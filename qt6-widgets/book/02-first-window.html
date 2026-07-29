@@ -100,12 +100,24 @@ GUI アプリはそれでは困ります。ユーザーが操作するまで、�
 </div>
 
 <div class="note pitfall">
-  <span class="note-title">古い記事にある <code>app.exec_()</code> は Qt6 では使えない</span>
+  <span class="note-title">古い記事にある <code>app.exec_()</code> は、動くけれど使わない</span>
   <p>
     Python 2 の時代、<code>exec</code> は予約語だったため、
     PyQt / PySide では末尾にアンダースコアを付けた <code>exec_()</code> が使われていました。
-    <strong>Qt6（PySide6）では <code>exec()</code> が正しい書き方</strong>です。
-    Web 上のサンプルで <code>exec_()</code> を見かけたら、それは Qt5 以前の記事だと判断できます。
+  </p>
+  <p>
+    <strong>PySide6 では <code>exec_()</code> も今のところ動きます。</strong>
+    ただし実行すると、次の警告が出ます。
+  </p>
+  <div class="src" data-lang="bash" data-file="警告">
+DeprecationWarning: 'exec_' will be removed in the future. Use 'exec' instead.
+  </div>
+  <p>
+    つまり「エラーにはならないが、いずれ消える書き方」です。
+    正しいのは <code>exec()</code> のほう。
+    Web 上のサンプルで <code>exec_()</code> を見かけたら、
+    <strong>それは Qt5 以前に書かれた記事だという目印</strong>として使えます。
+    その記事の他の部分も古い可能性が高い、と身構えてください。
   </p>
 </div>
 
@@ -172,6 +184,6 @@ GUI アプリはそれでは困ります。ユーザーが操作するまで、�
     <li>親のないウィジェットは、それ自体がウィンドウになる。</li>
     <li><code>show()</code> を呼ばないと画面には出ない。</li>
     <li><code>app.exec()</code> はイベントループ。ここでプログラムは「待ち」に入る。</li>
-    <li>Qt6 では <code>exec_()</code> ではなく <code>exec()</code>。<code>exec_()</code> を見たら古い記事。</li>
+    <li>Qt6 では <code>exec_()</code> ではなく <code>exec()</code>。<code>exec_()</code> も動くが非推奨で、見かけたら古い記事の目印。</li>
   </ul>
 </div>

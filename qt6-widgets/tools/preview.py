@@ -23,8 +23,15 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT.parent / "docs"
 OUT = ROOT / "tools" / ".preview"
-PORT = 8791
 CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+
+
+def free_port() -> int:
+    """空いているポートを OS に選ばせる。固定にすると同時実行でぶつかる。"""
+    import socket
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
 
 VIEWPORTS = {"desktop": (1280, 900), "mobile": (390, 844)}
 
@@ -45,8 +52,9 @@ def main() -> int:
     targets = [p for p in pages() if only in p]
     OUT.mkdir(parents=True, exist_ok=True)
 
+    port = free_port()
     server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", "-d", str(DOCS), str(PORT)],
+        [sys.executable, "-m", "http.server", "-d", str(DOCS), str(port)],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(1.2)
 
@@ -74,7 +82,7 @@ def main() -> int:
 
                     for rel in targets:
                         errors.clear()
-                        page.goto(f"http://127.0.0.1:{PORT}/{rel}",
+                        page.goto(f"http://127.0.0.1:{port}/{rel}",
                                   wait_until="networkidle")
                         # 遅延読み込みのままだと、画面外の画像が写らない。
                         page.evaluate(

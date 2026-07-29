@@ -81,7 +81,7 @@ PySide6 の場合は違います。必要なものはすべて 1 つのパッケ
 <table>
   <thead><tr><th>要るもの</th><th>条件</th></tr></thead>
   <tbody>
-    <tr><td>Python</td><td>3.9 以上（3.11 以上を推奨）</td></tr>
+    <tr><td>Python</td><td><strong>3.10 以上 3.14 以下</strong>（3.12 前後が無難）</td></tr>
     <tr><td>OS</td><td>Windows / macOS / Linux のどれでも</td></tr>
     <tr><td>エディタ</td><td>VS Code など、好きなもので</td></tr>
   </tbody>
@@ -104,6 +104,22 @@ Qt のライブラリ本体は PySide6 のパッケージに同梱されてい�
 macOS や Linux では <code>python3</code> と打つ必要があるかもしれません。
 「見つかりません」と言われたら、先に <a href="https://www.python.org/downloads/">python.org</a> から入れてください。
 </p>
+
+<div class="note pitfall">
+  <span class="note-title">Python 3.9 以下だと、そもそも入りません</span>
+  <p>
+    PySide6 6.11 が対応しているのは <strong>Python 3.10 以上 3.14 以下</strong>です。
+    範囲外の Python で <code>pip install pyside6</code> を実行すると、
+    次のようなメッセージが出てインストールが失敗します。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">エラー</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">ERROR:<span class="w"> </span>Could<span class="w"> </span>not<span class="w"> </span>find<span class="w"> </span>a<span class="w"> </span>version<span class="w"> </span>that<span class="w"> </span>satisfies<span class="w"> </span>the<span class="w"> </span>requirement<span class="w"> </span>pyside6</span><span class="cl">ERROR:<span class="w"> </span>No<span class="w"> </span>matching<span class="w"> </span>distribution<span class="w"> </span>found<span class="w"> </span><span class="k">for</span><span class="w"> </span>pyside6</span></code></pre></figure>
+  <p>
+    「パッケージ名を間違えたのかな」と思いがちですが、
+    <strong>Python のバージョンが合っていないだけ</strong>です。
+    まず <code>python --version</code> を確認してください。
+    出たばかりの最新の Python でも、まだ対応していないことがあります。
+  </p>
+</div>
 
 <h2 id="作業用のフォルダと仮想環境を作る">作業用のフォルダと仮想環境を作る</h2>
 

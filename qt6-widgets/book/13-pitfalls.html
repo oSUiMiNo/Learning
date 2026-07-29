@@ -10,72 +10,107 @@
 ほとんどのケースはここに当てはまります。
 </p>
 
+<p>
+大事なのは<strong>右端の列</strong>です。
+「エラーになる」ものより、<strong>「黙って動いてしまう」もののほうが厄介</strong>だからです。
+</p>
+
 <div class="table-wrap">
 <table>
-  <thead><tr><th>Qt5 までの書き方</th><th>Qt6 での書き方</th><th>出るエラー</th></tr></thead>
+  <thead><tr><th>Qt5 までの書き方</th><th>Qt6 での書き方</th><th>いま PySide6 で何が起きるか</th></tr></thead>
   <tbody>
-    <tr>
-      <td><code>app.exec_()</code></td>
-      <td><code>app.exec()</code></td>
-      <td><code>AttributeError</code></td>
-    </tr>
-    <tr>
-      <td><code>dialog.exec_()</code></td>
-      <td><code>dialog.exec()</code></td>
-      <td><code>AttributeError</code></td>
-    </tr>
-    <tr>
-      <td><code>Qt.AlignCenter</code></td>
-      <td><code>Qt.AlignmentFlag.AlignCenter</code></td>
-      <td><code>AttributeError</code></td>
-    </tr>
-    <tr>
-      <td><code>Qt.Horizontal</code></td>
-      <td><code>Qt.Orientation.Horizontal</code></td>
-      <td><code>AttributeError</code></td>
-    </tr>
-    <tr>
-      <td><code>Qt.Checked</code></td>
-      <td><code>Qt.CheckState.Checked</code></td>
-      <td><code>AttributeError</code></td>
-    </tr>
-    <tr>
-      <td><code>QMessageBox.Yes</code></td>
-      <td><code>QMessageBox.StandardButton.Yes</code></td>
-      <td><code>AttributeError</code></td>
-    </tr>
     <tr>
       <td><code>from PySide6.QtWidgets import QAction</code></td>
       <td><code>from PySide6.QtGui import QAction</code></td>
-      <td><code>ImportError</code></td>
+      <td>❌ <code>ImportError</code></td>
     </tr>
     <tr>
       <td><code>from PySide6.QtWidgets import QShortcut</code></td>
       <td><code>from PySide6.QtGui import QShortcut</code></td>
-      <td><code>ImportError</code></td>
+      <td>❌ <code>ImportError</code></td>
     </tr>
     <tr>
       <td><code>QRegExp</code></td>
       <td><code>QRegularExpression</code></td>
-      <td><code>ImportError</code></td>
+      <td>❌ <code>ImportError</code></td>
     </tr>
     <tr>
       <td><code>QDesktopWidget()</code></td>
       <td><code>app.primaryScreen()</code></td>
-      <td><code>ImportError</code></td>
+      <td>❌ <code>ImportError</code></td>
+    </tr>
+    <tr>
+      <td><code>app.exec_()</code> / <code>dialog.exec_()</code></td>
+      <td><code>app.exec()</code> / <code>dialog.exec()</code></td>
+      <td>⚠️ 動くが <code>DeprecationWarning</code></td>
     </tr>
     <tr>
       <td><code>Qt.AA_EnableHighDpiScaling</code> の設定</td>
       <td>不要（既定で有効）</td>
-      <td>非推奨の警告</td>
+      <td>⚠️ 動くが <code>DeprecationWarning</code></td>
+    </tr>
+    <tr>
+      <td><code>Qt.AlignCenter</code></td>
+      <td><code>Qt.AlignmentFlag.AlignCenter</code></td>
+      <td>😐 黙って動く</td>
+    </tr>
+    <tr>
+      <td><code>Qt.Horizontal</code></td>
+      <td><code>Qt.Orientation.Horizontal</code></td>
+      <td>😐 黙って動く</td>
+    </tr>
+    <tr>
+      <td><code>Qt.Checked</code></td>
+      <td><code>Qt.CheckState.Checked</code></td>
+      <td>😐 黙って動く</td>
+    </tr>
+    <tr>
+      <td><code>QMessageBox.Yes</code></td>
+      <td><code>QMessageBox.StandardButton.Yes</code></td>
+      <td>😐 黙って動く</td>
     </tr>
     <tr>
       <td><code>QVariant</code> を明示的に使う</td>
       <td>Python の値をそのまま返してよい</td>
-      <td>—</td>
+      <td>😐 書かなくてよくなった</td>
     </tr>
   </tbody>
 </table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">😐 の行が、この教材でいちばん伝えたいところ</span>
+  <p>
+    PySide6 には<strong>「寛容モード」</strong>という仕組みがあり、
+    Qt5 時代の短い enum の書き方を、内部で新しい形に読み替えて受け付けます。
+    <strong>エラーも警告も出ません。</strong>
+  </p>
+  <p>
+    ありがたい機能ではあるのですが、学習中には落とし穴になります。
+    古い記事を写して動いてしまうと、それが正しい書き方だと思い込んだまま先へ進んでしまうからです。
+  </p>
+  <p>
+    それでも最後まで書くべき理由は 3 つあります。
+  </p>
+  <ul>
+    <li>エディタの補完と型チェックが正しく効く</li>
+    <li>同じコードを <strong>PyQt6 に持っていくと、そちらは容赦なく <code>AttributeError</code></strong> になる</li>
+    <li>寛容モードはあくまで移行期の救済措置で、将来なくなる可能性がある</li>
+  </ul>
+</div>
+
+<div class="note deep">
+  <span class="note-title">この表は毎回、実物で確かめてから公開している</span>
+  <p>
+    ここに書いた挙動は、Web の記事を写したものではありません。
+    このページを組み立てるたびに <code>tools/check_claims.py</code> が
+    実際の PySide6 に対して 1 行ずつ試し、食い違っていれば公開が止まるようにしています。
+  </p>
+  <p>
+    実を言うと、この教材の初稿では 😐 の行を「<code>AttributeError</code> になる」と書いていました。
+    PyQt6 の挙動を PySide6 の話として書いてしまっていたのです。
+    このチェックを入れたことで間違いに気づきました。
+  </p>
 </div>
 
 <div class="note">
@@ -103,6 +138,11 @@
     <tr><td>シグナルの宣言</td><td><code>Signal()</code></td><td><code>pyqtSignal()</code></td></tr>
     <tr><td>スロットの装飾子</td><td><code>@Slot()</code></td><td><code>@pyqtSlot()</code></td></tr>
     <tr><td>プロパティ</td><td><code>Property()</code></td><td><code>pyqtProperty()</code></td></tr>
+    <tr>
+      <td>短い enum（<code>Qt.AlignCenter</code>）</td>
+      <td>寛容モードで動く</td>
+      <td><strong>厳格。<code>AttributeError</code> になる</strong></td>
+    </tr>
     <tr><td>それ以外の API</td><td colspan="2">ほぼ同一</td></tr>
   </tbody>
 </table>
@@ -333,6 +373,7 @@ GUI づくりで伸びるいちばんの近道は、<strong>自分が本当に�
   <h2>この章のまとめ</h2>
   <ul>
     <li>動かない記事に当たったら、まず Qt5 → Qt6 の差分早見表を見る。</li>
+    <li>PySide6 は古い書き方を黙って受け付ける。<strong>動いた ＝ 正しい書き方、ではない。</strong></li>
     <li>PyQt6 の記事は 3 語（<code>PyQt6</code> / <code>pyqtSignal</code> / <code>pyqtSlot</code>）を置き換えれば読める。</li>
     <li>固まるのはイベントループを塞いでいるから。別スレッドから画面は触らない。</li>
     <li>配布は PyInstaller。クロスコンパイルはできない。</li>

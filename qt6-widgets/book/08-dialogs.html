@@ -39,21 +39,31 @@ if answer == QMessageBox.StandardButton.Yes:
 <!--shot: ch08-messagebox | QMessageBox.question() で出した確認ダイアログ。既定のボタンを No にしてあるので、うっかり Enter を押しても閉じない。 -->
 
 <div class="note pitfall">
-  <span class="note-title">Qt6 では戻り値の比較を完全な名前で書く</span>
+  <span class="note-title">enum は最後まで書く — ただし短い書き方も「動いてしまう」</span>
   <div class="compare">
-    <div class="src" data-lang="python" data-file="Qt5 まで" data-cap="途中で切った書き方が許されていた">
+    <div class="src" data-lang="python" data-file="Qt5 までの書き方" data-cap="PySide6 では今も動くが、非推奨">
 if answer == QMessageBox.Yes:
     ...
     </div>
-    <div class="src" data-lang="python" data-file="Qt6" data-cap="StandardButton まで書く">
+    <div class="src" data-lang="python" data-file="Qt6 の書き方" data-cap="StandardButton まで書く">
 if answer == QMessageBox.StandardButton.Yes:
     ...
     </div>
   </div>
   <p>
-    Qt6 の PySide6 では列挙型が本物の Python の <code>Enum</code> になりました。
-    そのため「途中まで」の書き方は原則できません。
-    古い記事のコードで <code>AttributeError</code> が出たら、まずここを疑ってください。
+    Qt6 の PySide6 では、列挙型が本物の Python の <code>Enum</code> になりました。
+    本来は <code>QMessageBox.StandardButton.Yes</code> と最後まで書くのが正しい形です。
+  </p>
+  <p>
+    ところが PySide6 には<strong>古い書き方を黙って受け付ける「寛容モード」</strong>があり、
+    <code>QMessageBox.Yes</code> と書いても動いてしまいます。警告すら出ません。
+    そのため<strong>間違いに気づくきっかけがない</strong>のが、この項目の厄介なところです。
+  </p>
+  <p>
+    それでも最後まで書くべき理由は 2 つあります。
+    エディタの補完や型チェックが正しく効くこと。
+    そして<strong>同じコードを PyQt6 に持っていくと、こちらは容赦なく
+    <code>AttributeError</code> になる</strong>ことです。
   </p>
 </div>
 

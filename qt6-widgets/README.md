@@ -40,6 +40,7 @@ cd qt6-widgets
 | コマンド | やること |
 |---|---|
 | `python tools/check_examples.py` | 全サンプルを画面なしで起動し、エラーが出ないことを確認する |
+| `python tools/check_claims.py` | 本文が主張している Qt5 → Qt6 の挙動を、実物の PySide6 で確かめる |
 | `python tools/shots.py [絞り込み]` | Xvfb 上でサンプルを実際に動かし、スクリーンショットを撮り直す |
 | `python tools/build.py` | `book/` と `examples/` から `../docs/` を生成する |
 | `python tools/build.py --check` | 生成せずに、壊れている箇所だけを調べる |
@@ -49,10 +50,23 @@ cd qt6-widgets
 
 ```bash
 python tools/check_examples.py   # コードが動くか
+python tools/check_claims.py     # 本文の「Qt5 ではこう、Qt6 ではこう」が事実か
 python tools/shots.py            # 画面写真を撮り直す（コードを変えたとき）
 python tools/build.py            # サイトを生成
 python tools/preview.py          # ブラウザで検証
 ```
+
+### `tools/check_claims.py` を用意した理由
+
+第13章の「Qt5 時代の記事との差分・早見表」は、本来いちばん間違えてはいけない表です。
+にもかかわらず、この教材の初稿では 4 行が間違っていました。
+`Qt.AlignCenter` や `app.exec_()` は「Qt6 ではエラーになる」と書いていたのですが、
+実際には **PySide6 の寛容モードによって今も動きます**（`exec_()` は警告つき、enum は無警告）。
+PyQt6 の挙動を PySide6 の話として書いてしまっていたのです。
+
+Web の記事を読んで書くかぎり、この種の間違いは避けられません。
+そこで表の各行を実物の PySide6 に対して実行して確かめ、
+食い違ったら公開が止まるようにしています。
 
 ### `tools/preview.py` が調べていること
 

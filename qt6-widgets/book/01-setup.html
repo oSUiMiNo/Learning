@@ -10,7 +10,7 @@ PySide6 の場合は違います。必要なものはすべて 1 つのパッケ
 <table>
   <thead><tr><th>要るもの</th><th>条件</th></tr></thead>
   <tbody>
-    <tr><td>Python</td><td>3.9 以上（3.11 以上を推奨）</td></tr>
+    <tr><td>Python</td><td><strong>3.10 以上 3.14 以下</strong>（3.12 前後が無難）</td></tr>
     <tr><td>OS</td><td>Windows / macOS / Linux のどれでも</td></tr>
     <tr><td>エディタ</td><td>VS Code など、好きなもので</td></tr>
   </tbody>
@@ -35,6 +35,25 @@ python --version
 macOS や Linux では <code>python3</code> と打つ必要があるかもしれません。
 「見つかりません」と言われたら、先に <a href="https://www.python.org/downloads/">python.org</a> から入れてください。
 </p>
+
+<div class="note pitfall">
+  <span class="note-title">Python 3.9 以下だと、そもそも入りません</span>
+  <p>
+    PySide6 6.11 が対応しているのは <strong>Python 3.10 以上 3.14 以下</strong>です。
+    範囲外の Python で <code>pip install pyside6</code> を実行すると、
+    次のようなメッセージが出てインストールが失敗します。
+  </p>
+  <div class="src" data-lang="bash" data-file="エラー">
+ERROR: Could not find a version that satisfies the requirement pyside6
+ERROR: No matching distribution found for pyside6
+  </div>
+  <p>
+    「パッケージ名を間違えたのかな」と思いがちですが、
+    <strong>Python のバージョンが合っていないだけ</strong>です。
+    まず <code>python --version</code> を確認してください。
+    出たばかりの最新の Python でも、まだ対応していないことがあります。
+  </p>
+</div>
 
 <h2>作業用のフォルダと仮想環境を作る</h2>
 
