@@ -116,8 +116,8 @@ def render_code(source: str, *, language: str = "python", filename: str = "",
                 caption: str = "", source_file: str = "") -> str:
     lexer = PythonLexer() if language == "python" else get_lexer_by_name(language)
     body = split_into_lines(highlight(source, lexer, HtmlFormatter(nowrap=True)).rstrip("\n"))
-    label = filename or {"bash": "ターミナル", "xml": "XML", "css": "スタイルシート"}.get(
-        language, language)
+    label = filename or {"bash": "ターミナル", "xml": "XML", "css": "スタイルシート",
+                         "cpp": "C++", "cmake": "CMake"}.get(language, language)
     head = (
         '<div class="code-head">'
         f'<span class="code-file{"" if filename else " code-file--plain"}">'
@@ -143,6 +143,11 @@ SHOT_RE = re.compile(r"<!--\s*shot:\s*([^|>]+?)\s*(?:\|\s*(.*?)\s*)?-->", re.S)
 FIG_RE = re.compile(r"<!--\s*figure:\s*([^|>]+?)\s*(?:\|\s*(.*?)\s*)?-->", re.S)
 
 
+# 拡張子から構文強調の種類を決める。examples/cpp/ の C++ 版サンプルのため。
+LANGUAGE_BY_SUFFIX = {".py": "python", ".cpp": "cpp", ".h": "cpp",
+                      ".ui": "xml", ".txt": "cmake", ".qss": "css"}
+
+
 def expand_code(text: str, chapter: str) -> str:
     def repl(m: re.Match) -> str:
         name, caption = m.group(1).strip(), (m.group(2) or "").strip()
@@ -150,8 +155,11 @@ def expand_code(text: str, chapter: str) -> str:
         if not path.exists():
             fail(f"[{chapter}] サンプルが見つかりません: examples/{name}")
             return f'<p class="missing">サンプル未作成: {name}</p>'
-        return render_code(path.read_text(encoding="utf-8"), filename=name,
-                           caption=caption, source_file=name)
+        language = LANGUAGE_BY_SUFFIX.get(path.suffix, "text")
+        if path.name == "CMakeLists.txt":
+            language = "cmake"
+        return render_code(path.read_text(encoding="utf-8"), language=language,
+                           filename=name, caption=caption, source_file=name)
 
     return CODE_RE.sub(repl, text)
 

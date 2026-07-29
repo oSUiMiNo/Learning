@@ -388,5 +388,31 @@
     "script": "ch11_japanese.py",
     "note": "日本語化された QMessageBox",
     "bytes": 14972
+  },
+  "cpp-ch02-window": {
+    "name": "cpp-ch02-window",
+    "file": "img/cpp-ch02-window.webp",
+    "script": "cpp/ch02_window.cpp",
+    "title": "はじめての Qt ウィンドウ",
+    "css_width": 420,
+    "css_height": 180,
+    "pixel_width": 840,
+    "pixel_height": 360,
+    "windows": 1,
+    "note": "C++ 版をビルドして実行したもの",
+    "bytes": 8522
+  },
+  "cpp-ch03-signals": {
+    "name": "cpp-ch03-signals",
+    "file": "img/cpp-ch03-signals.webp",
+    "script": "cpp/ch03_signals.cpp",
+    "title": "シグナルとスロット（C++）",
+    "css_width": 360,
+    "css_height": 150,
+    "pixel_width": 720,
+    "pixel_height": 300,
+    "windows": 1,
+    "note": "C++ 版をビルドして実行したもの",
+    "bytes": 4592
   }
 }

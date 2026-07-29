@@ -7,3 +7,10 @@ venv/
 # 教材のビルド作業用（生成物であり、成果物ではない）
 qt6-widgets/tools/.preview/
 qt6-widgets/tools/.shots-tmp/
+qt6-widgets/tools/.cpp-build/
+
+# C++ サンプルのビルド結果
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake

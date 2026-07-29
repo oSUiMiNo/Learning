@@ -1,0 +1,442 @@
+<h2>結論: だいたいそのまま。ただし 5 つだけ質が違う</h2>
+
+<p>
+先に答えを書きます。<strong>Qt の使い方そのものは、Python でも C++ でもまったく同じです。</strong>
+クラス名も、メソッド名も、シグナル名も、引数の順番も変わりません。
+この教材で学んだ知識は、9 割方そのまま持っていけます。
+</p>
+
+<p>
+Qt はもともと C++ のライブラリで、PySide6 はそれを Python から呼べるようにしただけのものです。
+つまり<strong>あなたが学んできたのは、最初から C++ の Qt だった</strong>とも言えます。
+</p>
+
+<p>
+ただし、「そのまま書き写せばいい」とまでは言えません。
+言語が変わることで<strong>質的に違ってくるものが 5 つ</strong>あります。
+それを順に見ていきます。
+</p>
+
+<h2>まず、並べて見てみる</h2>
+
+<p>
+第 2 章で作った最初のウィンドウを、Python と C++ で並べます。
+</p>
+
+<!--code: ch02_window.py-->
+
+<!--code: cpp/ch02_window.cpp-->
+
+<p>
+行の並びも、呼んでいるものも、ほぼ 1 対 1 で対応しているのが分かるはずです。
+そして実際に、出来上がる画面も同じです。
+</p>
+
+<!--shot: ch02-window | Python 版（PySide6）を実行した画面 -->
+
+<!--shot: cpp-ch02-window | C++ 版をコンパイルして実行した画面。上とまったく同じものが出る。 -->
+
+<div class="note">
+  <span class="note-title">この 2 枚について</span>
+  <p>
+    どちらも実際に動かして撮ったものです。
+    Python 版はページ上部のバッジのバージョン、
+    C++ 版は環境の都合で Qt 6.4 でビルドしています。
+    <strong>バージョンが違っても同じ結果になる</strong>こと自体が、
+    ここで言いたいことの証明にもなっています。
+    この範囲の API は Qt6 を通してずっと変わっていません。
+  </p>
+</div>
+
+<h2>違い ① ビルドの壁 — ここがいちばん大きい</h2>
+
+<p>
+実のところ、コードの書き方よりもこちらのほうが障壁になります。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>Python (PySide6)</th><th>C++</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>準備</td>
+      <td><code>pip install pyside6</code> の 1 行</td>
+      <td>Qt 本体のインストール＋コンパイラ＋CMake</td>
+    </tr>
+    <tr>
+      <td>実行するまで</td>
+      <td><code>python app.py</code></td>
+      <td>configure → build → 実行</td>
+    </tr>
+    <tr>
+      <td>1 文字直したあと</td>
+      <td>そのまま実行し直すだけ</td>
+      <td>ビルドし直す（数秒〜数分）</td>
+    </tr>
+    <tr>
+      <td>実行速度</td>
+      <td>起動がやや遅い</td>
+      <td>速い</td>
+    </tr>
+    <tr>
+      <td>配布</td>
+      <td>PyInstaller で数十〜百 MB</td>
+      <td>実行ファイル＋Qt のライブラリ</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+Qt 本体は <a href="https://www.qt.io/download-qt-installer">Qt Online Installer</a> から入れるのが標準です。
+アカウント登録が必要で、ダウンロードは数 GB になります。
+Linux ならディストリビューションのパッケージ（<code>qt6-base-dev</code> など）でも構いません。
+</p>
+
+<p>
+そして、Python には無かった<strong>ビルド設定ファイル</strong>を書くことになります。
+</p>
+
+<!--code: cpp/CMakeLists.txt-->
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+cmake -S . -B build
+cmake --build build
+./build/ch02_window
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">最初に必ず出会うエラー: vtable への未定義参照</span>
+  <div class="src" data-lang="bash" data-file="リンクエラー">
+undefined reference to `vtable for MyWidget'
+  </div>
+  <p>
+    <code>Q_OBJECT</code> を書いたクラスが moc（後述）に通っていないときのエラーです。
+    CMakeLists.txt に <code>set(CMAKE_AUTOMOC ON)</code> があるか確認してください。
+    C++ 側の Qt でいちばん有名なつまずきポイントです。
+  </p>
+</div>
+
+<h2>違い ② メモリ管理 — 第 7 章の話が逆になる</h2>
+
+<p>
+第 7 章で「Python 側で参照を残さないとウィンドウが消える」という話をしました。
+C++ ではこの悩みがありません。かわりに<strong>「誰がいつ消すのか」を自分で決める</strong>必要があります。
+</p>
+
+<h3>2 つの作り方</h3>
+
+<div class="src" data-lang="cpp">
+QWidget window;                              // ① スタックに置く
+                                             //    main を抜けるときに自動で消える
+QLabel *label = new QLabel("文字", &window); // ② new で作り、親を渡す
+                                             //    親（window）が消えるとき一緒に消える
+</div>
+
+<p>
+Qt Widgets では、<strong>トップレベルのウィンドウは ①、その中身は ②</strong>というのが定石です。
+② で親を渡しておけば <code>delete</code> は不要です。親が責任を持って片付けてくれます。
+</p>
+
+<div class="note">
+  <span class="note-title">実は Python でも同じ仕組みが働いていた</span>
+  <p>
+    第 7 章で説明した「親が子を破棄する」というオブジェクトツリーは、
+    もともと C++ のこの仕組みそのものです。
+    PySide6 はそこに Python のガベージコレクションが重なっているため、話が少しややこしくなっていました。
+    <strong>C++ のほうが、むしろ素直です。</strong>
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">レイアウトは new で作る</span>
+  <p>
+    上のサンプルで <code>QVBoxLayout</code> だけ <code>new</code> しているのを不思議に思ったかもしれません。
+    レイアウトは、貼り付けた先のウィジェットに所有権が移ります。
+    スタックに置くと、ウィジェットが片付けようとした先がすでに無くなっていて壊れます。
+    <strong>レイアウトとウィジェットの子は <code>new</code>、と覚えてください。</strong>
+  </p>
+</div>
+
+<h2>違い ③ Q_OBJECT と moc — 自作シグナルのときだけ</h2>
+
+<p>
+Python では、シグナルを 1 行書くだけで作れました。
+</p>
+
+<div class="src" data-lang="python">
+class NameForm(QWidget):
+    submitted = Signal(str)
+</div>
+
+<p>C++ では、クラスに 2 つの決まりごとが増えます。</p>
+
+<ol>
+  <li>クラスの先頭に <code>Q_OBJECT</code> マクロを書く</li>
+  <li>そのクラスを <strong>moc</strong>（メタオブジェクトコンパイラ）に通す</li>
+</ol>
+
+<!--code: cpp/ch03_custom_signal.cpp-->
+
+<p>
+moc は「Q_OBJECT が書かれたクラスを読んで、シグナル／スロットの配線に必要なコードを
+自動生成する」道具です。Python では実行時にできることを、C++ ではコンパイル前に用意しておく、
+というだけの違いです。
+</p>
+
+<p>
+そして <strong>moc の実行は CMake が自動でやってくれます</strong>（<code>CMAKE_AUTOMOC ON</code>）。
+自分で意識するのは <code>Q_OBJECT</code> を書き忘れないことだけです。
+</p>
+
+<div class="note">
+  <span class="note-title">シグナルを自作しないなら、ここは丸ごと不要</span>
+  <p>
+    既存のシグナルにつなぐだけなら、<code>Q_OBJECT</code> もクラスも要りません。
+    ラムダを使えば済みます。次の例がそれです。
+  </p>
+</div>
+
+<h2>違い ④ connect の書き方</h2>
+
+<!--code: cpp/ch03_signals.cpp-->
+
+<!--shot: cpp-ch03-signals | C++ 版を実行した画面。Python 版（第3章）と同じものが動く。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>書き方</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Python</td>
+      <td><code>button.clicked.connect(on_clicked)</code></td>
+    </tr>
+    <tr>
+      <td>C++</td>
+      <td><code>connect(button, &amp;QPushButton::clicked, this, &amp;MyClass::onClicked);</code></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+長く見えますが、<strong>「誰の・どのシグナルを・誰の・どのスロットに」</strong>を
+そのまま並べているだけです。Python 版は前半 2 つが <code>button.clicked</code> に
+まとまっている、という違いにすぎません。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">古い C++ の記事に出てくる SIGNAL / SLOT マクロ</span>
+  <div class="compare">
+    <div class="src" data-lang="cpp" data-file="Qt4 時代の書き方" data-cap="動くが、間違いが実行時まで分からない">
+connect(button, SIGNAL(clicked()),
+        this, SLOT(onClicked()));
+    </div>
+    <div class="src" data-lang="cpp" data-file="Qt5 以降の書き方" data-cap="コンパイル時に間違いが分かる">
+connect(button, &amp;QPushButton::clicked,
+        this, &amp;MyClass::onClicked);
+    </div>
+  </div>
+  <p>
+    <code>SIGNAL()</code> / <code>SLOT()</code> は名前を文字列として扱う古い書き方です。
+    綴りを間違えても<strong>コンパイルは通ってしまい</strong>、実行時に
+    「そんなスロットはない」と警告が出るだけで、静かに動かなくなります。
+  </p>
+  <p>
+    C++ の Qt の記事は Python 以上に古いものが多いので、
+    <strong><code>SIGNAL(</code> という文字を見かけたら Qt4 時代の記事</strong>だと判断してください。
+    Python の <code>exec_()</code> と同じ役割の目印になります。
+  </p>
+</div>
+
+<h2>違い ⑤ 型 — 静的型と QVariant</h2>
+
+<p>
+いちばん地味ですが、書く量にいちばん効いてくる違いです。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>用途</th><th>Python</th><th>C++</th></tr></thead>
+  <tbody>
+    <tr><td>文字列</td><td><code>str</code></td><td><code>QString</code></td></tr>
+    <tr><td>文字列の組み立て</td><td><code>f"{n} 回"</code></td><td><code>QString("%1 回").arg(n)</code></td></tr>
+    <tr><td>リスト</td><td><code>list</code></td><td><code>QList&lt;T&gt;</code> / <code>std::vector&lt;T&gt;</code></td></tr>
+    <tr><td>辞書</td><td><code>dict</code></td><td><code>QHash&lt;K, V&gt;</code> / <code>QMap&lt;K, V&gt;</code></td></tr>
+    <tr><td>「何でも入る値」</td><td>そのまま返せる</td><td><strong><code>QVariant</code> で包む</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">第 10 章のモデルは、C++ では QVariant が必須になる</span>
+  <p>
+    Python では <code>data()</code> から文字列でも色でもそのまま返せました。
+    C++ の <code>data()</code> は戻り値の型が <code>QVariant</code> と決まっているので、包む必要があります。
+    「関係ない role には何も返さない」は、C++ では<strong>空の <code>QVariant</code> を返す</strong>ことになります。
+  </p>
+  <div class="compare">
+    <div class="src" data-lang="python" data-file="Python">
+def data(self, index, role):
+    if role == Qt.ItemDataRole.DisplayRole:
+        return self._rows[index.row()]
+    return None
+    </div>
+    <div class="src" data-lang="cpp" data-file="C++">
+QVariant data(const QModelIndex &amp;index,
+              int role) const override
+{
+    if (role == Qt::DisplayRole)
+        return m_rows.at(index.row());
+    return QVariant();
+}
+    </div>
+  </div>
+</div>
+
+<h2>書き換え早見表</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Python (PySide6)</th><th>C++</th></tr></thead>
+  <tbody>
+    <tr><td><code>app = QApplication(sys.argv)</code></td><td><code>QApplication app(argc, argv);</code></td></tr>
+    <tr><td><code>sys.exit(app.exec())</code></td><td><code>return app.exec();</code></td></tr>
+    <tr><td><code>w = QWidget()</code></td><td><code>QWidget w;</code>（または <code>new QWidget(親)</code>）</td></tr>
+    <tr><td><code>w.setWindowTitle("題")</code></td><td><code>w.setWindowTitle("題");</code></td></tr>
+    <tr><td><code>layout.addWidget(b)</code></td><td><code>layout-&gt;addWidget(b);</code>（ポインタは <code>-&gt;</code>）</td></tr>
+    <tr><td><code>Qt.AlignmentFlag.AlignCenter</code></td><td><code>Qt::AlignCenter</code></td></tr>
+    <tr><td><code>QMessageBox.StandardButton.Yes</code></td><td><code>QMessageBox::Yes</code></td></tr>
+    <tr><td><code>sig.connect(slot)</code></td><td><code>connect(送り手, &amp;型::sig, 受け手, &amp;型::slot);</code></td></tr>
+    <tr><td><code>x = Signal(str)</code></td><td><code>signals: void x(const QString &amp;);</code> ＋ <code>Q_OBJECT</code></td></tr>
+    <tr><td><code>self.x.emit(v)</code></td><td><code>emit x(v);</code></td></tr>
+    <tr><td><code>@Slot()</code></td><td><code>private slots:</code>（または普通のメソッド）</td></tr>
+    <tr><td><code>super().__init__()</code></td><td><code>: QWidget(parent)</code>（初期化リスト）</td></tr>
+    <tr><td><code>pyside6-uic form.ui -o ui_form.py</code></td><td><code>set(CMAKE_AUTOUIC ON)</code> が自動でやる</td></tr>
+    <tr><td><code>from PySide6.QtGui import QAction</code></td><td><code>#include &lt;QAction&gt;</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">名前空間の区切りが <code>.</code> から <code>::</code> に変わるだけ</span>
+  <p>
+    <code>Qt.AlignmentFlag.AlignCenter</code> が <code>Qt::AlignCenter</code> になるように、
+    C++ では区切りが <code>::</code> です。
+    そして C++ の Qt では、列挙型を <code>Qt::AlignmentFlag::AlignCenter</code> と
+    最後まで書く必要はありません（<code>Qt::AlignCenter</code> で通ります）。
+    この点は Python 版より短く書けます。
+  </p>
+</div>
+
+<h2>この教材の各章は、C++ ではどう変わるか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>章</th><th>C++ での違い</th></tr></thead>
+  <tbody>
+    <tr><td>第2章 最初のウィンドウ</td><td>ほぼ同じ。<code>sys.exit()</code> が <code>return</code> になるだけ</td></tr>
+    <tr><td>第3章 シグナルとスロット</td><td><strong>connect の書き方が変わる。</strong>自作シグナルには <code>Q_OBJECT</code> が要る</td></tr>
+    <tr><td>第4章 レイアウト</td><td><strong>まったく同じ。</strong><code>new</code> で作る点だけ違う</td></tr>
+    <tr><td>第5章 ウィジェット図鑑</td><td><strong>まったく同じ。</strong>クラス名もメソッド名も変わらない</td></tr>
+    <tr><td>第6章 QMainWindow</td><td>ほぼ同じ</td></tr>
+    <tr><td>第7章 親子関係とメモリ</td><td><strong>話が変わる。</strong>GC がないぶん、むしろ単純になる</td></tr>
+    <tr><td>第8章 ダイアログ</td><td>ほぼ同じ。戻り値がタプルではなく参照渡しになるものがある</td></tr>
+    <tr><td>第9章 Qt Designer</td><td>同じツール。変換は CMake が自動でやる</td></tr>
+    <tr><td>第10章 モデル / ビュー</td><td><strong>戻り値を <code>QVariant</code> で包む。</strong>考え方は同じ</td></tr>
+    <tr><td>第11章 見た目を整える</td><td><strong>まったく同じ。</strong>スタイルシートの文法も同一</td></tr>
+    <tr><td>第13章 配布</td><td>PyInstaller ではなく <code>windeployqt</code> / <code>macdeployqt</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>結局、どちらを選ぶべきか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>こういう場合</th><th>おすすめ</th></tr></thead>
+  <tbody>
+    <tr><td>自分用の道具をさっと作りたい</td><td>Python</td></tr>
+    <tr><td>すでにある Python の処理に画面を付けたい</td><td>Python</td></tr>
+    <tr><td>機械学習やデータ処理と組み合わせる</td><td>Python</td></tr>
+    <tr><td>試行錯誤しながら画面を詰めたい</td><td>Python（ビルド待ちがない）</td></tr>
+    <tr><td>起動速度・動作速度が要件になる</td><td>C++</td></tr>
+    <tr><td>組み込み機器で動かす</td><td>C++</td></tr>
+    <tr><td>ソースを隠して配布したい</td><td>C++</td></tr>
+    <tr><td>既存の C++ 資産と組み合わせる</td><td>C++</td></tr>
+    <tr><td>チームがすでに C++ で書いている</td><td>C++</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">両方使う、という選択肢もある</span>
+  <p>
+    重い処理だけ C++ で書いて、画面と組み立ては Python から、という構成も取れます。
+    Qt にはそのための仕組み（Shiboken）がありますが、
+    最初から狙うものではありません。
+    <strong>まず片方で 1 本作り切ってから考えるので十分です。</strong>
+  </p>
+</div>
+
+<h2>移るときの第一歩</h2>
+
+<p>
+C++ に移ると決めたら、順番はこうするのが安全です。
+</p>
+
+<ol>
+  <li>
+    <strong>Qt をインストールして、空のウィンドウを 1 つ出すところまでやる。</strong>
+    ここが最大の関門なので、先に片付けます。この章の <code>cpp/ch02_window.cpp</code> と
+    <code>CMakeLists.txt</code> をそのまま使えます
+  </li>
+  <li>
+    <strong>この教材の第 4 章（レイアウト）のサンプルを C++ で書き直してみる。</strong>
+    レイアウトはほぼ同じなので、C++ の書き方に慣れる練習になります
+  </li>
+  <li>
+    <strong>第 3 章のシグナルとスロットを C++ で書き直す。</strong>
+    ここで <code>Q_OBJECT</code> と moc に一度ぶつかっておきます
+  </li>
+  <li>
+    <strong>第 12 章の ToDo アプリを移植する。</strong>
+    ここまで来れば、あとは調べながら進められます
+  </li>
+</ol>
+
+<p>
+公式ドキュメントは、第 13 章で書いたとおり
+<a href="https://doc.qt.io/qt-6/">C++ 版のリファレンス</a>を読むのが正解です。
+C++ に移る人にとっては、<strong>読み替えの手間すらなくなります</strong>。
+</p>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>
+    Qt をインストールしたら、この章の 3 本のサンプルをビルドしてみてください。
+  </p>
+  <div class="src" data-lang="bash" data-file="ターミナル">
+cd qt6-widgets/examples/cpp
+cmake -S . -B build
+cmake --build build
+./build/ch02_window
+  </div>
+  <p>
+    3 本とも動いたら、C++ 側の環境構築は完了しています。
+    次は <code>ch03_signals.cpp</code> のラムダの中身を書き換えて、
+    ビルドし直す往復に慣れてください。
+  </p>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>Qt の API は Python でも C++ でも同一。<strong>学んだことの 9 割はそのまま使える。</strong></li>
+    <li>本当の壁はコードではなく<strong>ビルド環境</strong>。ここを先に片付ける。</li>
+    <li>メモリは「トップレベルはスタック、中身は <code>new</code> ＋親」。GC がないぶん単純。</li>
+    <li>自作シグナルのときだけ <code>Q_OBJECT</code> と moc が要る（CMake が自動化してくれる）。</li>
+    <li><code>connect</code> は <code>&amp;クラス::シグナル</code> の形。<code>SIGNAL(</code> を見たら Qt4 時代の記事。</li>
+    <li>モデル / ビューでは戻り値を <code>QVariant</code> で包む。</li>
+  </ul>
+</div>

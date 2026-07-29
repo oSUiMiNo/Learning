@@ -11,6 +11,7 @@ Python (PySide6 6.11) で Qt Widgets を学ぶ、初心者向けの入門書で�
 ```
 qt6-widgets/
 ├── examples/     ★ コードの単一情報源。すべて単体で実行できる
+│   └── cpp/      付録章の C++ 版。CMake でビルドして動作確認している
 ├── book/         本文（章ごとの HTML）と章立て定義 toc.py
 ├── assets/       style.css / book.js / 概念図の SVG
 └── tools/        ビルドと検証のスクリプト
@@ -42,6 +43,7 @@ cd qt6-widgets
 | `python tools/check_examples.py` | 全サンプルを画面なしで起動し、エラーが出ないことを確認する |
 | `python tools/check_claims.py` | 本文が主張している Qt5 → Qt6 の挙動を、実物の PySide6 で確かめる |
 | `python tools/shots.py [絞り込み]` | Xvfb 上でサンプルを実際に動かし、スクリーンショットを撮り直す |
+| `python tools/shots_cpp.py` | 付録の C++ サンプルをビルドして実行し、撮影する（Qt6 の C++ 環境がなければ自動で飛ばす） |
 | `python tools/build.py` | `book/` と `examples/` から `../docs/` を生成する |
 | `python tools/build.py --check` | 生成せずに、壊れている箇所だけを調べる |
 | `python tools/preview.py` | 出来上がったサイトをブラウザで巡回して検証する |
