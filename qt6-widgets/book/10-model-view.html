@@ -1,0 +1,251 @@
+<p>
+第 5 章で <code>QListWidget</code> を紹介しました。項目を <code>addItems()</code> で足すだけの、簡単なものです。
+実はあれは「初心者向けの入口」で、Qt の本命は別にあります。
+</p>
+
+<p>
+それが<strong>モデル / ビュー</strong>です。
+Qt 入門者が最初にぶつかる壁として有名ですが、
+考え方さえ掴めば、実際にはとても素直な仕組みです。
+</p>
+
+<h2>なぜ分けるのか</h2>
+
+<p>
+<code>QListWidget</code> は、データそのものをウィジェットの中に抱え込みます。
+項目が 100 個くらいなら問題ありませんが、10 万件だとどうでしょうか。
+画面に映るのはせいぜい 30 行なのに、10 万個のオブジェクトを作ることになります。
+</p>
+
+<p>
+モデル / ビューは、この関係を分けます。
+</p>
+
+<ul>
+  <li><strong>モデル</strong>＝データの持ち主。「何行ある？」「その升目は何？」に答える係</li>
+  <li><strong>ビュー</strong>＝表示する係。<strong>画面に見えている範囲だけ</strong>モデルに問い合わせる</li>
+</ul>
+
+<p>
+だから 10 万件でも一瞬で開きます。
+そして同じモデルを、表としてもリストとしても同時に表示できます。
+</p>
+
+<!--figure: model-view | ビューは「いま見えている升目」についてだけモデルに尋ねる。モデルは尋ねられたら答えるだけで、どう表示されるかは知らない。 -->
+
+<h2>覚えることは 4 つのメソッドだけ</h2>
+
+<p>
+表を作るなら <code>QAbstractTableModel</code> を継承して、次の 4 つを書きます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>メソッド</th><th>聞かれていること</th><th>返すもの</th></tr></thead>
+  <tbody>
+    <tr><td><code>rowCount()</code></td><td>行はいくつ？</td><td><code>int</code></td></tr>
+    <tr><td><code>columnCount()</code></td><td>列はいくつ？</td><td><code>int</code></td></tr>
+    <tr><td><code>data(index, role)</code></td><td>その升目の「◯◯」は？</td><td>文字列・色・数値など</td></tr>
+    <tr><td><code>headerData(...)</code></td><td>見出しは？</td><td>文字列</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!--code: ch10_tableview.py-->
+
+<!--shot: ch10-tableview | 5 行 3 列の表。価格の列だけ右揃えになっているのは、data() が TextAlignmentRole に答えているから。 -->
+
+<h2>QModelIndex — 升目の住所</h2>
+
+<p>
+<code>data()</code> に渡ってくる <code>index</code> は、「どの升目のことを聞いているか」を表す住所です。
+使うのは 2 つだけです。
+</p>
+
+<div class="src" data-lang="python">
+index.row()      # 何行目か（0 から）
+index.column()   # 何列目か（0 から）
+</div>
+
+<h2>role — 「何を聞かれているか」</h2>
+
+<p>
+ここが最初の関門です。
+<strong>ビューは同じ升目について、何度も違う質問をしてきます。</strong>
+その質問の種類が <code>role</code> です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>role</th><th>質問の内容</th><th>返すもの</th></tr></thead>
+  <tbody>
+    <tr><td><code>DisplayRole</code></td><td>表示する文字は？</td><td>文字列</td></tr>
+    <tr><td><code>TextAlignmentRole</code></td><td>寄せ方は？</td><td><code>Qt.AlignmentFlag</code></td></tr>
+    <tr><td><code>ForegroundRole</code></td><td>文字の色は？</td><td><code>QBrush</code> / <code>QColor</code></td></tr>
+    <tr><td><code>BackgroundRole</code></td><td>背景の色は？</td><td><code>QBrush</code> / <code>QColor</code></td></tr>
+    <tr><td><code>CheckStateRole</code></td><td>チェックの状態は？</td><td><code>Qt.CheckState</code></td></tr>
+    <tr><td><code>ToolTipRole</code></td><td>ツールチップは？</td><td>文字列</td></tr>
+    <tr><td><code>EditRole</code></td><td>編集時に入れる値は？</td><td>生の値</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">聞かれていない role に答えると表示が壊れる</span>
+  <p>
+    <code>data()</code> は<strong>関係のない role には必ず <code>None</code> を返す</strong>必要があります。
+    role を見ずに常に文字列を返してしまうと、
+    「背景色は？」と聞かれたのに文字列を返すことになり、表示が崩れます。
+  </p>
+  <div class="src" data-lang="python">
+def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    if role == Qt.ItemDataRole.DisplayRole:
+        return str(self._rows[index.row()][index.column()])
+    return None     # ★ これを忘れない
+  </div>
+</div>
+
+<div class="note deep">
+  <span class="note-title">古い記事にある <code>int(...)</code> は、いまは不要</span>
+  <p>
+    揃え方を返すところで <code>int(...)</code> で包んでいる記事をよく見かけます。
+  </p>
+  <div class="src" data-lang="python">
+return int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)   # 昔の書き方
+return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter        # そのままでよい
+  </div>
+  <p>
+    初期の PySide6 では列挙型の扱いが安定していなかった名残です。
+    このページのバージョンで確認したところ、
+    <strong>どちらで返しても表示結果は同じ</strong>でした。
+    新しく書くなら、包まないほうが素直です。
+  </p>
+</div>
+
+<h2>編集できるようにする</h2>
+
+<p>
+表示だけなら上の 4 つで足ります。ユーザーに編集させるには、あと 2 つ足します。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>メソッド</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>flags(index)</code></td><td>その升目に「何ができるか」を宣言する（選択可・編集可・チェック可）</td></tr>
+    <tr><td><code>setData(index, value, role)</code></td><td>ユーザーの操作結果を受け取る。成功したら <code>True</code> を返す</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="src" data-lang="python">
+def flags(self, index):
+    return (Qt.ItemFlag.ItemIsEnabled
+            | Qt.ItemFlag.ItemIsSelectable
+            | Qt.ItemFlag.ItemIsEditable)
+
+def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
+    if role != Qt.ItemDataRole.EditRole:
+        return False
+    self._rows[index.row()][index.column()] = value
+    self.dataChanged.emit(index, index, [role])   # ★ 忘れると画面が更新されない
+    return True
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">データを変えたら、必ず「変わった」と知らせる</span>
+  <p>
+    モデルの中身を書き換えただけでは、ビューは気づきません。
+    ビューは「変わったよ」というシグナルを聞いて、初めて描き直します。
+  </p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>やること</th><th>使うもの</th></tr></thead>
+      <tbody>
+        <tr><td>既存の升目の値が変わった</td><td><code>dataChanged.emit(左上, 右下, [role])</code></td></tr>
+        <tr><td>行を追加する</td><td><code>beginInsertRows()</code> … <code>endInsertRows()</code> で挟む</td></tr>
+        <tr><td>行を削除する</td><td><code>beginRemoveRows()</code> … <code>endRemoveRows()</code> で挟む</td></tr>
+        <tr><td>全部作り直す</td><td><code>beginResetModel()</code> … <code>endResetModel()</code> で挟む</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    挟むのを忘れると、行数の食い違いでビューがクラッシュすることがあります。
+    面倒に見えますが、これは「ビューに整合性を保たせるため」の約束です。
+  </p>
+</div>
+
+<h2>並べ替えと絞り込み — QSortFilterProxyModel</h2>
+
+<p>
+「検索欄に打った文字で一覧を絞り込みたい」。
+自分でフィルタ済みのリストを作り直す必要はありません。
+<strong>モデルとビューの間に 1 枚はさむだけ</strong>です。
+</p>
+
+<!--code: ch10_filter.py-->
+
+<!--shot: ch10-filter | 検索欄に「ラ」と入れた状態。ぶどうとメロンだけが残っている。元のモデルには一切手を触れていない。 -->
+
+<div class="src" data-lang="python">
+proxy = QSortFilterProxyModel()
+proxy.setSourceModel(source)           # 元モデルを包む
+proxy.setFilterKeyColumn(-1)           # -1 = すべての列を検索対象に
+view.setModel(proxy)                   # ビューにはプロキシを渡す
+
+search.textChanged.connect(proxy.setFilterFixedString)
+view.setSortingEnabled(True)           # 見出しクリックで並べ替え
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">プロキシを挟むと行番号がずれる</span>
+  <p>
+    ビューが「3 行目が選ばれた」と言ってきても、それは<strong>絞り込み後の 3 行目</strong>です。
+    元のデータの何番目かを知るには、変換が必要です。
+  </p>
+  <div class="src" data-lang="python">
+source_index = proxy.mapToSource(proxy_index)
+row = source_index.row()        # これが元データでの行番号
+  </div>
+</div>
+
+<h2>どのビューを使うか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ビュー</th><th>見た目</th><th>合うモデル</th></tr></thead>
+  <tbody>
+    <tr><td><code>QListView</code></td><td>1 列のリスト</td><td><code>QAbstractListModel</code></td></tr>
+    <tr><td><code>QTableView</code></td><td>行と列の表</td><td><code>QAbstractTableModel</code></td></tr>
+    <tr><td><code>QTreeView</code></td><td>階層のあるツリー</td><td><code>QAbstractItemModel</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">QListWidget と QListView、どちらを使う？</span>
+  <p>
+    項目が数十個で、内容も固定なら <code>QListWidget</code> で十分です。無理にモデルを書く必要はありません。
+    <strong>件数が多い・データが別の場所（DB や API）にある・同じデータを複数の見せ方で出したい</strong>
+    のいずれかに当てはまったら、モデル / ビューに移ってください。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch10_tableview.py</code> の <code>data()</code> に <code>ForegroundRole</code> の処理を足し、価格が 500 円以上の行を赤字にする（ヒント: <code>from PySide6.QtGui import QColor</code> して <code>return QColor("crimson")</code>）。</li>
+    <li><code>ToolTipRole</code> に答えるようにして、升目にマウスを乗せると産地が出るようにする。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>モデルはデータ、ビューは表示。ビューは<strong>見えている範囲だけ</strong>問い合わせるので大量データに強い。</li>
+    <li>最低限書くのは <code>rowCount()</code> / <code>columnCount()</code> / <code>data()</code> / <code>headerData()</code>。</li>
+    <li><code>index</code> は升目の住所、<code>role</code> は質問の種類。<strong>関係ない role には <code>None</code> を返す</strong>。</li>
+    <li>データを変えたら <code>dataChanged</code> か <code>begin…/end…</code> で必ず知らせる。</li>
+    <li>並べ替え・絞り込みは <code>QSortFilterProxyModel</code> を 1 枚はさむだけ。行番号の変換に注意。</li>
+  </ul>
+</div>

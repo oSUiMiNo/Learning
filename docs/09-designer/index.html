@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第9章 Qt Designer — 画面をマウスで作る | Qt6 Widgets 入門</title>
+<meta name="description" content="コードを書かずに画面を組み立てるツールが標準で付いてきます。作った .ui ファイルを Python から使う 2 つの方法を比べます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li><a href="../03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="../04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="../05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li><a href="../06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="../07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="../08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li class="is-current"><a href="../09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="../10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="../11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="../12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="../13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 9 章<span class="dot">·</span>読了目安 12 分</p>
+        <h1>第9章 Qt Designer — 画面をマウスで作る</h1>
+        <p class="lede">コードを書かずに画面を組み立てるツールが標準で付いてきます。作った .ui ファイルを Python から使う 2 つの方法を比べます。</p>
+      </header>
+      <div class="prose">
+<p>
+ここまでは画面をすべてコードで組み立ててきました。
+Qt にはもうひとつのやり方があります。
+<strong>Qt Designer</strong> という、マウスで画面を作るツールです。
+しかも <code>pip install pyside6</code> のときに一緒に入っています。
+</p>
+
+<h2 id="起動する">起動する</h2>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">pyside6-designer</span></code></pre></figure>
+
+<p>
+起動すると「新しいフォーム」を選ぶ画面が出ます。
+とりあえず <strong>Widget</strong> を選べば、空のウィンドウから始められます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>選ぶもの</th><th>作られるもの</th><th>使いどころ</th></tr></thead>
+  <tbody>
+    <tr><td>Widget</td><td><code>QWidget</code></td><td>画面の一部、タブの中身</td></tr>
+    <tr><td>Main Window</td><td><code>QMainWindow</code></td><td>メニュー付きのアプリ本体</td></tr>
+    <tr><td>Dialog with Buttons Bottom</td><td><code>QDialog</code></td><td>OK / キャンセル付きのダイアログ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="Designer-での作業の流れ">Designer での作業の流れ</h2>
+
+<ol>
+  <li><strong>左のパネルから部品をドラッグして置く。</strong>この時点では自由な位置に置かれます</li>
+  <li><strong>右のパネル（プロパティエディタ）で設定を変える。</strong>とくに <code>objectName</code> が重要です</li>
+  <li><strong>レイアウトを適用する。</strong>ここがいちばん大事です（下記）</li>
+  <li><code>.ui</code> ファイルとして保存する</li>
+</ol>
+
+<div class="note pitfall">
+  <span class="note-title">Designer で必ずやること: レイアウトの適用</span>
+  <p>
+    部品を置いただけだと、絶対座標で固定されたままです。
+    ウィンドウをリサイズすると崩れます。
+  </p>
+  <p>
+    まとめたい部品を複数選択して<strong>右クリック →［レイアウト］→［垂直に並べる］</strong>などを選ぶか、
+    背景（フォーム自体）を右クリックしてレイアウトを適用します。
+    <strong>いちばん外側のフォームにレイアウトが適用されているか</strong>を必ず確認してください。
+    適用されていると、上部のツールバーの「レイアウトを分割」ボタンが押せる状態になります。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">objectName はコードから触るときの名前になる</span>
+  <p>
+    Designer で付けた <code>objectName</code> が、そのまま Python 側の属性名になります。
+    <code>pushButton_3</code> のような自動生成の名前のままにせず、
+    <code>submitButton</code> のように意味のある名前にしておくと、後の作業が段違いに楽になります。
+  </p>
+</div>
+
+<h2 id="ui-ファイルの正体">.ui ファイルの正体</h2>
+
+<p>
+保存された <code>.ui</code> は、ただの XML テキストです。
+Git で差分も見られますし、いざとなれば手で編集もできます。
+</p>
+
+<figure class="code-block" data-lang="xml"><div class="code-head"><span class="code-file">ch09_form.ui（抜粋）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="nt">&lt;widget</span><span class="w"> </span><span class="na">class=</span><span class="s">&quot;QLineEdit&quot;</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;nameEdit&quot;</span><span class="nt">&gt;</span></span><span class="cl"><span class="w">  </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;placeholderText&quot;</span><span class="nt">&gt;</span></span><span class="cl"><span class="w">    </span><span class="nt">&lt;string&gt;</span>山田<span class="w"> </span>太郎<span class="nt">&lt;/string&gt;</span></span><span class="cl"><span class="w">  </span><span class="nt">&lt;/property&gt;</span></span><span class="cl"><span class="nt">&lt;/widget&gt;</span></span></code></pre></figure>
+
+<h2 id="Python-から使う-2-つの方法">Python から使う 2 つの方法</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 300" role="img" aria-label=".ui ファイルを Python から使う 2 つの経路。uic で変換する方法と、実行時に QUiLoader で読む方法。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <!-- designer -->
+  <rect x="30" y="112" width="140" height="76" rx="10" class="d-accent"/>
+  <text x="100" y="140" text-anchor="middle" class="d-title">Qt Designer</text>
+  <text x="100" y="162" text-anchor="middle" class="d-mute">マウスで画面を作る</text>
+  <text x="100" y="180" text-anchor="middle" class="d-mute">pyside6-designer</text>
+
+  <path d="M170 150 h44" class="d-flow"/>
+  <path d="M214 150 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="214" y="112" width="126" height="76" rx="10" class="d-box"/>
+  <text x="277" y="144" text-anchor="middle" class="d-code">form.ui</text>
+  <text x="277" y="166" text-anchor="middle" class="d-mute">中身は XML</text>
+
+  <!-- route A -->
+  <path d="M340 132 h40 v-56 h44" class="d-flow"/>
+  <path d="M424 76 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="392" y="66" text-anchor="middle" class="d-head-accent">方法 1</text>
+
+  <rect x="424" y="42" width="266" height="68" rx="10" class="d-tip"/>
+  <text x="440" y="66" class="d-code">pyside6-uic form.ui -o ui_form.py</text>
+  <text x="440" y="88" class="d-mute">先に Python へ変換しておく。補完が効く。</text>
+  <text x="440" y="104" class="d-mute">.ui を直したら変換し直す必要がある。</text>
+
+  <!-- route B -->
+  <path d="M340 168 h40 v56 h44" class="d-flow"/>
+  <path d="M424 224 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="392" y="248" text-anchor="middle" class="d-head-accent">方法 2</text>
+
+  <rect x="424" y="190" width="266" height="68" rx="10" class="d-deep"/>
+  <text x="440" y="214" class="d-code">QUiLoader().load("form.ui")</text>
+  <text x="440" y="236" class="d-mute">実行時にそのまま読む。変換不要。</text>
+  <text x="440" y="252" class="d-mute">補完は効かず、.ui の同梱が必要。</text>
+
+  <!-- result -->
+  <text x="30" y="230" class="d-mute">どちらでも、</text>
+  <text x="30" y="250" class="d-mute">出来上がる画面は</text>
+  <text x="30" y="270" class="d-mute">まったく同じ。</text>
+</svg>
+<figcaption>.ui を Python から使う 2 つの経路。どちらを選んでも、出来上がる画面はまったく同じ。</figcaption></figure>
+
+<h3 id="方法-1-pyside6-uic-で-Python-に変換するおすすめ">方法 1: pyside6-uic で Python に変換する（おすすめ）</h3>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">pyside6-uic<span class="w"> </span>ch09_form.ui<span class="w"> </span>-o<span class="w"> </span>ui_ch09_form.py</span></code></pre></figure>
+
+<p>
+これで <code>Ui_ProfileForm</code> というクラスを持つ Python ファイルが生成されます。
+生成されたクラスは<strong>「画面を組み立てる手順書」</strong>であって、ウィジェットそのものではありません。
+そのため、<code>QWidget</code> と一緒に継承して使います。
+</p>
+
+<figure class="code-block" data-lang="python" data-src="ch09_designer_app.py"><div class="code-head"><span class="code-file">ch09_designer_app.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;Qt Designer で作った .ui を使う（方法 1: pyside6-uic で Python に変換する）。</span></span><span class="cl"></span><span class="cl"><span class="sd">事前に 1 回だけ実行しておく:</span></span><span class="cl"><span class="sd">    pyside6-uic ch09_form.ui -o ui_ch09_form.py</span></span><span class="cl"></span><span class="cl"><span class="sd">生成された Ui_ProfileForm は「画面を組み立てる手順書」であって</span></span><span class="cl"><span class="sd">ウィジェットそのものではない。QWidget と一緒に継承して使う。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch09_designer_app.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QWidget</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">ui_ch09_form</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ui_ProfileForm</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">ProfileForm</span><span class="p">(</span><span class="n">QWidget</span><span class="p">,</span> <span class="n">Ui_ProfileForm</span><span class="p">):</span></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></span><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">setupUi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>          <span class="c1"># ここで .ui の中身が self の上に組み立てられる</span></span><span class="cl"></span><span class="cl">        <span class="c1"># .ui で付けた objectName が、そのまま属性名になる。</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">submitButton</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_submit</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">agreeCheck</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">submitButton</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">submitButton</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span></span><span class="cl"></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="nf">on_submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></span><span class="cl">        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nameEdit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;ななし&quot;</span></span><span class="cl">        <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">planCombo</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">resultLabel</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> さんを「</span><span class="si">{</span><span class="n">plan</span><span class="si">}</span><span class="s2">」で受け付けました&quot;</span><span class="p">)</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"><span class="n">form</span> <span class="o">=</span> <span class="n">ProfileForm</span><span class="p">()</span></span><span class="cl"><span class="n">form</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">Qt Designer で作ったフォーム</span></div><img src="../img/ch09-designer-result.webp" alt=".ui から作った画面。［利用規約に同意する］にチェックを入れるまで［送信］は押せない、という動作だけをコード側で足している。" width="420" height="240" loading="lazy" decoding="async"></div><figcaption>.ui から作った画面。［利用規約に同意する］にチェックを入れるまで［送信］は押せない、という動作だけをコード側で足している。</figcaption></figure>
+
+<div class="note pitfall">
+  <span class="note-title">生成されたファイルは絶対に手で編集しない</span>
+  <p>
+    <code>ui_*.py</code> の先頭には「WARNING! All changes made in this file will be lost」と書かれています。
+    <code>.ui</code> を直して変換し直すたびに、上書きされて消えるからです。
+    <strong>動作（シグナルの接続など）は必ず自分のクラス側に書いてください。</strong>
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">.ui を直したら変換し直す</span>
+  <p>
+    Designer で <code>.ui</code> を編集しても、<code>ui_*.py</code> は自動では更新されません。
+    毎回 <code>pyside6-uic</code> を実行する必要があります。
+    忘れると「Designer では直したのに反映されない」と悩むことになります。
+  </p>
+</div>
+
+<h3 id="方法-2-実行時に-QUiLoader-で読み込む">方法 2: 実行時に QUiLoader で読み込む</h3>
+
+<figure class="code-block" data-lang="python" data-src="ch09_uiloader.py"><div class="code-head"><span class="code-file">ch09_uiloader.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;Qt Designer で作った .ui を使う（方法 2: 実行時に QUiLoader で読み込む）。</span></span><span class="cl"></span><span class="cl"><span class="sd">変換の手間がない代わりに、</span></span><span class="cl"><span class="sd">  ・エディタの補完が効かない（属性がその場で生えるため）</span></span><span class="cl"><span class="sd">  ・.ui の配布が必要</span></span><span class="cl"><span class="sd">  ・load() が返すのは新しいウィジェットで、self ではない</span></span><span class="cl"><span class="sd">という違いがある。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch09_uiloader.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtUiTools</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUiLoader</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">loader</span> <span class="o">=</span> <span class="n">QUiLoader</span><span class="p">()</span></span><span class="cl"><span class="n">ui_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;ch09_form.ui&quot;</span></span><span class="cl"><span class="n">form</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">ui_file</span><span class="p">)</span>      <span class="c1"># 戻り値が画面そのもの</span></span><span class="cl"><span class="k">if</span> <span class="n">form</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span></span><span class="cl">    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;読み込みに失敗しました: </span><span class="si">{</span><span class="n">loader</span><span class="o">.</span><span class="n">errorString</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># 子ウィジェットは objectName で属性としてたどれる。</span></span><span class="cl"><span class="n">form</span><span class="o">.</span><span class="n">submitButton</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span></span><span class="cl"><span class="n">form</span><span class="o">.</span><span class="n">agreeCheck</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">submitButton</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">)</span></span><span class="cl"><span class="n">form</span><span class="o">.</span><span class="n">submitButton</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span></span><span class="cl">    <span class="k">lambda</span><span class="p">:</span> <span class="n">form</span><span class="o">.</span><span class="n">resultLabel</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span></span><span class="cl">        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">form</span><span class="o">.</span><span class="n">nameEdit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;ななし&#39;</span><span class="si">}</span><span class="s2"> さんを&quot;</span></span><span class="cl">        <span class="sa">f</span><span class="s2">&quot;「</span><span class="si">{</span><span class="n">form</span><span class="o">.</span><span class="n">planCombo</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span><span class="si">}</span><span class="s2">」で受け付けました&quot;</span></span><span class="cl">    <span class="p">)</span></span><span class="cl"><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">form</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<p>変換が要らないぶん手軽ですが、いくつか制約があります。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>方法 1（uic で変換）</th><th>方法 2（QUiLoader）</th></tr></thead>
+  <tbody>
+    <tr><td>事前の変換</td><td>必要</td><td>不要</td></tr>
+    <tr><td>エディタの補完</td><td>効く</td><td>効かない</td></tr>
+    <tr><td>配布するもの</td><td><code>.py</code> だけでよい</td><td><code>.ui</code> も同梱する</td></tr>
+    <tr><td>継承して使う</td><td>できる</td><td>できない（戻り値が別インスタンス）</td></tr>
+    <tr><td>おすすめ度</td><td>★ こちらを推奨</td><td>プロトタイプ向け</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">QUiLoader は「自分自身」にはロードできない</span>
+  <p>
+    <code>loader.load()</code> は<strong>新しいウィジェットを作って返します</strong>。
+    <code>self</code> の上に組み立ててくれるわけではありません。
+    そのため、<code>QWidget</code> を継承したクラスの <code>__init__</code> で
+    <code>self.ui = loader.load(...)</code> としても、
+    <code>self</code> 自体は空のままです。
+    継承して使いたいなら、方法 1 を選んでください。
+  </p>
+</div>
+
+<h2 id="Designer-とコードどちらで作るべきか">Designer とコード、どちらで作るべきか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>場面</th><th>向いているやり方</th></tr></thead>
+  <tbody>
+    <tr><td>入力項目の多い設定画面・フォーム</td><td>Designer。手で書くと退屈で長い</td></tr>
+    <tr><td>見た目を何度も調整したい</td><td>Designer。結果がその場で見える</td></tr>
+    <tr><td>実行時に項目数が変わる画面</td><td>コード。Designer では表現できない</td></tr>
+    <tr><td>同じ部品を繰り返し生成する</td><td>コード。ループで書ける</td></tr>
+    <tr><td>差分レビューを重視する</td><td>コード。XML の差分は読みにくい</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+現実には<strong>併用</strong>が多いです。
+土台のフォームは Designer で作り、動的に増える部分だけコードで足す、という形です。
+</p>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>pyside6-designer</code> を起動し、Widget フォームに <code>QLineEdit</code> と <code>QPushButton</code> を 1 つずつ置く。</li>
+    <li>背景を右クリックして［レイアウト］→［垂直に並べる］を適用する。</li>
+    <li><code>objectName</code> をそれぞれ <code>inputEdit</code> / <code>okButton</code> に変える。</li>
+    <li><code>my_form.ui</code> として保存し、<code>pyside6-uic my_form.ui -o ui_my_form.py</code> を実行する。</li>
+    <li><code>ch09_designer_app.py</code> を真似して、ボタンを押すと入力内容を表示するようにする。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>pyside6-designer</code> でマウスで画面を作れる。追加インストールは不要。</li>
+    <li>Designer では<strong>レイアウトの適用</strong>を忘れない。これをしないと崩れる。</li>
+    <li><code>objectName</code> がそのまま Python の属性名になる。意味のある名前を付ける。</li>
+    <li>使い方は <code>pyside6-uic</code> で変換する方法を推奨。生成ファイルは手で触らない。</li>
+    <li><code>QUiLoader</code> は手軽だが、補完が効かず継承もできない。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../08-dialogs/"><span class="pager-dir">← 前の章</span><span class="pager-title">ダイアログ</span></a>
+<a class="pager-link pager-next" href="../10-model-view/"><span class="pager-dir">次の章 →</span><span class="pager-title">モデル / ビュー</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-29 時点）
+  </p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

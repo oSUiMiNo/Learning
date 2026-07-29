@@ -1,0 +1,44 @@
+<svg viewBox="0 0 720 280" role="img" aria-label="モーダルとモードレスの違い。モーダルは閉じるまで処理が止まり、モードレスは並行して動く。">
+  <rect x="1" y="1" width="718" height="278" rx="14" class="d-box-plain"/>
+
+  <!-- modal -->
+  <rect x="30" y="28" width="316" height="224" rx="10" class="d-accent"/>
+  <text x="50" y="54" class="d-title">モーダル — dialog.exec()</text>
+
+  <rect x="50" y="70" width="276" height="30" rx="5" class="d-box"/>
+  <text x="62" y="90" class="d-code">answer = dialog.exec()</text>
+
+  <path d="M188 100 v22" class="d-flow"/>
+  <path d="M188 122 l-4 -9 h8 z" class="d-arrowhead"/>
+
+  <rect x="50" y="122" width="276" height="52" rx="5" class="d-warn"/>
+  <text x="188" y="144" text-anchor="middle" class="d-head-warn">ここで止まって待つ</text>
+  <text x="188" y="164" text-anchor="middle" class="d-mute">閉じられるまで次の行に進まない</text>
+
+  <path d="M188 174 v22" class="d-flow"/>
+  <path d="M188 196 l-4 -9 h8 z" class="d-arrowhead"/>
+
+  <rect x="50" y="196" width="276" height="38" rx="5" class="d-box"/>
+  <text x="62" y="220" class="d-code">if answer == Accepted: …</text>
+
+  <!-- modeless -->
+  <rect x="374" y="28" width="316" height="224" rx="10" class="d-tip"/>
+  <text x="394" y="54" class="d-title">モードレス — dialog.show()</text>
+
+  <rect x="394" y="70" width="276" height="30" rx="5" class="d-box"/>
+  <text x="406" y="90" class="d-code">dialog.show()</text>
+
+  <path d="M532 100 v22" class="d-flow"/>
+  <path d="M532 122 l-4 -9 h8 z" class="d-arrowhead"/>
+
+  <rect x="394" y="122" width="276" height="52" rx="5" class="d-box"/>
+  <text x="532" y="144" text-anchor="middle" class="d-mark">すぐ次の行へ進む</text>
+  <text x="532" y="164" text-anchor="middle" class="d-mute">ダイアログは開いたまま動き続ける</text>
+
+  <path d="M532 174 v22" class="d-flow"/>
+  <path d="M532 196 l-4 -9 h8 z" class="d-arrowhead"/>
+
+  <rect x="394" y="196" width="276" height="38" rx="5" class="d-warn"/>
+  <text x="406" y="214" class="d-mute">結果はシグナル（accepted 等）で</text>
+  <text x="406" y="230" class="d-mute">受け取る。変数に持ち続けること。</text>
+</svg>

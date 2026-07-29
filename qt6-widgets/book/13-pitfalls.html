@@ -1,0 +1,341 @@
+<p>
+ひととおり終わりました。ここから先は、自分で調べながら進むことになります。
+その助けになるものを集めておきます。
+</p>
+
+<h2>Qt5 時代の記事との差分・早見表</h2>
+
+<p>
+検索して出てきた記事のコードが動かないとき、まずこの表を見てください。
+ほとんどのケースはここに当てはまります。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Qt5 までの書き方</th><th>Qt6 での書き方</th><th>出るエラー</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>app.exec_()</code></td>
+      <td><code>app.exec()</code></td>
+      <td><code>AttributeError</code></td>
+    </tr>
+    <tr>
+      <td><code>dialog.exec_()</code></td>
+      <td><code>dialog.exec()</code></td>
+      <td><code>AttributeError</code></td>
+    </tr>
+    <tr>
+      <td><code>Qt.AlignCenter</code></td>
+      <td><code>Qt.AlignmentFlag.AlignCenter</code></td>
+      <td><code>AttributeError</code></td>
+    </tr>
+    <tr>
+      <td><code>Qt.Horizontal</code></td>
+      <td><code>Qt.Orientation.Horizontal</code></td>
+      <td><code>AttributeError</code></td>
+    </tr>
+    <tr>
+      <td><code>Qt.Checked</code></td>
+      <td><code>Qt.CheckState.Checked</code></td>
+      <td><code>AttributeError</code></td>
+    </tr>
+    <tr>
+      <td><code>QMessageBox.Yes</code></td>
+      <td><code>QMessageBox.StandardButton.Yes</code></td>
+      <td><code>AttributeError</code></td>
+    </tr>
+    <tr>
+      <td><code>from PySide6.QtWidgets import QAction</code></td>
+      <td><code>from PySide6.QtGui import QAction</code></td>
+      <td><code>ImportError</code></td>
+    </tr>
+    <tr>
+      <td><code>from PySide6.QtWidgets import QShortcut</code></td>
+      <td><code>from PySide6.QtGui import QShortcut</code></td>
+      <td><code>ImportError</code></td>
+    </tr>
+    <tr>
+      <td><code>QRegExp</code></td>
+      <td><code>QRegularExpression</code></td>
+      <td><code>ImportError</code></td>
+    </tr>
+    <tr>
+      <td><code>QDesktopWidget()</code></td>
+      <td><code>app.primaryScreen()</code></td>
+      <td><code>ImportError</code></td>
+    </tr>
+    <tr>
+      <td><code>Qt.AA_EnableHighDpiScaling</code> の設定</td>
+      <td>不要（既定で有効）</td>
+      <td>非推奨の警告</td>
+    </tr>
+    <tr>
+      <td><code>QVariant</code> を明示的に使う</td>
+      <td>Python の値をそのまま返してよい</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">見分け方のコツ</span>
+  <p>
+    記事の中に <code>exec_()</code> か <code>PyQt5</code> / <code>PySide2</code> の文字があれば、
+    それは Qt5 時代のものです。考え方の部分は今も有効なので、
+    上の表で機械的に置き換えれば、たいてい動きます。
+  </p>
+</div>
+
+<h2>PyQt6 と PySide6 の違い</h2>
+
+<p>
+検索すると <code>PyQt6</code> の記事も大量に出てきます。
+この 2 つは<strong>ほぼ同じもの</strong>で、同じ Qt を別の会社が Python から使えるようにしたものです。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>PySide6（この教材）</th><th>PyQt6</th></tr></thead>
+  <tbody>
+    <tr><td>作っているところ</td><td>Qt 社（公式）</td><td>Riverbank Computing 社</td></tr>
+    <tr><td>ライセンス</td><td>LGPL / 商用</td><td>GPL / 商用</td></tr>
+    <tr><td>シグナルの宣言</td><td><code>Signal()</code></td><td><code>pyqtSignal()</code></td></tr>
+    <tr><td>スロットの装飾子</td><td><code>@Slot()</code></td><td><code>@pyqtSlot()</code></td></tr>
+    <tr><td>プロパティ</td><td><code>Property()</code></td><td><code>pyqtProperty()</code></td></tr>
+    <tr><td>それ以外の API</td><td colspan="2">ほぼ同一</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">PyQt6 の記事を PySide6 に読み替える</span>
+  <p>
+    <code>PyQt6</code> → <code>PySide6</code>、<code>pyqtSignal</code> → <code>Signal</code>、
+    <code>pyqtSlot</code> → <code>Slot</code>。この 3 つを置き換えるだけで、たいてい動きます。
+  </p>
+  <p>
+    ライセンス面では、クローズドソースのソフトを配布する予定があるなら
+    LGPL の PySide6 のほうが扱いやすいです（GPL は原則ソース公開が必要）。
+  </p>
+</div>
+
+<h2>症状から引く トラブル一覧</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>症状</th><th>よくある原因</th><th>参照</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>ウィンドウが出ずに終了する</td>
+      <td><code>app.exec()</code> を呼んでいない / <code>show()</code> を忘れた</td>
+      <td>第 2 章</td>
+    </tr>
+    <tr>
+      <td>別ウィンドウが一瞬で消える</td>
+      <td>ローカル変数のまま参照を残していない</td>
+      <td>第 7 章</td>
+    </tr>
+    <tr>
+      <td>ボタンを押しても何も起きない</td>
+      <td><code>connect(func())</code> とカッコを付けた</td>
+      <td>第 3 章</td>
+    </tr>
+    <tr>
+      <td>ループで作ったボタンが全部同じ動きをする</td>
+      <td><code>lambda</code> が変数を遅延評価している</td>
+      <td>第 3 章</td>
+    </tr>
+    <tr>
+      <td>作ったのに画面に出てこない</td>
+      <td><code>addWidget()</code> / <code>addLayout()</code> の呼び忘れ</td>
+      <td>第 4 章</td>
+    </tr>
+    <tr>
+      <td>ウィンドウが横に伸びてしまう</td>
+      <td><code>QLabel</code> の <code>setWordWrap(True)</code> 忘れ</td>
+      <td>第 5 章</td>
+    </tr>
+    <tr>
+      <td>スクロール領域の中身が潰れる</td>
+      <td><code>setWidgetResizable(True)</code> 忘れ</td>
+      <td>第 5 章</td>
+    </tr>
+    <tr>
+      <td>データを変えたのに表示が変わらない</td>
+      <td><code>dataChanged</code> を出していない</td>
+      <td>第 10 章</td>
+    </tr>
+    <tr>
+      <td>行を足したら落ちた</td>
+      <td><code>beginInsertRows()</code> で挟んでいない</td>
+      <td>第 10 章</td>
+    </tr>
+    <tr>
+      <td>アプリが固まる・応答しなくなる</td>
+      <td>スロットの中で重い処理を回している</td>
+      <td>下記</td>
+    </tr>
+    <tr>
+      <td><code>RuntimeError: … already deleted</code></td>
+      <td>親ごと破棄された子を触っている</td>
+      <td>第 7 章</td>
+    </tr>
+    <tr>
+      <td>Linux で <code>xcb</code> プラグインのエラー</td>
+      <td>OS 側のライブラリ不足</td>
+      <td>第 1 章</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>アプリが固まるとき — 重い処理の扱い</h2>
+
+<p>
+第 2 章のイベントループの図で触れた話です。
+スロットの中で時間のかかる処理をすると、その間 UI は完全に止まります。
+</p>
+
+<div class="src" data-lang="python" data-cap="✗ この 10 秒間、ウィンドウは真っ白のまま操作できない">
+def on_clicked(self):
+    result = download_large_file()   # 10 秒かかる
+    self.label.setText(result)
+</div>
+
+<p>解決策は主に 3 つあります。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>方法</th><th>向いている場面</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>QThread</code> / <code>QThreadPool</code> ＋ <code>QRunnable</code></td>
+      <td>CPU を使う処理、既存の同期的なライブラリを呼ぶとき</td>
+    </tr>
+    <tr>
+      <td><code>QProcess</code></td>
+      <td>外部コマンドを実行するとき</td>
+    </tr>
+    <tr>
+      <td><code>QtAsyncio</code>（PySide6 に同梱）</td>
+      <td>Python の <code>asyncio</code> と組み合わせたいとき</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">別スレッドから画面を触ってはいけない</span>
+  <p>
+    Qt では、<strong>ウィジェットの操作はすべてメインスレッドから</strong>行う決まりです。
+    別スレッドから <code>label.setText()</code> を呼ぶと、動くこともありますが、
+    いずれ不定期にクラッシュします。
+    結果はシグナルで送り、メインスレッド側のスロットで画面を更新してください。
+    シグナルはスレッドをまたいでも安全に届きます。
+  </p>
+</div>
+
+<h2>配布する</h2>
+
+<p>
+Python が入っていない人に渡すには、実行ファイルにまとめます。
+定番は <strong>PyInstaller</strong> です。
+</p>
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+pip install pyinstaller
+pyinstaller --noconfirm --windowed --name "MyApp" ch12_todo_app.py
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>オプション</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>--windowed</code></td><td>実行時に黒いコンソール窓を出さない（GUI アプリでは必須）</td></tr>
+    <tr><td><code>--onefile</code></td><td>1 つの exe にまとめる。起動は遅くなる</td></tr>
+    <tr><td><code>--icon=app.ico</code></td><td>アイコンを指定する</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">配布でつまずきやすい点</span>
+  <ul>
+    <li><strong>クロスコンパイルはできない。</strong>Windows 版は Windows で、macOS 版は macOS でビルドする必要があります</li>
+    <li><strong>ファイルサイズは大きい。</strong>Qt を丸ごと含むので数十〜百数十 MB になります</li>
+    <li><strong>相対パスが変わる。</strong>画像などを読む場合、<code>sys._MEIPASS</code> を見る必要があります</li>
+    <li>macOS では署名と公証をしないと「開発元を確認できません」と警告が出ます</li>
+  </ul>
+</div>
+
+<h2>次に学ぶとよいもの</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>やりたいこと</th><th>調べるもの</th></tr></thead>
+  <tbody>
+    <tr><td>重い処理でも固まらないようにする</td><td><code>QThreadPool</code>, <code>QRunnable</code>, <code>QtAsyncio</code></td></tr>
+    <tr><td>自分で図形を描く</td><td><code>paintEvent</code>, <code>QPainter</code></td></tr>
+    <tr><td>表の升目に独自の描画をする</td><td><code>QStyledItemDelegate</code></td></tr>
+    <tr><td>データベースと直結する</td><td><code>QtSql</code>, <code>QSqlTableModel</code></td></tr>
+    <tr><td>グラフを描く</td><td><code>QtCharts</code>, <code>QtGraphs</code>（Qt 6.11 で強化）</td></tr>
+    <tr><td>多言語対応する</td><td><code>QTranslator</code>, <code>pyside6-lupdate</code>, Qt Linguist</td></tr>
+    <tr><td>アニメーションの多い画面を作る</td><td>Qt Quick / QML（別系統。第 0 章参照）</td></tr>
+    <tr><td>テストを書く</td><td><code>pytest-qt</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>公式ドキュメントの歩き方</h2>
+
+<p>
+最終的にいちばん頼りになるのは公式のリファレンスです。読むコツがあります。
+</p>
+
+<ul>
+  <li>
+    <strong>C++ 版のドキュメントを読む。</strong>
+    <a href="https://doc.qt.io/qt-6/">doc.qt.io/qt-6</a> のほうが情報量が多く、更新も早いです。
+    <code>QWidget::setEnabled()</code> は Python では <code>widget.setEnabled()</code>、と読み替えるだけです
+  </li>
+  <li>
+    <strong>Python 版は <a href="https://doc.qt.io/qtforpython-6/">doc.qt.io/qtforpython-6</a>。</strong>
+    Python 特有の書き方（戻り値がタプルになる、など）はこちらで確認します
+  </li>
+  <li>
+    <strong>クラスのページでは、まず「Signals」の節を探す。</strong>
+    そのウィジェットで何ができるかは、シグナルの一覧を見るのがいちばん早いです
+  </li>
+  <li>
+    <strong>継承元もたどる。</strong>
+    <code>QPushButton</code> のページに載っていないメソッドは、
+    <code>QAbstractButton</code> や <code>QWidget</code> のページにあります
+  </li>
+</ul>
+
+<h2>おわりに</h2>
+
+<p>
+ここまでで、ウィンドウを出し、部品を並べ、操作に反応し、
+データを表示し、見た目を整え、保存して、配布するところまで通しで扱いました。
+これは「小さな道具を自分のために作る」には十分な範囲です。
+</p>
+
+<p>
+GUI づくりで伸びるいちばんの近道は、<strong>自分が本当に欲しいものを 1 つ作ること</strong>です。
+毎日使っているスクリプトに画面を付ける、それだけで十分です。
+その過程で必ず何かに詰まりますが、詰まった内容は、この教材の目次のどこかに対応しています。
+戻ってきて引いてください。
+</p>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>動かない記事に当たったら、まず Qt5 → Qt6 の差分早見表を見る。</li>
+    <li>PyQt6 の記事は 3 語（<code>PyQt6</code> / <code>pyqtSignal</code> / <code>pyqtSlot</code>）を置き換えれば読める。</li>
+    <li>固まるのはイベントループを塞いでいるから。別スレッドから画面は触らない。</li>
+    <li>配布は PyInstaller。クロスコンパイルはできない。</li>
+    <li>公式リファレンスは C++ 版を読み、Python 特有の点だけ Python 版で確認する。</li>
+  </ul>
+</div>

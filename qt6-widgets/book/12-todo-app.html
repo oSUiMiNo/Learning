@@ -1,0 +1,231 @@
+<p>
+最後は総仕上げです。ここまで学んだものを全部使って、
+<strong>実際に使える ToDo アプリ</strong>を 1 本作ります。
+</p>
+
+<p>要件はこうします。</p>
+
+<ul>
+  <li>やることを入力して追加できる</li>
+  <li>チェックを付けて「完了」にできる</li>
+  <li>完了した項目をまとめて削除できる（確認つき）</li>
+  <li>いま何件中何件終わったかが常に見える</li>
+  <li><strong>閉じても内容が残る</strong>（次に開いたら復元される）</li>
+</ul>
+
+<h2>作る前に、役割を分ける</h2>
+
+<p>
+いきなりコードを書き始めると、あとで手が付けられなくなります。
+先に「何を誰が担当するか」を決めます。
+</p>
+
+<!--figure: todo-arch | 画面・データ・保存の 3 つに分ける。画面はデータの持ち方を知らず、モデルは見た目を知らない。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>担当</th><th>やること</th><th>使う知識</th></tr></thead>
+  <tbody>
+    <tr><td><code>TodoWindow</code></td><td>画面の組み立て、操作の受け取り</td><td>第 4・6・8 章</td></tr>
+    <tr><td><code>TodoModel</code></td><td>データの保持と出し入れ</td><td>第 10 章</td></tr>
+    <tr><td><code>save_path()</code> / <code>load()</code> / <code>save()</code></td><td>ファイルへの保存と復元</td><td>この章</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>完成したコード</h2>
+
+<!--code: ch12_todo_app.py-->
+
+<!--shot: ch12-todo | 起動直後。まだ何も入っていない状態。右下のステータスバーに件数が出ている。 -->
+
+<!--shot: ch12-todo-done | 3 件追加したところ。チェックボックスは QListView が CheckStateRole を見て自動的に描いている。 -->
+
+<h2>要点を順に見ていく</h2>
+
+<h3>チェックボックス付きのリストにする</h3>
+
+<p>
+<code>QListView</code> にチェックボックスを出すために、モデル側で 3 つのことをしています。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>メソッド</th><th>やっていること</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>data()</code></td>
+      <td><code>CheckStateRole</code> で聞かれたら、チェック状態を返す</td>
+    </tr>
+    <tr>
+      <td><code>flags()</code></td>
+      <td><code>ItemIsUserCheckable</code> を返して「チェックできる」と宣言する</td>
+    </tr>
+    <tr>
+      <td><code>setData()</code></td>
+      <td>ユーザーがチェックを変えたとき、それをデータに反映する</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>この 3 つが揃って初めて、チェックが「見える」かつ「押せる」かつ「保存される」ようになります。</p>
+
+<div class="note pitfall">
+  <span class="note-title">返すのは Enum、受け取るのは int。ここが噛み合わない</span>
+  <p>
+    <code>data()</code> では <code>Qt.CheckState.Checked</code> をそのまま返して構いません。
+    ところが <code>setData()</code> に渡ってくる <code>value</code> は
+    <strong>Enum ではなく <code>int</code>（Checked なら <code>2</code>）</strong>です。
+  </p>
+  <div class="src" data-lang="python">
+# ✗ int と Enum を比べているので、いつまでも False
+self._items[index.row()]["done"] = (value == Qt.CheckState.Checked)
+
+# ○ いったん Qt.CheckState() で包み直してから比べる
+self._items[index.row()]["done"] = (Qt.CheckState(value) == Qt.CheckState.Checked)
+  </div>
+  <p>
+    エラーは出ず、ただ「チェックしても完了にならない」という形で現れるので厄介です。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">古い記事にある <code>.value</code> は、いまは不要</span>
+  <p>
+    <code>data()</code> の戻り値に <code>.value</code> を付けている記事がありますが、
+    このページのバージョンで確認したところ、
+    <strong>Enum のまま返しても <code>.value</code> を付けても表示は同じ</strong>でした。
+    初期の PySide6 で列挙型の扱いが安定していなかった名残です。
+  </p>
+</div>
+
+<h3>行の追加・削除は「挟む」</h3>
+
+<div class="src" data-lang="python">
+def add(self, text):
+    row = len(self._items)
+    self.beginInsertRows(QModelIndex(), row, row)   # ★ 前
+    self._items.append({"text": text, "done": False})
+    self.endInsertRows()                            # ★ 後
+</div>
+
+<p>
+リストに <code>append</code> するだけでは、ビューは行が増えたことを知りません。
+必ず <code>beginInsertRows()</code> / <code>endInsertRows()</code> で挟みます。
+まとめて作り替えるときは <code>beginResetModel()</code> / <code>endResetModel()</code> です。
+</p>
+
+<h3>自作シグナルで件数表示を更新する</h3>
+
+<div class="src" data-lang="python">
+class TodoModel(QAbstractListModel):
+    changed = Signal()          # 「中身が変わった」を知らせる自作シグナル
+</div>
+
+<p>
+モデルが直接ステータスバーを触ることもできますが、それでは
+「モデルが画面を知っている」ことになり、切り分けが崩れます。
+<strong>モデルは「変わった」と叫ぶだけ</strong>にして、
+それを聞いたウィンドウ側が表示を更新します。
+</p>
+
+<div class="src" data-lang="python">
+self.model.changed.connect(self.update_status)
+</div>
+
+<h3>保存先は自分で決めず、Qt に聞く</h3>
+
+<div class="src" data-lang="python">
+base = QStandardPaths.writableLocation(
+    QStandardPaths.StandardLocation.AppDataLocation)
+</div>
+
+<p>
+「アプリがデータを置いてよい場所」は OS ごとに違います。
+自分でパスを書くと、環境によって書き込めずに落ちます。
+<code>QStandardPaths</code> に聞けば、適切な場所を返してくれます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>OS</th><th>AppDataLocation の例</th></tr></thead>
+  <tbody>
+    <tr><td>Windows</td><td><code>C:\Users\名前\AppData\Roaming\…</code></td></tr>
+    <tr><td>macOS</td><td><code>~/Library/Application Support/…</code></td></tr>
+    <tr><td>Linux</td><td><code>~/.local/share/…</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>終了時に確実に保存する</h3>
+
+<div class="src" data-lang="python">
+def closeEvent(self, event):
+    self.save()
+    super().closeEvent(event)
+</div>
+
+<p>
+<code>closeEvent</code> はウィンドウが閉じられる直前に必ず呼ばれます。
+ここで保存しておけば、保存ボタンを押し忘れても内容が残ります。
+</p>
+
+<div class="note">
+  <span class="note-title">壊れたファイルでも起動できるようにする</span>
+  <p>
+    <code>load()</code> の中で例外を握りつぶして空リストを返しているのは、
+    保存ファイルが壊れていてもアプリが起動しなくならないようにするためです。
+    <strong>「起動できないアプリ」は、データが少し失われるよりずっと困ります。</strong>
+  </p>
+</div>
+
+<h2>ここから先の育て方</h2>
+
+<p>できあがったものに、次のような機能を足していけます。難易度順に並べてあります。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>機能</th><th>使う知識</th></tr></thead>
+  <tbody>
+    <tr><td>項目をダブルクリックで編集できるようにする</td><td><code>flags()</code> に <code>ItemIsEditable</code> を足す（第 10 章）</td></tr>
+    <tr><td>完了した項目に取り消し線を引く</td><td><code>data()</code> で <code>FontRole</code> に答える（第 10 章）</td></tr>
+    <tr><td>検索欄で絞り込む</td><td><code>QSortFilterProxyModel</code>（第 10 章）</td></tr>
+    <tr><td>ダークテーマに対応する</td><td><code>QPalette</code>（第 11 章）</td></tr>
+    <tr><td>期限を持たせて並べ替える</td><td><code>QDateEdit</code> ＋ ソート（第 5・10 章）</td></tr>
+    <tr><td>ウィンドウの位置を記憶する</td><td><code>QSettings</code>（第 6 章）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>
+    まずは「完了した項目に取り消し線を引く」から挑戦してみてください。
+    <code>TodoModel.data()</code> に次を足すだけです。
+  </p>
+  <div class="src" data-lang="python">
+from PySide6.QtGui import QFont
+
+# data() の中に追加
+if role == Qt.ItemDataRole.FontRole and item["done"]:
+    font = QFont()
+    font.setStrikeOut(True)
+    return font
+  </div>
+  <p>
+    チェックを付けた瞬間に取り消し線が付くはずです。
+    もし付かなければ、<code>setData()</code> の <code>dataChanged.emit()</code> を確認してください。
+  </p>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>作る前に「画面 / データ / 保存」の担当を分けておくと、後から機能を足しやすい。</li>
+    <li>チェック付きリストは <code>data()</code> / <code>flags()</code> / <code>setData()</code> の 3 点セット。</li>
+    <li>行の増減は <code>begin…</code> / <code>end…</code> で必ず挟む。</li>
+    <li>モデルは「変わった」と叫ぶだけ。画面の更新は聞いた側の仕事。</li>
+    <li>保存先は <code>QStandardPaths</code> に聞き、<code>closeEvent</code> で確実に書く。</li>
+  </ul>
+</div>

@@ -1,0 +1,47 @@
+<svg viewBox="0 0 720 300" role="img" aria-label="イベントループの流れ。操作がキューに積まれ、ループが取り出してウィジェットに配り、再描画される。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="34" class="d-head-accent">app.exec() が始まると、この輪をぐるぐる回り続ける</text>
+
+  <!-- 1 -->
+  <rect x="30" y="52" width="150" height="72" rx="10" class="d-box"/>
+  <text x="105" y="80" text-anchor="middle" class="d-title">① 操作が起きる</text>
+  <text x="105" y="101" text-anchor="middle" class="d-mute">クリック / キー入力</text>
+  <text x="105" y="116" text-anchor="middle" class="d-mute">タイマー / 再描画要求</text>
+
+  <!-- 2 -->
+  <rect x="215" y="52" width="150" height="72" rx="10" class="d-tip"/>
+  <text x="290" y="80" text-anchor="middle" class="d-title">② 行列に並ぶ</text>
+  <text x="290" y="101" text-anchor="middle" class="d-mute">イベントキュー</text>
+  <text x="290" y="116" text-anchor="middle" class="d-mute">先に来たものから順に</text>
+
+  <!-- 3 -->
+  <rect x="400" y="52" width="150" height="72" rx="10" class="d-accent"/>
+  <text x="475" y="80" text-anchor="middle" class="d-title">③ ループが取り出す</text>
+  <text x="475" y="101" text-anchor="middle" class="d-mute">宛先のウィジェットへ</text>
+  <text x="475" y="116" text-anchor="middle" class="d-mute">1 つずつ配達する</text>
+
+  <!-- 4 -->
+  <rect x="585" y="52" width="105" height="72" rx="10" class="d-box"/>
+  <text x="637" y="80" text-anchor="middle" class="d-title">④ 反応する</text>
+  <text x="637" y="101" text-anchor="middle" class="d-mute">スロットが</text>
+  <text x="637" y="116" text-anchor="middle" class="d-mute">呼ばれる</text>
+
+  <path d="M180 88 L215 88" class="d-flow"/>
+  <path d="M215 88 l-9 -5 v10 z" class="d-arrowhead"/>
+  <path d="M365 88 L400 88" class="d-flow"/>
+  <path d="M400 88 l-9 -5 v10 z" class="d-arrowhead"/>
+  <path d="M550 88 L585 88" class="d-flow"/>
+  <path d="M585 88 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <!-- return loop -->
+  <path d="M637 124 L637 160 L105 160 L105 124" class="d-flow"/>
+  <path d="M105 124 l-5 9 h10 z" class="d-arrowhead"/>
+  <text x="371" y="152" text-anchor="middle" class="d-mark">画面を描き直して、また ① へ戻る</text>
+
+  <!-- warning -->
+  <rect x="30" y="192" width="660" height="80" rx="10" class="d-warn"/>
+  <text x="52" y="218" class="d-head-warn">⚠ ここで長い処理をすると画面が固まる</text>
+  <text x="52" y="240" class="d-mute">③ で呼ばれた自分のコードが終わるまで、ループは次のイベントを取り出せない。</text>
+  <text x="52" y="259" class="d-mute">10 秒かかる処理を書けば、その 10 秒間はボタンも押せず、再描画もされない。</text>
+</svg>

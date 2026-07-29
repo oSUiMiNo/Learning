@@ -1,0 +1,36 @@
+<svg viewBox="0 0 720 300" role="img" aria-label="シグナルとスロットの関係図。送り手のシグナルを受け手のスロットに connect でつなぐ。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <!-- sender -->
+  <rect x="34" y="34" width="210" height="120" rx="10" class="d-box"/>
+  <text x="139" y="60" text-anchor="middle" class="d-title">送り手（発信する側）</text>
+  <text x="139" y="82" text-anchor="middle" class="d-code">QPushButton</text>
+  <rect x="58" y="98" width="162" height="38" rx="19" class="d-accent"/>
+  <text x="139" y="122" text-anchor="middle" class="d-code">clicked シグナル</text>
+
+  <!-- receiver -->
+  <rect x="476" y="34" width="210" height="120" rx="10" class="d-box"/>
+  <text x="581" y="60" text-anchor="middle" class="d-title">受け手（反応する側）</text>
+  <text x="581" y="82" text-anchor="middle" class="d-code">自分で書いた関数</text>
+  <rect x="500" y="98" width="162" height="38" rx="19" class="d-tip"/>
+  <text x="581" y="122" text-anchor="middle" class="d-code">on_clicked スロット</text>
+
+  <!-- connection -->
+  <path d="M244 117 L476 117" class="d-flow"/>
+  <path d="M476 117 l-10 -5 v10 z" class="d-arrowhead"/>
+  <rect x="278" y="86" width="164" height="30" rx="15" class="d-accent"/>
+  <text x="360" y="106" text-anchor="middle" class="d-code">connect()</text>
+  <text x="360" y="140" text-anchor="middle" class="d-mute">押された瞬間に呼び出される</text>
+
+  <!-- code -->
+  <rect x="34" y="182" width="652" height="88" rx="10" class="d-dash"/>
+  <text x="56" y="208" class="d-head-accent">つなぐのは、この 1 行だけ</text>
+  <text x="56" y="236" class="d-code">button.clicked.connect(on_clicked)</text>
+
+  <path d="M62 244 v10 h48" class="d-line"/>
+  <text x="116" y="258" class="d-mute">送り手</text>
+  <path d="M118 244 v22 h44" class="d-line"/>
+  <text x="168" y="270" class="d-mute">シグナル名</text>
+  <path d="M228 244 v10 h56" class="d-line"/>
+  <text x="290" y="258" class="d-mute">受け手（カッコを付けずに渡す）</text>
+</svg>

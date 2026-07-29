@@ -1,0 +1,186 @@
+<p>
+ここまでは画面をすべてコードで組み立ててきました。
+Qt にはもうひとつのやり方があります。
+<strong>Qt Designer</strong> という、マウスで画面を作るツールです。
+しかも <code>pip install pyside6</code> のときに一緒に入っています。
+</p>
+
+<h2>起動する</h2>
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+pyside6-designer
+</div>
+
+<p>
+起動すると「新しいフォーム」を選ぶ画面が出ます。
+とりあえず <strong>Widget</strong> を選べば、空のウィンドウから始められます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>選ぶもの</th><th>作られるもの</th><th>使いどころ</th></tr></thead>
+  <tbody>
+    <tr><td>Widget</td><td><code>QWidget</code></td><td>画面の一部、タブの中身</td></tr>
+    <tr><td>Main Window</td><td><code>QMainWindow</code></td><td>メニュー付きのアプリ本体</td></tr>
+    <tr><td>Dialog with Buttons Bottom</td><td><code>QDialog</code></td><td>OK / キャンセル付きのダイアログ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Designer での作業の流れ</h2>
+
+<ol>
+  <li><strong>左のパネルから部品をドラッグして置く。</strong>この時点では自由な位置に置かれます</li>
+  <li><strong>右のパネル（プロパティエディタ）で設定を変える。</strong>とくに <code>objectName</code> が重要です</li>
+  <li><strong>レイアウトを適用する。</strong>ここがいちばん大事です（下記）</li>
+  <li><code>.ui</code> ファイルとして保存する</li>
+</ol>
+
+<div class="note pitfall">
+  <span class="note-title">Designer で必ずやること: レイアウトの適用</span>
+  <p>
+    部品を置いただけだと、絶対座標で固定されたままです。
+    ウィンドウをリサイズすると崩れます。
+  </p>
+  <p>
+    まとめたい部品を複数選択して<strong>右クリック →［レイアウト］→［垂直に並べる］</strong>などを選ぶか、
+    背景（フォーム自体）を右クリックしてレイアウトを適用します。
+    <strong>いちばん外側のフォームにレイアウトが適用されているか</strong>を必ず確認してください。
+    適用されていると、上部のツールバーの「レイアウトを分割」ボタンが押せる状態になります。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">objectName はコードから触るときの名前になる</span>
+  <p>
+    Designer で付けた <code>objectName</code> が、そのまま Python 側の属性名になります。
+    <code>pushButton_3</code> のような自動生成の名前のままにせず、
+    <code>submitButton</code> のように意味のある名前にしておくと、後の作業が段違いに楽になります。
+  </p>
+</div>
+
+<h2>.ui ファイルの正体</h2>
+
+<p>
+保存された <code>.ui</code> は、ただの XML テキストです。
+Git で差分も見られますし、いざとなれば手で編集もできます。
+</p>
+
+<div class="src" data-lang="xml" data-file="ch09_form.ui（抜粋）">
+&lt;widget class="QLineEdit" name="nameEdit"&gt;
+  &lt;property name="placeholderText"&gt;
+    &lt;string&gt;山田 太郎&lt;/string&gt;
+  &lt;/property&gt;
+&lt;/widget&gt;
+</div>
+
+<h2>Python から使う 2 つの方法</h2>
+
+<!--figure: ui-flow | .ui を Python から使う 2 つの経路。どちらを選んでも、出来上がる画面はまったく同じ。 -->
+
+<h3>方法 1: pyside6-uic で Python に変換する（おすすめ）</h3>
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+pyside6-uic ch09_form.ui -o ui_ch09_form.py
+</div>
+
+<p>
+これで <code>Ui_ProfileForm</code> というクラスを持つ Python ファイルが生成されます。
+生成されたクラスは<strong>「画面を組み立てる手順書」</strong>であって、ウィジェットそのものではありません。
+そのため、<code>QWidget</code> と一緒に継承して使います。
+</p>
+
+<!--code: ch09_designer_app.py-->
+
+<!--shot: ch09-designer-result | .ui から作った画面。［利用規約に同意する］にチェックを入れるまで［送信］は押せない、という動作だけをコード側で足している。 -->
+
+<div class="note pitfall">
+  <span class="note-title">生成されたファイルは絶対に手で編集しない</span>
+  <p>
+    <code>ui_*.py</code> の先頭には「WARNING! All changes made in this file will be lost」と書かれています。
+    <code>.ui</code> を直して変換し直すたびに、上書きされて消えるからです。
+    <strong>動作（シグナルの接続など）は必ず自分のクラス側に書いてください。</strong>
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">.ui を直したら変換し直す</span>
+  <p>
+    Designer で <code>.ui</code> を編集しても、<code>ui_*.py</code> は自動では更新されません。
+    毎回 <code>pyside6-uic</code> を実行する必要があります。
+    忘れると「Designer では直したのに反映されない」と悩むことになります。
+  </p>
+</div>
+
+<h3>方法 2: 実行時に QUiLoader で読み込む</h3>
+
+<!--code: ch09_uiloader.py-->
+
+<p>変換が要らないぶん手軽ですが、いくつか制約があります。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>方法 1（uic で変換）</th><th>方法 2（QUiLoader）</th></tr></thead>
+  <tbody>
+    <tr><td>事前の変換</td><td>必要</td><td>不要</td></tr>
+    <tr><td>エディタの補完</td><td>効く</td><td>効かない</td></tr>
+    <tr><td>配布するもの</td><td><code>.py</code> だけでよい</td><td><code>.ui</code> も同梱する</td></tr>
+    <tr><td>継承して使う</td><td>できる</td><td>できない（戻り値が別インスタンス）</td></tr>
+    <tr><td>おすすめ度</td><td>★ こちらを推奨</td><td>プロトタイプ向け</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">QUiLoader は「自分自身」にはロードできない</span>
+  <p>
+    <code>loader.load()</code> は<strong>新しいウィジェットを作って返します</strong>。
+    <code>self</code> の上に組み立ててくれるわけではありません。
+    そのため、<code>QWidget</code> を継承したクラスの <code>__init__</code> で
+    <code>self.ui = loader.load(...)</code> としても、
+    <code>self</code> 自体は空のままです。
+    継承して使いたいなら、方法 1 を選んでください。
+  </p>
+</div>
+
+<h2>Designer とコード、どちらで作るべきか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>場面</th><th>向いているやり方</th></tr></thead>
+  <tbody>
+    <tr><td>入力項目の多い設定画面・フォーム</td><td>Designer。手で書くと退屈で長い</td></tr>
+    <tr><td>見た目を何度も調整したい</td><td>Designer。結果がその場で見える</td></tr>
+    <tr><td>実行時に項目数が変わる画面</td><td>コード。Designer では表現できない</td></tr>
+    <tr><td>同じ部品を繰り返し生成する</td><td>コード。ループで書ける</td></tr>
+    <tr><td>差分レビューを重視する</td><td>コード。XML の差分は読みにくい</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+現実には<strong>併用</strong>が多いです。
+土台のフォームは Designer で作り、動的に増える部分だけコードで足す、という形です。
+</p>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>pyside6-designer</code> を起動し、Widget フォームに <code>QLineEdit</code> と <code>QPushButton</code> を 1 つずつ置く。</li>
+    <li>背景を右クリックして［レイアウト］→［垂直に並べる］を適用する。</li>
+    <li><code>objectName</code> をそれぞれ <code>inputEdit</code> / <code>okButton</code> に変える。</li>
+    <li><code>my_form.ui</code> として保存し、<code>pyside6-uic my_form.ui -o ui_my_form.py</code> を実行する。</li>
+    <li><code>ch09_designer_app.py</code> を真似して、ボタンを押すと入力内容を表示するようにする。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>pyside6-designer</code> でマウスで画面を作れる。追加インストールは不要。</li>
+    <li>Designer では<strong>レイアウトの適用</strong>を忘れない。これをしないと崩れる。</li>
+    <li><code>objectName</code> がそのまま Python の属性名になる。意味のある名前を付ける。</li>
+    <li>使い方は <code>pyside6-uic</code> で変換する方法を推奨。生成ファイルは手で触らない。</li>
+    <li><code>QUiLoader</code> は手軽だが、補完が効かず継承もできない。</li>
+  </ul>
+</div>

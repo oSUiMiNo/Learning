@@ -1,0 +1,59 @@
+<svg viewBox="0 0 720 330" role="img" aria-label="Qt アプリケーションの全体像。QApplication の下にウィジェットの木があり、イベントループが操作を配っている。">
+  <rect x="1" y="1" width="718" height="328" rx="14" class="d-box-plain"/>
+
+  <!-- QApplication -->
+  <rect x="30" y="28" width="180" height="70" rx="10" class="d-accent"/>
+  <text x="120" y="55" text-anchor="middle" class="d-title">QApplication</text>
+  <text x="120" y="76" text-anchor="middle" class="d-mute">アプリ全体の司令塔</text>
+  <text x="120" y="91" text-anchor="middle" class="d-mute">ひとつだけ作る</text>
+
+  <!-- Event loop -->
+  <rect x="30" y="128" width="180" height="86" rx="10" class="d-tip"/>
+  <text x="120" y="155" text-anchor="middle" class="d-title">イベントループ</text>
+  <text x="120" y="176" text-anchor="middle" class="d-mute">app.exec()</text>
+  <text x="120" y="196" text-anchor="middle" class="d-mute">操作を受け取って配る</text>
+
+  <path d="M120 98 L120 128" class="d-flow"/>
+  <path d="M120 128 l-5 -9 h10 z" class="d-arrowhead"/>
+
+  <!-- OS -->
+  <rect x="30" y="244" width="180" height="56" rx="10" class="d-box"/>
+  <text x="120" y="268" text-anchor="middle" class="d-title">OS / ウィンドウシステム</text>
+  <text x="120" y="288" text-anchor="middle" class="d-mute">クリック・キー入力</text>
+  <path d="M120 244 L120 214" class="d-flow"/>
+  <path d="M120 214 l-5 9 h10 z" class="d-arrowhead"/>
+
+  <!-- Widget tree -->
+  <rect x="272" y="28" width="418" height="272" rx="12" class="d-dash"/>
+  <text x="292" y="52" class="d-head-accent">ウィジェットの木（画面の中身）</text>
+
+  <rect x="292" y="66" width="170" height="44" rx="8" class="d-accent"/>
+  <text x="377" y="93" text-anchor="middle" class="d-title">QWidget（ウィンドウ）</text>
+
+  <path d="M377 110 L377 134 L340 134 L340 152" class="d-line"/>
+  <path d="M377 110 L377 134 L520 134 L520 152" class="d-line"/>
+  <path d="M340 152 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+  <path d="M520 152 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+
+  <rect x="292" y="152" width="96" height="40" rx="8" class="d-box"/>
+  <text x="340" y="177" text-anchor="middle" class="d-code">QLabel</text>
+
+  <rect x="440" y="152" width="160" height="40" rx="8" class="d-box"/>
+  <text x="520" y="177" text-anchor="middle" class="d-code">QWidget（枠）</text>
+
+  <path d="M520 192 L520 214 L470 214 L470 232" class="d-line"/>
+  <path d="M520 192 L520 214 L590 214 L590 232" class="d-line"/>
+  <path d="M470 232 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+  <path d="M590 232 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+
+  <rect x="416" y="232" width="108" height="40" rx="8" class="d-box"/>
+  <text x="470" y="257" text-anchor="middle" class="d-code">QLineEdit</text>
+
+  <rect x="536" y="232" width="120" height="40" rx="8" class="d-box"/>
+  <text x="596" y="257" text-anchor="middle" class="d-code">QPushButton</text>
+
+  <!-- loop to widgets -->
+  <path d="M210 171 L272 171" class="d-flow"/>
+  <path d="M272 171 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="241" y="163" text-anchor="middle" class="d-mark">配る</text>
+</svg>

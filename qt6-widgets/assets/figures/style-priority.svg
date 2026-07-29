@@ -1,0 +1,29 @@
+<svg viewBox="0 0 720 300" role="img" aria-label="見た目を決める 3 つの層。スタイル、パレット、スタイルシートの優先順位。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">見た目は 3 つの層で決まる（下の層ほど強い）</text>
+
+  <!-- layer 1 -->
+  <rect x="30" y="48" width="660" height="66" rx="10" class="d-box"/>
+  <text x="52" y="74" class="d-title">① スタイル — 部品の描き方そのもの</text>
+  <text x="52" y="98" class="d-code">app.setStyle("Fusion")</text>
+  <text x="330" y="98" class="d-mute">既定は OS ネイティブ。Fusion にすると全 OS で同じ見た目になる。</text>
+
+  <path d="M360 114 v14" class="d-flow"/>
+  <path d="M360 128 l-4 -9 h8 z" class="d-arrowhead"/>
+
+  <!-- layer 2 -->
+  <rect x="30" y="128" width="660" height="66" rx="10" class="d-tip"/>
+  <text x="52" y="154" class="d-title">② パレット — 「役割ごとの色」の設定</text>
+  <text x="52" y="178" class="d-code">app.setPalette(palette)</text>
+  <text x="330" y="178" class="d-mute">背景・文字・選択色などを一括で差し替える。ダークテーマはここ。</text>
+
+  <path d="M360 194 v14" class="d-flow"/>
+  <path d="M360 208 l-4 -9 h8 z" class="d-arrowhead"/>
+
+  <!-- layer 3 -->
+  <rect x="30" y="208" width="660" height="66" rx="10" class="d-accent"/>
+  <text x="52" y="234" class="d-title">③ スタイルシート — 個別の上書き（いちばん強い）</text>
+  <text x="52" y="258" class="d-code">setStyleSheet("...")</text>
+  <text x="330" y="258" class="d-mute">CSS 風に細かく指定。当てた部分は ①② を上書きする。</text>
+</svg>

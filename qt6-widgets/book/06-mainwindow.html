@@ -1,0 +1,197 @@
+<p>
+ここまでは <code>QWidget</code> をそのままウィンドウとして使ってきました。
+それで困らない小さな道具もありますが、
+メニューやツールバーが要るアプリでは <code>QMainWindow</code> を使います。
+</p>
+
+<h2>QMainWindow は「置き場所」が決まっている</h2>
+
+<p>
+<code>QWidget</code> との違いは単純で、
+<strong>メニューバー・ツールバー・ステータスバー・ドックの置き場所が最初から用意されている</strong>ことです。
+自分でレイアウトを組む必要はありません。
+</p>
+
+<!--figure: mainwindow-areas | QMainWindow の各領域。中央だけは自分で用意したウィジェットを setCentralWidget() で置く。 -->
+
+<div class="note pitfall">
+  <span class="note-title">QMainWindow にレイアウトを直接設定してはいけない</span>
+  <p>
+    <code>QMainWindow</code> は自分でレイアウトを管理しているので、
+    <code>QVBoxLayout(main_window)</code> のように直接レイアウトを付けると警告が出て、うまく動きません。
+    <strong>中身は必ず <code>setCentralWidget()</code> で 1 つのウィジェットとして渡します。</strong>
+    複数並べたいときは、まず <code>QWidget</code> を作ってそこにレイアウトを組み、
+    それを中央ウィジェットにします。
+  </p>
+  <div class="src" data-lang="python">
+central = QWidget()
+layout = QVBoxLayout(central)
+layout.addWidget(...)
+self.setCentralWidget(central)   # ○ この形にする
+  </div>
+</div>
+
+<h2>QAction — 「動作」をひとつの物として扱う</h2>
+
+<p>
+「ファイルを開く」という動作は、メニューにもツールバーにも、
+右クリックメニューにも置きたいことがあります。
+毎回コピーするのではなく、<strong>動作そのものをひとつのオブジェクトにする</strong>のが Qt のやり方です。
+それが <code>QAction</code> です。
+</p>
+
+<div class="src" data-lang="python">
+open_action = QAction("開く", self)
+open_action.setShortcut(QKeySequence.StandardKey.Open)   # Ctrl+O / ⌘O
+open_action.setStatusTip("ファイルを開きます")
+open_action.triggered.connect(self.on_open)
+
+file_menu.addAction(open_action)   # メニューにも
+toolbar.addAction(open_action)     # ツールバーにも、同じものを置ける
+</div>
+
+<p>
+こうしておけば、<code>open_action.setEnabled(False)</code> の 1 行で
+メニュー項目もツールバーのボタンも同時に灰色になります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">Qt6 で QAction の置き場所が変わった</span>
+  <div class="compare">
+    <div class="src" data-lang="python" data-file="Qt5 まで（動かない）" data-cap="QtWidgets から import していた">
+from PySide6.QtWidgets import QAction
+    </div>
+    <div class="src" data-lang="python" data-file="Qt6（正しい）" data-cap="QtGui に移動した">
+from PySide6.QtGui import QAction
+    </div>
+  </div>
+  <p>
+    <code>ImportError: cannot import name 'QAction' from 'PySide6.QtWidgets'</code>
+    というエラーが出たら、これが原因です。
+    <code>QShortcut</code> も同じく <code>QtGui</code> に移動しています。
+  </p>
+</div>
+
+<h2>全部入りの例</h2>
+
+<!--code: ch06_mainwindow.py-->
+
+<!--shot: ch06-mainwindow | 上からメニューバー、ツールバー。左がドック、中央が QPlainTextEdit、下がステータスバー。ドックのタイトル右にある小さなボタンで、切り離したり閉じたりできる。 -->
+
+<h3>メニューバー</h3>
+
+<div class="src" data-lang="python">
+file_menu = self.menuBar().addMenu("ファイル(&F)")
+file_menu.addAction(open_action)
+file_menu.addSeparator()          # 区切り線
+file_menu.addAction(quit_action)
+</div>
+
+<p>
+メニュー名の <code>(&amp;F)</code> は、<kbd>Alt</kbd> + <kbd>F</kbd> で開けるようにする指定です。
+<code>&amp;</code> の直後の文字に下線が引かれます。
+</p>
+
+<h3>ツールバー</h3>
+
+<div class="src" data-lang="python">
+toolbar = self.addToolBar("主なツール")
+toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+toolbar.addAction(open_action)
+</div>
+
+<p>アイコンだけ、文字だけ、両方、といった表示の切り替えは次のとおりです。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>指定</th><th>見た目</th></tr></thead>
+  <tbody>
+    <tr><td><code>ToolButtonIconOnly</code></td><td>アイコンのみ（既定）</td></tr>
+    <tr><td><code>ToolButtonTextOnly</code></td><td>文字のみ</td></tr>
+    <tr><td><code>ToolButtonTextBesideIcon</code></td><td>アイコンの右に文字</td></tr>
+    <tr><td><code>ToolButtonTextUnderIcon</code></td><td>アイコンの下に文字</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>ステータスバー</h3>
+
+<div class="src" data-lang="python">
+self.statusBar().showMessage("準備完了")            # 一時的な表示
+self.statusBar().showMessage("保存しました", 3000)   # 3 秒で消える
+self.statusBar().addPermanentWidget(QLabel("UTF-8")) # 右端に常駐
+</div>
+
+<!--shot: ch06-menu | ［ヘルプ］→［このアプリについて］を実行した直後。ステータスバーの左側にメッセージが出ている。 -->
+
+<div class="note">
+  <span class="note-title">setStatusTip は自動でステータスバーに出る</span>
+  <p>
+    <code>QAction</code> に <code>setStatusTip()</code> を設定しておくと、
+    そのメニュー項目にマウスを乗せただけで説明がステータスバーに出ます。
+    自分でシグナルをつなぐ必要はありません。
+  </p>
+</div>
+
+<h3>ドック</h3>
+
+<div class="src" data-lang="python">
+dock = QDockWidget("最近使ったファイル", self)
+dock.setWidget(中身のウィジェット)
+self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
+</div>
+
+<p>
+ドックはユーザーが切り離してフローティングにしたり、
+左右上下に付け替えたりできます。エディタのサイドパネルのようなものです。
+</p>
+
+<h2>ウィンドウの状態を覚えておく</h2>
+
+<p>
+「前回終了したときの位置とサイズで開いてほしい」というのは、よくある要望です。
+<code>QSettings</code> を使うと、OS ごとの適切な場所（Windows ならレジストリ、
+macOS なら plist）に自動で保存してくれます。
+</p>
+
+<div class="src" data-lang="python">
+from PySide6.QtCore import QSettings
+
+class MyWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        # ... 画面の組み立て ...
+        settings = QSettings("MyCompany", "MyApp")
+        geometry = settings.value("geometry")
+        if geometry:
+            self.restoreGeometry(geometry)
+        state = settings.value("windowState")
+        if state:
+            self.restoreState(state)      # ツールバーやドックの配置も戻る
+
+    def closeEvent(self, event):
+        settings = QSettings("MyCompany", "MyApp")
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
+        super().closeEvent(event)
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch06_mainwindow.py</code> に「編集」メニューを足し、［元に戻す］［やり直す］を入れる。ショートカットは <code>QKeySequence.StandardKey.Undo</code> / <code>Redo</code>。</li>
+    <li>ドックを右側（<code>RightDockWidgetArea</code>）に移してみる。</li>
+    <li>上の <code>QSettings</code> のコードを組み込んで、ウィンドウを動かして閉じ、もう一度開いてみる。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>QMainWindow</code> はメニュー・ツールバー・ステータスバー・ドックの置き場所を用意してくれる。</li>
+    <li>中身は <code>setCentralWidget()</code> でひとつだけ渡す。直接レイアウトを付けてはいけない。</li>
+    <li>動作は <code>QAction</code> にまとめ、メニューとツールバーで使い回す。</li>
+    <li>Qt6 では <code>QAction</code> は <code>QtGui</code> にある（Qt5 は <code>QtWidgets</code>）。</li>
+    <li>ウィンドウの位置・サイズの記憶は <code>QSettings</code> ＋ <code>saveGeometry()</code>。</li>
+  </ul>
+</div>

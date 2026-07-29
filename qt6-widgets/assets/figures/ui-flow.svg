@@ -1,0 +1,41 @@
+<svg viewBox="0 0 720 300" role="img" aria-label=".ui ファイルを Python から使う 2 つの経路。uic で変換する方法と、実行時に QUiLoader で読む方法。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <!-- designer -->
+  <rect x="30" y="112" width="140" height="76" rx="10" class="d-accent"/>
+  <text x="100" y="140" text-anchor="middle" class="d-title">Qt Designer</text>
+  <text x="100" y="162" text-anchor="middle" class="d-mute">マウスで画面を作る</text>
+  <text x="100" y="180" text-anchor="middle" class="d-mute">pyside6-designer</text>
+
+  <path d="M170 150 h44" class="d-flow"/>
+  <path d="M214 150 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="214" y="112" width="126" height="76" rx="10" class="d-box"/>
+  <text x="277" y="144" text-anchor="middle" class="d-code">form.ui</text>
+  <text x="277" y="166" text-anchor="middle" class="d-mute">中身は XML</text>
+
+  <!-- route A -->
+  <path d="M340 132 h40 v-56 h44" class="d-flow"/>
+  <path d="M424 76 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="392" y="66" text-anchor="middle" class="d-head-accent">方法 1</text>
+
+  <rect x="424" y="42" width="266" height="68" rx="10" class="d-tip"/>
+  <text x="440" y="66" class="d-code">pyside6-uic form.ui -o ui_form.py</text>
+  <text x="440" y="88" class="d-mute">先に Python へ変換しておく。補完が効く。</text>
+  <text x="440" y="104" class="d-mute">.ui を直したら変換し直す必要がある。</text>
+
+  <!-- route B -->
+  <path d="M340 168 h40 v56 h44" class="d-flow"/>
+  <path d="M424 224 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="392" y="248" text-anchor="middle" class="d-head-accent">方法 2</text>
+
+  <rect x="424" y="190" width="266" height="68" rx="10" class="d-deep"/>
+  <text x="440" y="214" class="d-code">QUiLoader().load("form.ui")</text>
+  <text x="440" y="236" class="d-mute">実行時にそのまま読む。変換不要。</text>
+  <text x="440" y="252" class="d-mute">補完は効かず、.ui の同梱が必要。</text>
+
+  <!-- result -->
+  <text x="30" y="230" class="d-mute">どちらでも、</text>
+  <text x="30" y="250" class="d-mute">出来上がる画面は</text>
+  <text x="30" y="270" class="d-mute">まったく同じ。</text>
+</svg>

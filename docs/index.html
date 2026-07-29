@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</title>
+<meta name="description" content="PySide6 6.11 と Qt 6.11 で学ぶ、Qt Widgets の初心者向け入門書。掲載コードはすべて実際に実行して動作確認され、スクリーンショットもそのコードを動かして撮影しています。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="./assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="is-cover">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="./">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li><a href="03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li><a href="06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li><a href="09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="cover">
+      <header class="cover-head">
+        <p class="eyebrow">Python ではじめる デスクトップ GUI</p>
+        <h1>Qt6 Widgets 入門</h1>
+        <p class="cover-sub">Python (PySide6) ではじめるデスクトップ GUI</p>
+        <p class="cover-lede">PySide6 6.11 と Qt 6.11 で学ぶ、Qt Widgets の初心者向け入門書。掲載コードはすべて実際に実行して動作確認され、スクリーンショットもそのコードを動かして撮影しています。</p>
+        <p class="cover-actions">
+          <a class="btn btn-primary" href="00-intro/">読みはじめる</a>
+          <a class="btn" href="01-setup/">環境構築から始める</a>
+        </p>
+      </header>
+
+      <section class="promise">
+        <h2>この教材の約束</h2>
+        <ul class="promise-list">
+          <li>
+            <strong>載っているコードは、すべて実際に動かして確認済み</strong>
+            本文のコードは <code>examples/</code> にある実ファイルをそのまま読み込んで表示しています。
+            書き写す途中で壊れる、ということが起きません。
+          </li>
+          <li>
+            <strong>画面写真は、その同じコードを動かして撮ったもの</strong>
+            イラストでも作図でもなく、Qt 6.11.1 が実際に描画した画面です。
+          </li>
+          <li>
+            <strong>「昔はこう書いた」を毎回はっきり書く</strong>
+            Qt5 時代の記事をそのまま真似すると動かない箇所は、
+            ⚠️ つまずきポイントとして本文中で名指しします。
+          </li>
+        </ul>
+        <p class="verline">
+          検証環境: <strong>Qt 6.11.1</strong> ／
+          <strong>PySide6 6.11.1</strong> ／
+          <strong>Python 3.11.15</strong>（2026-07-29 時点の最新）
+        </p>
+      </section>
+
+      <section class="toc-section">
+        <h2>目次<span class="toc-total">全 14 章 · 通読 約 174 分</span></h2>
+        <ol class="toc-cards">
+      <li class="toc-card">
+        <a href="00-intro/">
+          <span class="toc-num">はじめに</span>
+          <span class="toc-title">はじめに</span>
+          <span class="toc-lede">Qt とは何か、なぜ PySide6 と Qt Widgets なのか、そして「ネットの記事どおりに書いたのに動かない」がなぜ起きるのかを先に片付けます。</span>
+          <span class="toc-time">7 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="01-setup/">
+          <span class="toc-num">第 1 章</span>
+          <span class="toc-title">環境構築</span>
+          <span class="toc-lede">Python さえ入っていれば、Qt の準備は pip コマンド 1 行で終わります。つまずきやすい仮想環境の話も含めて確実に通します。</span>
+          <span class="toc-time">8 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="02-first-window/">
+          <span class="toc-num">第 2 章</span>
+          <span class="toc-title">最初のウィンドウ</span>
+          <span class="toc-lede">たった 6 行のコードを題材に、Qt アプリが動き続ける仕組み「イベントループ」を最初に押さえます。ここが分かると後が全部楽になります。</span>
+          <span class="toc-time">10 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="03-signals/">
+          <span class="toc-num">第 3 章</span>
+          <span class="toc-title">シグナルとスロット</span>
+          <span class="toc-lede">「ボタンが押されたら何かする」を Qt はどう表現するのか。Qt のいちばんの発明であり、Qt6 で書き方が変わった部分でもあります。</span>
+          <span class="toc-time">12 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="04-layouts/">
+          <span class="toc-num">第 4 章</span>
+          <span class="toc-title">レイアウト</span>
+          <span class="toc-lede">この教材でいちばん大事な章です。座標を指定しないのが Qt 流。縦・横・格子・フォームの 4 つと「伸び縮みの配分」を覚えれば大半の画面は作れます。</span>
+          <span class="toc-time">18 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="05-widgets/">
+          <span class="toc-num">第 5 章</span>
+          <span class="toc-title">ウィジェット図鑑</span>
+          <span class="toc-lede">ボタン・入力欄・選択肢・表示・まとめ役。実際の画面写真つきで「やりたいことに対してどれを使うか」が引けるカタログです。</span>
+          <span class="toc-time">14 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="06-mainwindow/">
+          <span class="toc-num">第 6 章</span>
+          <span class="toc-title">ウィンドウの骨格</span>
+          <span class="toc-lede">メニューバー、ツールバー、ステータスバー、ドック。「アプリらしいアプリ」の枠組みは QMainWindow が用意してくれています。</span>
+          <span class="toc-time">12 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="07-object-tree/">
+          <span class="toc-num">第 7 章</span>
+          <span class="toc-title">親子関係とメモリ</span>
+          <span class="toc-lede">「ウィンドウを出したのに一瞬で消える」「なぜか落ちる」。Python と Qt でオブジェクトの寿命の考え方が違うことが原因です。</span>
+          <span class="toc-time">10 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="08-dialogs/">
+          <span class="toc-num">第 8 章</span>
+          <span class="toc-title">ダイアログ</span>
+          <span class="toc-lede">メッセージボックスとファイル選択は 1 行で呼べます。自作ダイアログと、モーダル／モードレスの違いまで押さえます。</span>
+          <span class="toc-time">12 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="09-designer/">
+          <span class="toc-num">第 9 章</span>
+          <span class="toc-title">Qt Designer</span>
+          <span class="toc-lede">コードを書かずに画面を組み立てるツールが標準で付いてきます。作った .ui ファイルを Python から使う 2 つの方法を比べます。</span>
+          <span class="toc-time">12 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="10-model-view/">
+          <span class="toc-num">第 10 章</span>
+          <span class="toc-title">モデル / ビュー</span>
+          <span class="toc-lede">Qt 入門者が最初にぶつかる壁。「データ」と「見せ方」を分けるという考え方さえ掴めれば、実は素直な仕組みです。</span>
+          <span class="toc-time">16 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="11-styling/">
+          <span class="toc-num">第 11 章</span>
+          <span class="toc-title">見た目を整える</span>
+          <span class="toc-lede">Qt は CSS によく似た記法で見た目を変えられます。ダークテーマ、アイコン、高解像度ディスプレイ対応まで。</span>
+          <span class="toc-time">13 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="12-todo-app/">
+          <span class="toc-num">第 12 章</span>
+          <span class="toc-title">実践: ToDo アプリ</span>
+          <span class="toc-lede">ここまでの全部入り。保存機能つきの ToDo アプリを、設計の考え方から順に組み上げて完成させます。</span>
+          <span class="toc-time">20 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="13-pitfalls/">
+          <span class="toc-num">第 13 章</span>
+          <span class="toc-title">つまずき集と次の一歩</span>
+          <span class="toc-lede">Qt5 時代の記事との差分早見表、PyQt6 との違い、配布方法、そして公式ドキュメントの歩き方。ここから先は自力で進めます。</span>
+          <span class="toc-time">10 分</span>
+        </a>
+      </li>
+        </ol>
+      </section>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-29 時点）
+  </p>
+</footer>
+
+<script src="./assets/book.js" defer></script>
+</body>
+</html>

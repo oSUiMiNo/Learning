@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第2章 最初のウィンドウ — イベントループを理解する | Qt6 Widgets 入門</title>
+<meta name="description" content="たった 6 行のコードを題材に、Qt アプリが動き続ける仕組み「イベントループ」を最初に押さえます。ここが分かると後が全部楽になります。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li class="is-current"><a href="../02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li><a href="../03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="../04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="../05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li><a href="../06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="../07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="../08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li><a href="../09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="../10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="../11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="../12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="../13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 2 章<span class="dot">·</span>読了目安 10 分</p>
+        <h1>第2章 最初のウィンドウ — イベントループを理解する</h1>
+        <p class="lede">たった 6 行のコードを題材に、Qt アプリが動き続ける仕組み「イベントループ」を最初に押さえます。ここが分かると後が全部楽になります。</p>
+      </header>
+      <div class="prose">
+<p>
+Qt のプログラムは、どんなに大きくなっても骨格は同じです。
+<strong>①アプリを作る → ②画面を出す → ③イベントループに入る</strong>。
+まずはこの 3 つだけのプログラムを見てみましょう。
+</p>
+
+<h2 id="6-行でウィンドウを出す">6 行でウィンドウを出す</h2>
+
+<figure class="code-block" data-lang="python" data-src="ch02_hello.py"><div class="code-head"><span class="code-file">ch02_hello.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;最初のウィンドウ — Qt アプリに絶対必要な 3 つの要素だけを書いたもの。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch02_hello.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QLabel</span></span><span class="cl"></span><span class="cl"><span class="c1"># ① アプリケーション本体。Qt の世界にひとつだけ存在する「司令塔」。</span></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># ② 画面に置くもの（ウィジェット）。親を持たないウィジェットは</span></span><span class="cl"><span class="c1">#    それ自体が独立したウィンドウになる。</span></span><span class="cl"><span class="n">label</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;こんにちは、Qt!&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">label</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"></span><span class="cl"><span class="c1"># ③ イベントループ。ここでプログラムは「待ち」に入り、</span></span><span class="cl"><span class="c1">#    ユーザーの操作を待ち受け続ける。閉じられると exec() が返る。</span></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">python<span class="w"> </span>ch02_hello.py</span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">（タイトル未設定）</span></div><img src="../img/ch02-hello.webp" alt="実行結果。文字の大きさぴったりの、小さなウィンドウが出る。タイトルもサイズも指定していないので、こうなる。" width="93" height="16" loading="lazy" decoding="async"></div><figcaption>実行結果。文字の大きさぴったりの、小さなウィンドウが出る。タイトルもサイズも指定していないので、こうなる。</figcaption></figure>
+
+<p>
+素っ気ない見た目ですが、これは立派なウィンドウです。
+ドラッグして動かせますし、閉じればプログラムも終わります。
+</p>
+
+<h3 id="①-QApplication--アプリの司令塔">① QApplication — アプリの司令塔</h3>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span></code></pre></figure>
+
+<p>
+Qt のアプリには、必ずこれが 1 つだけ必要です。
+画面の設定を管理したり、OS からの入力を受け取ったりする、いわば本体です。
+<strong>どのウィジェットよりも先に作らなければいけません</strong>。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">よくあるエラー: QWidget: Must construct a QApplication before a QWidget</span>
+  <p>
+    「ウィジェットより先に QApplication を作れ」という意味です。
+    <code>QApplication(sys.argv)</code> の行が、
+    ウィジェットを作る行より後ろに書かれていないか確認してください。
+  </p>
+</div>
+
+<h3 id="②-ウィジェット--画面に置くもの">② ウィジェット — 画面に置くもの</h3>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">label</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;こんにちは、Qt!&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">label</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span></code></pre></figure>
+
+<p>
+Qt では、画面に出るものはすべて<strong>ウィジェット</strong>と呼ばれます。
+ボタンも、入力欄も、ウィンドウそのものも、全部ウィジェットです。
+</p>
+
+<p>
+ここで大事なルールがひとつ。
+<strong>親を持たないウィジェットは、それ自体がひとつのウィンドウになります。</strong>
+上のコードで <code>QLabel</code> がウィンドウとして出たのはそのためです。
+親子関係の話は第 7 章でくわしく扱います。
+</p>
+
+<p>
+そして <code>show()</code> を呼ばないと、作っただけでは画面に出ません。これも忘れがちな点です。
+</p>
+
+<h3 id="③-appexec--イベントループ">③ app.exec() — イベントループ</h3>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<p>
+ここがいちばん重要です。この行に到達すると、プログラムは<strong>止まったまま待ち続けます</strong>。
+何を待っているかというと、ユーザーの操作です。
+</p>
+
+<h2 id="イベントループという考え方">イベントループという考え方</h2>
+
+<p>
+ふつうの Python スクリプトは、上から下まで実行したら終わります。
+GUI アプリはそれでは困ります。ユーザーが操作するまで、終わらずに待っていてほしいからです。
+</p>
+
+<p>
+そのための仕掛けが<strong>イベントループ</strong>です。
+「操作が起きるのを待つ → 起きたら対応する担当者に渡す → また待つ」を、
+アプリが終わるまでひたすら繰り返します。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 300" role="img" aria-label="イベントループの流れ。操作がキューに積まれ、ループが取り出してウィジェットに配り、再描画される。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="34" class="d-head-accent">app.exec() が始まると、この輪をぐるぐる回り続ける</text>
+
+  <!-- 1 -->
+  <rect x="30" y="52" width="150" height="72" rx="10" class="d-box"/>
+  <text x="105" y="80" text-anchor="middle" class="d-title">① 操作が起きる</text>
+  <text x="105" y="101" text-anchor="middle" class="d-mute">クリック / キー入力</text>
+  <text x="105" y="116" text-anchor="middle" class="d-mute">タイマー / 再描画要求</text>
+
+  <!-- 2 -->
+  <rect x="215" y="52" width="150" height="72" rx="10" class="d-tip"/>
+  <text x="290" y="80" text-anchor="middle" class="d-title">② 行列に並ぶ</text>
+  <text x="290" y="101" text-anchor="middle" class="d-mute">イベントキュー</text>
+  <text x="290" y="116" text-anchor="middle" class="d-mute">先に来たものから順に</text>
+
+  <!-- 3 -->
+  <rect x="400" y="52" width="150" height="72" rx="10" class="d-accent"/>
+  <text x="475" y="80" text-anchor="middle" class="d-title">③ ループが取り出す</text>
+  <text x="475" y="101" text-anchor="middle" class="d-mute">宛先のウィジェットへ</text>
+  <text x="475" y="116" text-anchor="middle" class="d-mute">1 つずつ配達する</text>
+
+  <!-- 4 -->
+  <rect x="585" y="52" width="105" height="72" rx="10" class="d-box"/>
+  <text x="637" y="80" text-anchor="middle" class="d-title">④ 反応する</text>
+  <text x="637" y="101" text-anchor="middle" class="d-mute">スロットが</text>
+  <text x="637" y="116" text-anchor="middle" class="d-mute">呼ばれる</text>
+
+  <path d="M180 88 L215 88" class="d-flow"/>
+  <path d="M215 88 l-9 -5 v10 z" class="d-arrowhead"/>
+  <path d="M365 88 L400 88" class="d-flow"/>
+  <path d="M400 88 l-9 -5 v10 z" class="d-arrowhead"/>
+  <path d="M550 88 L585 88" class="d-flow"/>
+  <path d="M585 88 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <!-- return loop -->
+  <path d="M637 124 L637 160 L105 160 L105 124" class="d-flow"/>
+  <path d="M105 124 l-5 9 h10 z" class="d-arrowhead"/>
+  <text x="371" y="152" text-anchor="middle" class="d-mark">画面を描き直して、また ① へ戻る</text>
+
+  <!-- warning -->
+  <rect x="30" y="192" width="660" height="80" rx="10" class="d-warn"/>
+  <text x="52" y="218" class="d-head-warn">⚠ ここで長い処理をすると画面が固まる</text>
+  <text x="52" y="240" class="d-mute">③ で呼ばれた自分のコードが終わるまで、ループは次のイベントを取り出せない。</text>
+  <text x="52" y="259" class="d-mute">10 秒かかる処理を書けば、その 10 秒間はボタンも押せず、再描画もされない。</text>
+</svg>
+<figcaption>イベントループの一周。app.exec() を呼んだ瞬間からこの輪が回り始め、ウィンドウが閉じられるまで止まらない。</figcaption></figure>
+
+<div class="note deep">
+  <span class="note-title">なぜ sys.exit() で包むのか</span>
+  <p>
+    <code>app.exec()</code> はアプリの終了コード（正常なら 0）を返します。
+    それを <code>sys.exit()</code> に渡すことで、
+    シェルやタスクランナーに「正常に終わったか」を正しく伝えられます。
+    単に <code>app.exec()</code> と書いても動きますが、包んでおくのが作法です。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">古い記事にある <code>app.exec_()</code> は Qt6 では使えない</span>
+  <p>
+    Python 2 の時代、<code>exec</code> は予約語だったため、
+    PyQt / PySide では末尾にアンダースコアを付けた <code>exec_()</code> が使われていました。
+    <strong>Qt6（PySide6）では <code>exec()</code> が正しい書き方</strong>です。
+    Web 上のサンプルで <code>exec_()</code> を見かけたら、それは Qt5 以前の記事だと判断できます。
+  </p>
+</div>
+
+<h2 id="ウィンドウらしくする">ウィンドウらしくする</h2>
+
+<p>
+タイトルもサイズもないと使いものになりません。中身も並べてみましょう。
+</p>
+
+<figure class="code-block" data-lang="python" data-src="ch02_window.py"><div class="code-head"><span class="code-file">ch02_window.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;ウィンドウらしいウィンドウを作る — タイトル・サイズ・中身を持たせる。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch02_window.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QVBoxLayout</span><span class="p">,</span> <span class="n">QWidget</span></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># 「入れ物」となるウィジェット。これがウィンドウ本体になる。</span></span><span class="cl"><span class="n">window</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;はじめての Qt ウィンドウ&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">420</span><span class="p">,</span> <span class="mi">180</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># 中身を縦に並べるためのレイアウト。</span></span><span class="cl"><span class="c1"># QVBoxLayout(window) のように親を渡すと、その場で window に適用される。</span></span><span class="cl"><span class="n">layout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">window</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;ようこそ、Qt Widgets の世界へ。&quot;</span><span class="p">))</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;このウィンドウは 20 行足らずで出来ています。&quot;</span><span class="p">))</span></span><span class="cl"></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">はじめての Qt ウィンドウ</span></div><img src="../img/ch02-window.webp" alt="タイトルバーに文字が入り、サイズも指定した。2 つのラベルは QVBoxLayout によって縦に並んでいる。" width="420" height="180" loading="lazy" decoding="async"></div><figcaption>タイトルバーに文字が入り、サイズも指定した。2 つのラベルは QVBoxLayout によって縦に並んでいる。</figcaption></figure>
+
+<p>新しく出てきたのは 3 つです。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>setWindowTitle("…")</code></td><td>タイトルバーに出る文字</td></tr>
+    <tr><td><code>resize(幅, 高さ)</code></td><td>最初に表示されるときの大きさ（ピクセル）</td></tr>
+    <tr><td><code>QVBoxLayout(window)</code></td><td>中身を縦に並べる係。第 4 章の主題</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">resize と setFixedSize の違い</span>
+  <p>
+    <code>resize()</code> は「最初の大きさ」を決めるだけで、ユーザーは後から変えられます。
+    変えさせたくないときは <code>setFixedSize(幅, 高さ)</code> を使います。
+    ただし固定サイズは、文字を大きくしている環境などで中身がはみ出す原因になるので、
+    よほどの理由がなければ <code>resize()</code> にしておくのが安全です。
+  </p>
+</div>
+
+<h2 id="スクリーンショットの見た目について">スクリーンショットの見た目について</h2>
+
+<div class="note">
+  <span class="note-title">この教材の画面写真は Linux + Fusion スタイル</span>
+  <p>
+    Qt Widgets の見た目は OS ごとに変わります。
+    この教材のスクリーンショットは、どの章でも同じ見た目になるように
+    <strong>Fusion</strong> という Qt 共通のスタイルで撮影しています。
+    あなたの Windows / macOS では、ボタンの角の丸みや配色が違って見えるはずですが、
+    <strong>構造とコードはまったく同じ</strong>です。心配しないでください。
+    見た目を意図的に揃える方法は第 11 章で扱います。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch02_window.py</code> の <code>resize()</code> の数字を変えて、起動時の大きさが変わることを確かめる。</li>
+    <li><code>layout.addWidget(QLabel("3 行目"))</code> を足して、行が増えることを確かめる。</li>
+    <li><code>sys.exit(app.exec())</code> の行をコメントアウトして実行してみる。ウィンドウが一瞬も出ずに終わるはずです。<strong>これがイベントループの正体</strong>です。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>Qt アプリは <code>QApplication</code> → ウィジェット → <code>app.exec()</code> の 3 点セット。</li>
+    <li>親のないウィジェットは、それ自体がウィンドウになる。</li>
+    <li><code>show()</code> を呼ばないと画面には出ない。</li>
+    <li><code>app.exec()</code> はイベントループ。ここでプログラムは「待ち」に入る。</li>
+    <li>Qt6 では <code>exec_()</code> ではなく <code>exec()</code>。<code>exec_()</code> を見たら古い記事。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../01-setup/"><span class="pager-dir">← 前の章</span><span class="pager-title">環境構築</span></a>
+<a class="pager-link pager-next" href="../03-signals/"><span class="pager-dir">次の章 →</span><span class="pager-title">シグナルとスロット</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-29 時点）
+  </p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

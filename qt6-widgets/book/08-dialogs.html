@@ -1,0 +1,204 @@
+<p>
+「本当に削除しますか？」「ファイルを選んでください」。
+こういう小さな窓を、Qt は最初から用意しています。
+自分で作る必要があるのは、独自の入力フォームが要るときだけです。
+</p>
+
+<h2>1 行で呼べる標準ダイアログ</h2>
+
+<!--code: ch08_messagebox.py-->
+
+<h3>お知らせ・警告・エラー</h3>
+
+<div class="src" data-lang="python">
+QMessageBox.information(self, "お知らせ", "処理が完了しました。")
+QMessageBox.warning(self, "注意", "上書きされる可能性があります。")
+QMessageBox.critical(self, "エラー", "ファイルを開けませんでした。")
+</div>
+
+<p>
+第 1 引数は<strong>親ウィンドウ</strong>です。これを正しく渡すと、
+ダイアログが親の中央に出て、親の操作をブロックしてくれます。
+<code>None</code> でも動きますが、変な位置に出るので必ず渡してください。
+</p>
+
+<h3>はい / いいえ を聞く</h3>
+
+<div class="src" data-lang="python">
+answer = QMessageBox.question(
+    self,
+    "確認",
+    "保存していない変更があります。\n本当に閉じますか？",
+    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+    QMessageBox.StandardButton.No,      # 既定で選ばれているボタン
+)
+if answer == QMessageBox.StandardButton.Yes:
+    ...
+</div>
+
+<!--shot: ch08-messagebox | QMessageBox.question() で出した確認ダイアログ。既定のボタンを No にしてあるので、うっかり Enter を押しても閉じない。 -->
+
+<div class="note pitfall">
+  <span class="note-title">Qt6 では戻り値の比較を完全な名前で書く</span>
+  <div class="compare">
+    <div class="src" data-lang="python" data-file="Qt5 まで" data-cap="途中で切った書き方が許されていた">
+if answer == QMessageBox.Yes:
+    ...
+    </div>
+    <div class="src" data-lang="python" data-file="Qt6" data-cap="StandardButton まで書く">
+if answer == QMessageBox.StandardButton.Yes:
+    ...
+    </div>
+  </div>
+  <p>
+    Qt6 の PySide6 では列挙型が本物の Python の <code>Enum</code> になりました。
+    そのため「途中まで」の書き方は原則できません。
+    古い記事のコードで <code>AttributeError</code> が出たら、まずここを疑ってください。
+  </p>
+</div>
+
+<h3>ファイルを選ばせる</h3>
+
+<div class="src" data-lang="python">
+# 開く（1 つ）
+path, _ = QFileDialog.getOpenFileName(
+    self, "ファイルを選ぶ", "", "テキスト (*.txt *.md);;すべて (*)")
+
+# 開く（複数）
+paths, _ = QFileDialog.getOpenFileNames(self, "複数選ぶ")
+
+# 保存先を決める
+path, _ = QFileDialog.getSaveFileName(self, "名前を付けて保存", "無題.txt")
+
+# フォルダを選ぶ
+folder = QFileDialog.getExistingDirectory(self, "フォルダを選ぶ")
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">戻り値はタプル。受け取り方を間違えやすい</span>
+  <p>
+    <code>getOpenFileName()</code> が返すのは
+    <strong><code>(選ばれたパス, 選ばれたフィルタ)</code> のタプル</strong>です。
+    <code>path = QFileDialog.getOpenFileName(...)</code> と書くと、
+    <code>path</code> にタプルが入ってしまい、後で「ファイルが見つからない」と言われます。
+    かならず 2 つで受け取ってください（使わないほうは <code>_</code> で捨てます）。
+  </p>
+  <p>
+    また、キャンセルされたときは<strong>空文字列</strong>が返ります。
+    <code>if not path: return</code> のチェックを忘れずに。
+  </p>
+</div>
+
+<h3>文字列や数値を入力させる</h3>
+
+<div class="src" data-lang="python">
+text, ok = QInputDialog.getText(self, "入力", "お名前は？")
+num, ok  = QInputDialog.getInt(self, "入力", "個数", value=1, minValue=1, maxValue=99)
+item, ok = QInputDialog.getItem(self, "選択", "色は？", ["赤", "青", "緑"])
+</div>
+
+<p>
+こちらも戻り値はタプルで、2 つめの <code>ok</code> が「OK が押されたか」です。
+</p>
+
+<h2>自分でダイアログを作る</h2>
+
+<p>
+入力項目が 2 つ以上あるなら、<code>QDialog</code> を継承して自分で作ります。
+</p>
+
+<!--code: ch08_custom_dialog.py-->
+
+<!--shot: ch08-custom-dialog | 自作のプロフィール編集ダイアログ。［OK］［Cancel］の並び順は QDialogButtonBox が OS の作法に合わせて決めてくれる。 -->
+
+<p>覚えることは 3 つだけです。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>もの</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>QDialogButtonBox</code></td><td>OK / キャンセルを、OS ごとの正しい順序で並べてくれる</td></tr>
+    <tr><td><code>accept()</code> / <code>reject()</code></td><td>QDialog が最初から持っているスロット。閉じて結果を返す</td></tr>
+    <tr><td><code>exec()</code></td><td>ダイアログを開き、閉じられるまで待つ。戻り値で結果が分かる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">なぜ QDialogButtonBox を使うのか</span>
+  <p>
+    OK とキャンセルの並び順は OS によって逆です。
+    Windows は［OK］［キャンセル］、macOS は［キャンセル］［OK］。
+    自分で <code>QHBoxLayout</code> に並べると、どちらかの OS で不自然になります。
+    <code>QDialogButtonBox</code> はこれを自動で吸収してくれます。
+  </p>
+</div>
+
+<h2>モーダルとモードレス</h2>
+
+<p>
+ダイアログの開き方には 2 種類あります。この違いは重要です。
+</p>
+
+<!--figure: modal | exec() は閉じられるまでその行で待つ。show() はすぐ次の行に進み、ダイアログは開いたまま動き続ける。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>モーダル <code>exec()</code></th><th>モードレス <code>show()</code></th></tr></thead>
+  <tbody>
+    <tr><td>親ウィンドウの操作</td><td>できない</td><td>できる</td></tr>
+    <tr><td>コードの流れ</td><td>その行で止まって待つ</td><td>すぐ次の行へ進む</td></tr>
+    <tr><td>結果の受け取り</td><td>戻り値で分かる</td><td>シグナル（<code>accepted</code> など）で受け取る</td></tr>
+    <tr><td>向いている場面</td><td>確認、設定、必須の入力</td><td>検索パネル、ツールパレット</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="src" data-lang="python" data-cap="モードレスの場合。参照を残さないと第 7 章の「一瞬で消える」が起きる。">
+self.finder = FindDialog(self)      # ★ self に持たせる
+self.finder.accepted.connect(self.on_find_accepted)
+self.finder.show()
+</div>
+
+<h2>「閉じてよいか」を確認してから閉じる</h2>
+
+<p>
+未保存の変更があるときに、閉じる操作を引き止めたいことがあります。
+<code>closeEvent</code> を上書きして、<code>event.ignore()</code> を呼ぶと閉じるのを止められます。
+</p>
+
+<div class="src" data-lang="python">
+def closeEvent(self, event):
+    if not self.is_dirty:
+        super().closeEvent(event)
+        return
+
+    answer = QMessageBox.question(
+        self, "確認", "保存していない変更があります。閉じますか？",
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        QMessageBox.StandardButton.No)
+
+    if answer == QMessageBox.StandardButton.Yes:
+        super().closeEvent(event)
+    else:
+        event.ignore()      # 閉じるのを取り消す
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch08_custom_dialog.py</code> のダイアログに「メールアドレス」の欄を足す。</li>
+    <li>名前が空のまま OK が押されたら、<code>QMessageBox.warning()</code> を出して閉じないようにする（ヒント: <code>accept()</code> を上書きして、条件を満たすときだけ <code>super().accept()</code> を呼ぶ）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>確認・ファイル選択・簡単な入力は <code>QMessageBox</code> / <code>QFileDialog</code> / <code>QInputDialog</code> で 1 行。</li>
+    <li>第 1 引数の親ウィンドウは必ず渡す。位置とブロックの挙動が正しくなる。</li>
+    <li><code>QFileDialog</code> の戻り値は<strong>タプル</strong>。キャンセル時は空文字列。</li>
+    <li>自作ダイアログは <code>QDialog</code> ＋ <code>QDialogButtonBox</code> ＋ <code>accept()</code>/<code>reject()</code>。</li>
+    <li><code>exec()</code> は待つ、<code>show()</code> は待たない。モードレスは参照を残す。</li>
+  </ul>
+</div>

@@ -1,0 +1,243 @@
+<p>
+この章がこの教材でいちばん大事です。
+ここを乗り越えると、あとは部品を差し替えるだけで大抵の画面が作れるようになります。
+</p>
+
+<h2>Qt では座標を書かない</h2>
+
+<p>
+GUI 作りというと「ボタンを x=20, y=50 に置く」と考えたくなりますが、Qt ではそうしません。
+かわりに<strong>「縦に並べて」「横に並べて」と指示だけ出し、位置の計算は Qt に任せます</strong>。
+</p>
+
+<p>これには理由があります。</p>
+
+<ul>
+  <li>ウィンドウの大きさが変わっても、勝手に追従してくれる</li>
+  <li>文字の大きさや言語が変わっても崩れない（日本語と英語では文字幅が違う）</li>
+  <li>OS ごとにボタンの標準サイズが違っても、そのまま動く</li>
+</ul>
+
+<p>
+座標を直接指定する方法（<code>move()</code> や <code>setGeometry()</code>）もありますが、
+上の 3 つがすべて自分の責任になります。使わないでください。
+</p>
+
+<h2>縦に並べる — QVBoxLayout</h2>
+
+<!--code: ch04_vbox.py-->
+
+<!--shot: ch04-vbox | 3 つのボタンが縦に等分に並ぶ。ウィンドウを縦に伸ばすと、3 つとも一緒に伸びる。 -->
+
+<p>
+<code>QVBoxLayout(window)</code> のように<strong>引数にウィジェットを渡すと、その場でそのウィジェットに適用されます</strong>。
+これが一番短い書き方です。
+</p>
+
+<div class="note">
+  <span class="note-title">もうひとつの書き方</span>
+  <p>
+    引数なしで作ってから、後で貼り付けることもできます。どちらでも同じです。
+  </p>
+  <div class="src" data-lang="python">
+layout = QVBoxLayout()
+layout.addWidget(QPushButton("上"))
+window.setLayout(layout)      # ← 後から貼る
+  </div>
+</div>
+
+<h2>横に並べる — QHBoxLayout</h2>
+
+<!--code: ch04_hbox.py-->
+
+<!--shot: ch04-hbox | 名前が V から H に変わっただけで、並ぶ向きが横になる。 -->
+
+<h2>余白を配る — addStretch()</h2>
+
+<p>
+ここまでのサンプルでは、部品がウィンドウいっぱいに引き伸ばされていました。
+実際の画面では「ボタンは右下にまとめたい」ことのほうが多いはずです。
+</p>
+
+<p>
+そこで使うのが <code>addStretch()</code> です。
+これは<strong>「中身のない、伸びるだけの部品」を置く</strong>命令だと考えてください。
+バネを挟むイメージです。
+</p>
+
+<!--figure: stretch | レイアウトは、まず各部品が必要とする幅を確保し、残った余りを stretch の比で分配する。addStretch() は「余りを全部吸う見えない部品」を置くのと同じこと。 -->
+
+<!--code: ch04_stretch.py-->
+
+<!--shot: ch04-stretch | 同じ 2 つのボタンでも、バネをどこに入れるかで配置が変わる。①は伸ばされ、②は右寄せ、③は中央寄せ。 -->
+
+<div class="note">
+  <span class="note-title">これがダイアログのボタン配置の定番</span>
+  <p>
+    ②の「先頭に <code>addStretch()</code>、そのあとボタン」は、
+    OK / キャンセルを右下にまとめる標準的な書き方です。覚えてしまってください。
+  </p>
+</div>
+
+<h2>伸び縮みの配分をコントロールする</h2>
+
+<p>
+「入力欄は広く、ボタンは必要な分だけ」のように、伸び方に差をつけたいことがあります。
+方法は 2 つです。
+</p>
+
+<h3>方法 1: stretch 係数</h3>
+
+<p>
+<code>addWidget()</code> の第 2 引数に数字を渡すと、<strong>余りを分ける比率</strong>になります。
+</p>
+
+<div class="src" data-lang="python">
+row.addWidget(edit, 1)      # 余りをもらう
+row.addWidget(button)       # 省略 = 0 = 余りをもらわない
+</div>
+
+<h3>方法 2: サイズポリシー</h3>
+
+<p>
+部品自身に「伸びたがり度」を設定する方法です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ポリシー</th><th>ふるまい</th></tr></thead>
+  <tbody>
+    <tr><td><code>Fixed</code></td><td>ちょうどよいサイズから変わらない</td></tr>
+    <tr><td><code>Preferred</code></td><td>基本はちょうどよいサイズ。既定値</td></tr>
+    <tr><td><code>Expanding</code></td><td>余っている空間を積極的に吸う</td></tr>
+    <tr><td><code>Minimum</code></td><td>最小サイズは守り、必要なら伸びる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!--code: ch04_sizepolicy.py-->
+
+<!--shot: ch04-sizepolicy | ①は 1:2:1 の比で幅が配られている。②では Fixed のボタンは文字ぶんの幅のまま、Expanding のボタンだけが余りを吸っている。③は余白を広げた例。 -->
+
+<h2>余白の調整 — margin と spacing</h2>
+
+<p>
+「なんとなく窮屈」「詰まって見える」は、たいてい余白で解決します。
+Qt の余白は 2 種類しかありません。
+</p>
+
+<!--figure: box-model | contentsMargins はレイアウト全体の外周の余白、spacing は部品どうしの隙間。この 2 つだけ覚えればよい。 -->
+
+<div class="src" data-lang="python">
+layout.setContentsMargins(24, 16, 24, 16)   # 左, 上, 右, 下
+layout.setSpacing(12)                       # 部品どうしの隙間
+</div>
+
+<div class="note">
+  <span class="note-title">余白をゼロにしたいとき</span>
+  <p>
+    レイアウトを入れ子にすると、内側のレイアウトにも既定の余白が入って
+    二重に空いてしまうことがあります。
+    内側は <code>setContentsMargins(0, 0, 0, 0)</code> にしておくとすっきりします。
+  </p>
+</div>
+
+<h2>格子に並べる — QGridLayout</h2>
+
+<p>
+電卓のキーパッドのように、行と列で並べたいときに使います。
+</p>
+
+<!--code: ch04_grid.py-->
+
+<!--shot: ch04-grid | 表示欄は 4 列ぶんを占め、その下に 4×4 のキーが並ぶ。 -->
+
+<p>
+<code>addWidget(部品, 行, 列, 行数, 列数)</code> の後ろ 2 つを省くと 1×1 になります。
+行・列は <strong>0 から数えます</strong>。
+</p>
+
+<h2>入力フォーム専用 — QFormLayout</h2>
+
+<p>
+「ラベル : 入力欄」がずらりと並ぶ画面は、これを使うのがいちばん短くて確実です。
+</p>
+
+<!--code: ch04_form.py-->
+
+<!--shot: ch04-form | ラベルの右端がそろい、入力欄の左端もそろう。グリッドで自力で組むより短く書ける。 -->
+
+<div class="note deep">
+  <span class="note-title">QFormLayout が優れている点</span>
+  <p>
+    ラベルを左に置くか上に置くかは、実は OS ごとの作法が違います。
+    <code>QFormLayout</code> はそれを自動で判断してくれます。
+    また、ウィンドウが狭いときにラベルを上に折り返す機能も持っています。
+    自力でグリッドを組むと、これらは全部自分の担当になります。
+  </p>
+</div>
+
+<h2>入れ子にする — 実際の画面の作り方</h2>
+
+<p>
+現実の画面は、1 種類のレイアウトだけでは組めません。
+<strong>「縦に積んだものの中に、横並びの列がある」</strong>という構造を作ります。
+</p>
+
+<!--figure: layout-tree | 左の見た目と、右のレイアウトの木は 1 対 1 で対応する。画面を作るときは、まずこの木を頭の中に描いてからコードにする。 -->
+
+<p>
+レイアウトの中にレイアウトを入れるときは、<code>addWidget()</code> ではなく
+<strong><code>addLayout()</code></strong> を使います。
+</p>
+
+<!--code: ch04_nested.py-->
+
+<!--shot: ch04-nested | 入力欄と［追加］が横並びになり、下部のボタンは右に寄っている。リストが残りの高さを全部使っている。 -->
+
+<div class="note pitfall">
+  <span class="note-title">addWidget と addLayout を取り違えると静かに失敗する</span>
+  <p>
+    レイアウトに対して <code>addWidget()</code> を呼ぶとエラーになりますが、
+    もっと厄介なのは<strong>何も追加し忘れたとき</strong>です。
+    作ったレイアウトを親に追加し忘れると、
+    エラーも警告も出ないまま、その部分だけ画面に現れません。
+    「作ったのに出てこない」ときは、まず <code>addLayout()</code> の呼び忘れを疑ってください。
+  </p>
+</div>
+
+<h2>画面を作るときの手順</h2>
+
+<p>いきなりコードを書き始めず、次の順で考えると迷いません。</p>
+
+<ol>
+  <li><strong>紙に画面を描く。</strong>そして大きなかたまりで横線・縦線を引いてみる</li>
+  <li><strong>いちばん外側が縦か横かを決める。</strong>多くの画面は縦（<code>QVBoxLayout</code>）</li>
+  <li><strong>各段の中を、さらに縦・横で切り分ける。</strong>切れなくなるまで繰り返す</li>
+  <li><strong>「伸びてほしいのはどれか」を決める。</strong>そこに stretch を与える</li>
+  <li>最後にコードに落とす</li>
+</ol>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>次の画面を、レイアウトだけで組んでみてください（中身は空のボタンやラベルでかまいません）。</p>
+  <ul>
+    <li>上部に検索欄と［検索］ボタンが横並び</li>
+    <li>中央に大きな一覧（<code>QListWidget</code>）。ウィンドウを広げるとここだけが伸びる</li>
+    <li>下部に［削除］［閉じる］が<strong>右寄せ</strong>で並ぶ</li>
+  </ul>
+  <p>
+    答え合わせは <code>ch04_nested.py</code> とほぼ同じ形になれば正解です。
+  </p>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>座標は書かない。<code>QVBoxLayout</code> / <code>QHBoxLayout</code> / <code>QGridLayout</code> / <code>QFormLayout</code> の 4 つで組み立てる。</li>
+    <li><code>addStretch()</code> は「伸びるだけの見えない部品」。右寄せ・中央寄せはこれで作る。</li>
+    <li>伸び方の配分は <code>addWidget(w, 係数)</code> か <code>setSizePolicy()</code> で決める。</li>
+    <li>余白は <code>setContentsMargins()</code>（外周）と <code>setSpacing()</code>（部品間）の 2 つだけ。</li>
+    <li>レイアウトの中にレイアウトを入れるときは <code>addLayout()</code>。追加し忘れると無言で消える。</li>
+  </ul>
+</div>

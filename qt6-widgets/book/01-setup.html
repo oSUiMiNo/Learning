@@ -1,0 +1,166 @@
+<p>
+Qt というと「インストーラを落として数 GB のダウンロードを待つ」印象があるかもしれません。
+PySide6 の場合は違います。必要なものはすべて 1 つのパッケージに入っていて、
+<strong><code>pip install</code> の 1 行で終わります</strong>。
+</p>
+
+<h2>必要なもの</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>要るもの</th><th>条件</th></tr></thead>
+  <tbody>
+    <tr><td>Python</td><td>3.9 以上（3.11 以上を推奨）</td></tr>
+    <tr><td>OS</td><td>Windows / macOS / Linux のどれでも</td></tr>
+    <tr><td>エディタ</td><td>VS Code など、好きなもので</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+C++ のコンパイラも、Qt 本体のインストーラも要りません。
+Qt のライブラリ本体は PySide6 のパッケージに同梱されています。
+</p>
+
+<h2>Python が入っているか確かめる</h2>
+
+<p>ターミナル（Windows なら PowerShell やコマンドプロンプト）で確認します。</p>
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+python --version
+</div>
+
+<p>
+<code>Python 3.11.x</code> のように出れば大丈夫です。
+macOS や Linux では <code>python3</code> と打つ必要があるかもしれません。
+「見つかりません」と言われたら、先に <a href="https://www.python.org/downloads/">python.org</a> から入れてください。
+</p>
+
+<h2>作業用のフォルダと仮想環境を作る</h2>
+
+<p>
+いきなり <code>pip install</code> しても動きますが、
+<strong>仮想環境</strong>を作っておくと、プロジェクトごとにパッケージを独立させられます。
+後で「別のプロジェクトのために入れたものが干渉した」という事故を防げます。
+</p>
+
+<div class="src" data-lang="bash" data-file="ターミナル（macOS / Linux）">
+mkdir qt-practice
+cd qt-practice
+python3 -m venv .venv
+source .venv/bin/activate
+</div>
+
+<div class="src" data-lang="bash" data-file="ターミナル（Windows PowerShell）">
+mkdir qt-practice
+cd qt-practice
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+</div>
+
+<p>
+うまくいくと、プロンプトの先頭に <code>(.venv)</code> と出ます。これが「仮想環境の中にいる」印です。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">Windows で「スクリプトの実行が無効」と言われたら</span>
+  <p>
+    PowerShell の既定の設定で止められています。
+    PowerShell で次を 1 回だけ実行すると通るようになります。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+  </div>
+</div>
+
+<h2>PySide6 を入れる</h2>
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+pip install pyside6
+</div>
+
+<p>
+これだけです。100 MB ほどのダウンロードがあるので、少し待ちます。
+Qt のライブラリ本体も、この後で使う Qt Designer も、全部これに含まれています。
+</p>
+
+<div class="note">
+  <span class="note-title">バージョンを固定したいとき</span>
+  <p>
+    この教材とまったく同じ環境にしたい場合は、バージョンを明示して入れます。
+  </p>
+  <div class="src" data-lang="bash" data-file="ターミナル">
+pip install pyside6==6.11.1
+  </div>
+</div>
+
+<h2>ちゃんと入ったか、画面を出して確かめる</h2>
+
+<p>
+<code>import</code> が通るだけでは不十分です。実際にウィンドウが出るところまで確認しましょう。
+次のファイルを <code>ch01_verify.py</code> という名前で保存して実行してください。
+</p>
+
+<!--code: ch01_verify.py-->
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+python ch01_verify.py
+</div>
+
+<!--shot: ch01-verify | 実行するとこのウィンドウが出る。ここに出るバージョンが、このページ上部のバッジと一致していれば、教材とまったく同じ環境で学べる。 -->
+
+<p>
+このウィンドウが出れば環境構築は完了です。ウィンドウを閉じればプログラムも終わります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">Linux で「Could not load the Qt platform plugin "xcb"」と出たら</span>
+  <p>
+    Qt が画面を描くために必要な OS 側のライブラリが足りていません。
+    Ubuntu / Debian 系なら次で入ります。
+  </p>
+  <div class="src" data-lang="bash" data-file="ターミナル">
+sudo apt install -y libegl1 libxkbcommon-x11-0 libxcb-cursor0 \
+  libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+  libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
+  </div>
+  <p>Windows と macOS ではこの問題は起きません。</p>
+</div>
+
+<h2>ついてくる道具たち</h2>
+
+<p>
+<code>pip install pyside6</code> をすると、コマンドもいくつか使えるようになります。
+この教材で登場するのは上の 2 つです。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コマンド</th><th>何をするか</th><th>登場する章</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyside6-designer</code></td><td>画面をマウスで作るツールを起動する</td><td>第 9 章</td></tr>
+    <tr><td><code>pyside6-uic</code></td><td>Designer で作った <code>.ui</code> を Python に変換する</td><td>第 9 章</td></tr>
+    <tr><td><code>pyside6-rcc</code></td><td>画像などをプログラムに埋め込む形式に変換する</td><td>—</td></tr>
+    <tr><td><code>pyside6-lupdate</code></td><td>翻訳用の文言を抜き出す</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>
+    <code>ch01_verify.py</code> の <code>QLabel</code> の文字を好きなものに書き換えて、
+    もう一度実行してみてください。保存して <code>python ch01_verify.py</code> を打ち直すだけです。
+    「直す → 実行する」の往復が、これから何百回も繰り返す基本動作になります。
+  </p>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>準備は <code>pip install pyside6</code> の 1 行。Qt 本体も Designer も同梱されている。</li>
+    <li>仮想環境（<code>python -m venv .venv</code>）を作っておくと、後々の事故を防げる。</li>
+    <li>確認は <code>import</code> だけで済ませず、実際にウィンドウを出すところまでやる。</li>
+    <li>Linux で <code>xcb</code> のエラーが出たら、OS 側のライブラリを追加で入れる。</li>
+  </ul>
+</div>

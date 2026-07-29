@@ -1,0 +1,39 @@
+<svg viewBox="0 0 720 330" role="img" aria-label="stretch 係数の効き方。余った幅が係数の比で配られる様子。">
+  <rect x="1" y="1" width="718" height="328" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">レイアウトは「まず必要な分を配り、余りを stretch の比で分ける」</text>
+
+  <!-- step 1 -->
+  <text x="30" y="64" class="d-title">① それぞれが「最低これだけは要る」幅を主張する</text>
+  <rect x="30" y="76" width="660" height="38" rx="6" class="d-dash"/>
+  <rect x="36" y="82" width="110" height="26" rx="4" class="d-box"/>
+  <text x="91" y="100" text-anchor="middle" class="d-code">ボタンA</text>
+  <rect x="150" y="82" width="110" height="26" rx="4" class="d-box"/>
+  <text x="205" y="100" text-anchor="middle" class="d-code">ボタンB</text>
+  <rect x="264" y="82" width="110" height="26" rx="4" class="d-box"/>
+  <text x="319" y="100" text-anchor="middle" class="d-code">ボタンC</text>
+  <text x="530" y="100" text-anchor="middle" class="d-mute">← ここが余り（あまった幅）</text>
+
+  <!-- step 2 -->
+  <text x="30" y="152" class="d-title">② 余りを stretch の比で分ける — addWidget(w, 1) / (w, 2) / (w, 1)</text>
+
+  <rect x="30" y="164" width="660" height="44" rx="6" class="d-dash"/>
+  <rect x="36" y="170" width="171" height="32" rx="4" class="d-box"/>
+  <text x="121" y="191" text-anchor="middle" class="d-code">ボタンA（1）</text>
+  <rect x="211" y="170" width="242" height="32" rx="4" class="d-accent"/>
+  <text x="332" y="191" text-anchor="middle" class="d-code">ボタンB（2 ＝ 2倍もらう）</text>
+  <rect x="457" y="170" width="171" height="32" rx="4" class="d-box"/>
+  <text x="542" y="191" text-anchor="middle" class="d-code">ボタンC（1）</text>
+  <rect x="632" y="170" width="52" height="32" rx="4" class="d-box"/>
+  <text x="658" y="191" text-anchor="middle" class="d-mute">…</text>
+
+  <!-- step 3 -->
+  <text x="30" y="248" class="d-title">③ addStretch() は「見えない、伸びるだけの部品」を置くこと</text>
+  <rect x="30" y="260" width="660" height="44" rx="6" class="d-dash"/>
+  <rect x="36" y="266" width="380" height="32" rx="4" class="d-tip"/>
+  <text x="226" y="287" text-anchor="middle" class="d-code">addStretch() ← 中身のない伸縮スペース</text>
+  <rect x="424" y="266" width="120" height="32" rx="4" class="d-box"/>
+  <text x="484" y="287" text-anchor="middle" class="d-code">OK</text>
+  <rect x="552" y="266" width="132" height="32" rx="4" class="d-box"/>
+  <text x="618" y="287" text-anchor="middle" class="d-code">キャンセル</text>
+</svg>

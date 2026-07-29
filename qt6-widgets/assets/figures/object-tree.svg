@@ -1,0 +1,51 @@
+<svg viewBox="0 0 720 360" role="img" aria-label="Qt のオブジェクトツリーと寿命。親が破棄されると子もまとめて破棄される。">
+  <rect x="1" y="1" width="718" height="358" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">親を持たせると、後片付けを親に任せられる</text>
+
+  <!-- tree -->
+  <rect x="30" y="48" width="330" height="290" rx="10" class="d-dash"/>
+
+  <rect x="110" y="66" width="170" height="38" rx="8" class="d-accent"/>
+  <text x="195" y="90" text-anchor="middle" class="d-code">QWidget（親）</text>
+
+  <path d="M195 104 v26 h-70 v14" class="d-line"/>
+  <path d="M195 104 v26 h70 v14" class="d-line"/>
+  <path d="M125 144 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+  <path d="M265 144 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+
+  <rect x="52" y="144" width="146" height="36" rx="8" class="d-box"/>
+  <text x="125" y="167" text-anchor="middle" class="d-code">QLabel</text>
+
+  <rect x="200" y="144" width="140" height="36" rx="8" class="d-box"/>
+  <text x="270" y="167" text-anchor="middle" class="d-code">QWidget</text>
+
+  <path d="M270 180 v26 h-38 v14" class="d-line"/>
+  <path d="M270 180 v26 h44 v14" class="d-line"/>
+  <path d="M232 220 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+  <path d="M314 220 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+
+  <rect x="176" y="220" width="112" height="36" rx="8" class="d-box"/>
+  <text x="232" y="243" text-anchor="middle" class="d-code">QLineEdit</text>
+
+  <rect x="292" y="220" width="46" height="36" rx="8" class="d-box"/>
+  <text x="315" y="243" text-anchor="middle" class="d-code">…</text>
+
+  <text x="195" y="296" text-anchor="middle" class="d-mute">親が破棄されると</text>
+  <text x="195" y="318" text-anchor="middle" class="d-mute">この木の全員がまとめて破棄される</text>
+
+  <!-- rules -->
+  <rect x="384" y="48" width="306" height="132" rx="10" class="d-tip"/>
+  <text x="404" y="74" class="d-title">親が付くのはこの 2 つのとき</text>
+  <text x="404" y="100" class="d-code">QLabel("文字", parent=window)</text>
+  <text x="404" y="122" class="d-mute">→ 直接指定する</text>
+  <text x="404" y="146" class="d-code">layout.addWidget(label)</text>
+  <text x="404" y="168" class="d-mute">→ レイアウトが自動で親を設定する</text>
+
+  <rect x="384" y="196" width="306" height="142" rx="10" class="d-warn"/>
+  <text x="404" y="222" class="d-head-warn">⚠ Python 側の落とし穴</text>
+  <text x="404" y="248" class="d-mute">親がいないウィジェットは、Python の変数が</text>
+  <text x="404" y="268" class="d-mute">なくなった時点で回収され、画面から消える。</text>
+  <text x="404" y="296" class="d-mute">関数の中で作った別ウィンドウが一瞬で</text>
+  <text x="404" y="316" class="d-mute">消えるのは、ほぼこれが原因。</text>
+</svg>

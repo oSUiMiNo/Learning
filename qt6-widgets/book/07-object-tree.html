@@ -1,0 +1,172 @@
+<p>
+PySide6 を触り始めた人が、ほぼ必ず一度は遭遇する現象があります。
+</p>
+
+<blockquote>
+  ボタンを押したら別ウィンドウが開くようにした。<br>
+  なのに、<strong>開いた瞬間に消える。</strong>エラーは何も出ない。
+</blockquote>
+
+<p>
+これはバグではなく、Qt（C++）と Python でオブジェクトの寿命の考え方が違うことから起きます。
+この章でその正体を押さえておくと、あとで無駄に悩まずに済みます。
+</p>
+
+<h2>Qt 側のルール: 親が子の面倒を見る</h2>
+
+<p>
+Qt では、ウィジェットは<strong>親子関係の木</strong>を作ります。
+そして<strong>親が破棄されると、その子孫もまとめて破棄されます</strong>。
+C++ では自分でメモリを解放しなければならないので、
+「親に任せておけば全部片付く」というこの仕組みはとても便利です。
+</p>
+
+<!--figure: object-tree | 左が親子の木。右が、親が設定される 2 つのタイミングと、Python 側で起きる落とし穴。 -->
+
+<p>親が設定されるのは、次の 2 つのときです。</p>
+
+<div class="src" data-lang="python">
+label = QLabel("文字", parent=window)   # ① 明示的に指定する
+layout.addWidget(label)                 # ② レイアウトに入れると自動で設定される
+</div>
+
+<!--code: ch07_parent.py-->
+
+<div class="note">
+  <span class="note-title">親がいる ＝ 同じウィンドウの中に描かれる</span>
+  <p>
+    第 2 章で「親を持たないウィジェットはそれ自体がウィンドウになる」と書きました。
+    裏返すと、<strong>親を持たせれば、その親の内側に描かれる</strong>ということです。
+    <code>QLabel</code> が単体だとウィンドウになり、
+    レイアウトに入れると部品になるのは、この違いによるものです。
+  </p>
+</div>
+
+<h2>Python 側のルール: 誰も参照しなくなったら消える</h2>
+
+<p>
+一方 Python は、変数が誰からも参照されなくなったオブジェクトを自動的に回収します。
+PySide6 では、<strong>Python 側のオブジェクトが回収されると、
+その裏にある C++ 側のウィジェットも一緒に破棄されます</strong>。
+</p>
+
+<p>
+だから、次のコードは「開いた瞬間に消える」のです。
+</p>
+
+<div class="src" data-lang="python" data-cap="✗ sub はこの関数を抜けた瞬間に誰からも参照されなくなる">
+def open_window(self):
+    sub = QWidget()
+    sub.setWindowTitle("すぐ消える")
+    sub.show()
+    # ← ここで関数が終わる。sub の参照が消える。ウィンドウも消える。
+</div>
+
+<p>直し方は 2 つあります。どちらでもかまいません。</p>
+
+<div class="src" data-lang="python" data-cap="○ その1: self に持たせて、参照を残す">
+def open_window(self):
+    self.sub = QWidget()
+    self.sub.setWindowTitle("ちゃんと残る")
+    self.sub.show()
+</div>
+
+<div class="src" data-lang="python" data-cap="○ その2: 親を指定する。親が参照を持つので消えない">
+def open_window(self):
+    sub = QWidget(self)                       # 親を self にする
+    sub.setWindowFlag(Qt.WindowType.Window)   # それでも別ウィンドウとして出す
+    sub.show()
+</div>
+
+<!--code: ch07_vanishing_window.py-->
+
+<div class="note pitfall">
+  <span class="note-title">この症状に当てはまったら、まず参照を疑う</span>
+  <ul>
+    <li>ウィンドウやダイアログが一瞬で消える</li>
+    <li><code>QTimer</code> が一度も発火しない</li>
+    <li>アニメーションが始まらない</li>
+    <li><code>QTranslator</code> を入れたのに翻訳されない</li>
+  </ul>
+  <p>
+    どれも「Python 側で変数を残していないので回収された」が原因の定番です。
+    <code>self.</code> を付けるか、親を渡すかで直ります。
+  </p>
+</div>
+
+<h2>逆の事故: すでに破棄されたものを触る</h2>
+
+<p>
+参照を残すのとは反対に、<strong>C++ 側だけが先に破棄されている</strong>こともあります。
+このとき Python 側の変数はまだ生きているので、触ると例外になります。
+</p>
+
+<div class="src" data-lang="python">
+RuntimeError: Internal C++ object (QLabel) already deleted.
+</div>
+
+<p>
+親が破棄されたのに、子を指す Python の変数を持ち続けていた、という状況です。
+自分で <code>deleteLater()</code> を呼んだ後に触ってしまった場合にも起きます。
+</p>
+
+<div class="note deep">
+  <span class="note-title">ウィジェットを自分で消したいとき</span>
+  <p>
+    <code>del widget</code> ではなく <code>widget.deleteLater()</code> を使います。
+    これは「イベントループが一段落したら破棄してください」という予約で、
+    シグナル処理の途中で自分自身を消してしまう事故を防げます。
+  </p>
+  <div class="src" data-lang="python">
+old_widget.setParent(None)   # レイアウトから外す
+old_widget.deleteLater()     # 安全なタイミングで破棄してもらう
+  </div>
+</div>
+
+<h2>まとめると</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>状況</th><th>C++ 側</th><th>Python 側</th><th>結果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>親あり・変数なし</td><td>親が保持</td><td>参照なし</td><td>○ 生き続ける</td>
+    </tr>
+    <tr>
+      <td>親なし・変数あり（<code>self.x</code>）</td><td>保持者なし</td><td>参照あり</td><td>○ 生き続ける</td>
+    </tr>
+    <tr>
+      <td>親なし・変数なし（ローカル変数）</td><td>保持者なし</td><td>参照なし</td><td>✗ 消える</td>
+    </tr>
+    <tr>
+      <td>親が破棄済み・変数あり</td><td>破棄済み</td><td>参照あり</td><td>✗ 触ると <code>RuntimeError</code></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+覚えることはひとつだけです。
+<strong>「親に持たせるか、<code>self</code> に持たせるか、どちらかは必ずやる」。</strong>
+</p>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>
+    <code>ch07_vanishing_window.py</code> を実行し、
+    ［✗ 消えてしまう開き方］と［○ ちゃんと残る開き方］を押し比べてください。
+    エラーが 1 行も出ないことを、自分の目で確かめておくのが大事です。
+    これが「原因が分からない」の正体です。
+  </p>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>Qt では親が子を保持し、親の破棄とともに子も破棄される。</li>
+    <li>PySide6 では、Python 側の参照が消えると C++ 側のウィジェットも消える。</li>
+    <li>ウィンドウが一瞬で消えるのは、ほぼ「ローカル変数のまま放置した」が原因。</li>
+    <li>対処は <code>self.</code> を付けるか、親を渡すか。</li>
+    <li>手動で消すときは <code>del</code> ではなく <code>deleteLater()</code>。</li>
+  </ul>
+</div>

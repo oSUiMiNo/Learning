@@ -1,0 +1,50 @@
+<svg viewBox="0 0 720 320" role="img" aria-label="ToDo アプリの構成。画面、モデル、保存の 3 つに役割を分ける。">
+  <rect x="1" y="1" width="718" height="318" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">作る前に、役割を 3 つに分けておく</text>
+
+  <!-- window -->
+  <rect x="30" y="52" width="200" height="180" rx="10" class="d-tip"/>
+  <text x="130" y="78" text-anchor="middle" class="d-title">TodoWindow</text>
+  <text x="130" y="98" text-anchor="middle" class="d-mute">QMainWindow</text>
+  <text x="46" y="126" class="d-code">・入力欄とボタン</text>
+  <text x="46" y="148" class="d-code">・QListView</text>
+  <text x="46" y="170" class="d-code">・メニュー / ツールバー</text>
+  <text x="46" y="192" class="d-code">・ステータスバー</text>
+  <text x="46" y="216" class="d-mute">画面の組み立てだけ担当</text>
+
+  <!-- model -->
+  <rect x="262" y="52" width="200" height="180" rx="10" class="d-accent"/>
+  <text x="362" y="78" text-anchor="middle" class="d-title">TodoModel</text>
+  <text x="362" y="98" text-anchor="middle" class="d-mute">QAbstractListModel</text>
+  <text x="278" y="126" class="d-code">・rowCount()</text>
+  <text x="278" y="148" class="d-code">・data()</text>
+  <text x="278" y="170" class="d-code">・setData()</text>
+  <text x="278" y="192" class="d-code">・add() / remove_done()</text>
+  <text x="278" y="216" class="d-mute">データの出し入れだけ担当</text>
+
+  <!-- storage -->
+  <rect x="494" y="52" width="196" height="180" rx="10" class="d-box"/>
+  <text x="592" y="78" text-anchor="middle" class="d-title">保存</text>
+  <text x="592" y="98" text-anchor="middle" class="d-mute">JSON ファイル</text>
+  <text x="510" y="126" class="d-code">・load()</text>
+  <text x="510" y="148" class="d-code">・save()</text>
+  <text x="510" y="176" class="d-mute">置き場所は Qt に聞く</text>
+  <text x="510" y="196" class="d-code">QStandardPaths</text>
+  <text x="510" y="218" class="d-mute">起動時に読み、終了時に書く</text>
+
+  <path d="M230 118 h32" class="d-flow"/>
+  <path d="M262 118 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="246" y="110" text-anchor="middle" class="d-mark">操作</text>
+
+  <path d="M262 168 h-32" class="d-flow"/>
+  <path d="M230 168 l9 -5 v10 z" class="d-arrowhead"/>
+  <text x="246" y="186" text-anchor="middle" class="d-mark">通知</text>
+
+  <path d="M462 142 h32" class="d-flow"/>
+  <path d="M494 142 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="30" y="252" width="660" height="52" rx="10" class="d-dash"/>
+  <text x="52" y="278" class="d-mute">画面はデータの持ち方を知らず、モデルは画面の見た目を知らない。</text>
+  <text x="52" y="296" class="d-mute">この境目をはっきりさせておくと、後から表を増やしても壊れない。</text>
+</svg>

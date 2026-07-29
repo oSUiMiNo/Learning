@@ -1,0 +1,44 @@
+<svg viewBox="0 0 720 290" role="img" aria-label="レイアウトの余白。contentsMargins が外周の余白、spacing が部品どうしの間隔。">
+  <rect x="1" y="1" width="718" height="288" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">余白は 2 種類しかない</text>
+
+  <!-- outer widget -->
+  <rect x="30" y="48" width="420" height="212" rx="10" class="d-box"/>
+  <text x="42" y="68" class="d-mute">ウィジェット</text>
+
+  <!-- margins area -->
+  <rect x="58" y="80" width="364" height="160" rx="6" class="d-dash"/>
+
+  <!-- items -->
+  <rect x="76" y="98" width="328" height="34" rx="5" class="d-accent"/>
+  <text x="240" y="120" text-anchor="middle" class="d-code">部品 1</text>
+  <rect x="76" y="152" width="328" height="34" rx="5" class="d-accent"/>
+  <text x="240" y="174" text-anchor="middle" class="d-code">部品 2</text>
+  <rect x="76" y="206" width="328" height="18" rx="5" class="d-accent"/>
+
+  <!-- 外周の余白を指す -->
+  <path d="M34 116 h38" class="d-flow-warn"/>
+  <path d="M72 116 l-9 -4 v8 z" class="d-arrowhead-warn"/>
+  <path d="M66 116 l9 -4 v8 z" class="d-arrowhead-warn"/>
+  <path d="M446 116 L470 100" class="d-flow-warn"/>
+  <path d="M470 100 l-9 2 l4 6 z" class="d-arrowhead-warn"/>
+
+  <!-- 部品どうしの間隔を指す -->
+  <path d="M240 134 v16" class="d-flow"/>
+  <path d="M240 150 l-4 -9 h8 z" class="d-arrowhead"/>
+  <path d="M240 134 l-4 9 h8 z" class="d-arrowhead"/>
+  <path d="M404 142 L470 190" class="d-flow"/>
+  <path d="M470 190 l-8 -3 l-1 7 z" class="d-arrowhead"/>
+
+  <!-- legend -->
+  <rect x="480" y="60" width="210" height="82" rx="8" class="d-warn"/>
+  <text x="498" y="86" class="d-head-warn">外周の余白</text>
+  <text x="498" y="108" class="d-code">setContentsMargins(</text>
+  <text x="498" y="126" class="d-code">　左, 上, 右, 下)</text>
+
+  <rect x="480" y="158" width="210" height="82" rx="8" class="d-accent"/>
+  <text x="498" y="184" class="d-head-accent">部品どうしの間隔</text>
+  <text x="498" y="206" class="d-code">setSpacing(px)</text>
+  <text x="498" y="228" class="d-mute">すべての隙間に一律で効く</text>
+</svg>

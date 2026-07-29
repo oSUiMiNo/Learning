@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 教材のビルド作業用（生成物であり、成果物ではない）
+qt6-widgets/tools/.preview/
+qt6-widgets/tools/.shots-tmp/

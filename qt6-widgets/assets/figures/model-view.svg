@@ -1,0 +1,52 @@
+<svg viewBox="0 0 720 340" role="img" aria-label="モデル・ビュー・デリゲートの関係。ビューがモデルに問い合わせ、デリゲートが1つ1つの升目を描く。">
+  <rect x="1" y="1" width="718" height="338" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">「データ」と「見せ方」を分ける — それだけの仕組み</text>
+
+  <!-- data -->
+  <rect x="30" y="52" width="150" height="110" rx="10" class="d-box"/>
+  <text x="105" y="78" text-anchor="middle" class="d-title">あなたのデータ</text>
+  <text x="105" y="102" text-anchor="middle" class="d-code">list / dict</text>
+  <text x="105" y="122" text-anchor="middle" class="d-code">DB / CSV</text>
+  <text x="105" y="146" text-anchor="middle" class="d-mute">Qt とは無関係</text>
+
+  <path d="M180 107 h42" class="d-flow"/>
+  <path d="M222 107 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <!-- model -->
+  <rect x="222" y="52" width="176" height="110" rx="10" class="d-accent"/>
+  <text x="310" y="78" text-anchor="middle" class="d-title">モデル</text>
+  <text x="310" y="98" text-anchor="middle" class="d-mute">QAbstractTableModel</text>
+  <text x="310" y="122" text-anchor="middle" class="d-mute">「何行？」「何列？」</text>
+  <text x="310" y="142" text-anchor="middle" class="d-mute">「その升目は何？」に答える</text>
+
+  <path d="M398 92 h60" class="d-flow"/>
+  <path d="M458 92 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="428" y="82" text-anchor="middle" class="d-mark">答える</text>
+
+  <path d="M458 128 h-60" class="d-flow"/>
+  <path d="M398 128 l9 -5 v10 z" class="d-arrowhead"/>
+  <text x="428" y="146" text-anchor="middle" class="d-mark">尋ねる</text>
+
+  <!-- view -->
+  <rect x="458" y="52" width="232" height="110" rx="10" class="d-tip"/>
+  <text x="574" y="78" text-anchor="middle" class="d-title">ビュー</text>
+  <text x="574" y="98" text-anchor="middle" class="d-mute">QTableView / QListView</text>
+  <text x="574" y="124" text-anchor="middle" class="d-mute">スクロール・選択・並べ替えは</text>
+  <text x="574" y="144" text-anchor="middle" class="d-mute">最初から付いてくる</text>
+
+  <!-- index -->
+  <rect x="30" y="188" width="320" height="126" rx="10" class="d-deep"/>
+  <text x="50" y="214" class="d-title">QModelIndex ＝ 升目の住所</text>
+  <text x="50" y="240" class="d-code">index.row()　　… 何行目か</text>
+  <text x="50" y="262" class="d-code">index.column() … 何列目か</text>
+  <text x="50" y="292" class="d-mute">data() には必ずこれが渡ってくる。</text>
+
+  <!-- role -->
+  <rect x="370" y="188" width="320" height="126" rx="10" class="d-warn"/>
+  <text x="390" y="214" class="d-title">role ＝ 何を聞かれているか</text>
+  <text x="390" y="240" class="d-code">DisplayRole　　… 表示する文字</text>
+  <text x="390" y="262" class="d-code">CheckStateRole … チェックの状態</text>
+  <text x="390" y="284" class="d-code">ForegroundRole … 文字の色</text>
+  <text x="390" y="304" class="d-mute">同じ升目に、何度も違う role で聞かれる。</text>
+</svg>

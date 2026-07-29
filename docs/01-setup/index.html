@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第1章 環境構築 — 3 分で始める | Qt6 Widgets 入門</title>
+<meta name="description" content="Python さえ入っていれば、Qt の準備は pip コマンド 1 行で終わります。つまずきやすい仮想環境の話も含めて確実に通します。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li class="is-current"><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li><a href="../03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="../04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="../05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li><a href="../06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="../07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="../08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li><a href="../09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="../10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="../11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="../12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="../13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 1 章<span class="dot">·</span>読了目安 8 分</p>
+        <h1>第1章 環境構築 — 3 分で始める</h1>
+        <p class="lede">Python さえ入っていれば、Qt の準備は pip コマンド 1 行で終わります。つまずきやすい仮想環境の話も含めて確実に通します。</p>
+      </header>
+      <div class="prose">
+<p>
+Qt というと「インストーラを落として数 GB のダウンロードを待つ」印象があるかもしれません。
+PySide6 の場合は違います。必要なものはすべて 1 つのパッケージに入っていて、
+<strong><code>pip install</code> の 1 行で終わります</strong>。
+</p>
+
+<h2 id="必要なもの">必要なもの</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>要るもの</th><th>条件</th></tr></thead>
+  <tbody>
+    <tr><td>Python</td><td>3.9 以上（3.11 以上を推奨）</td></tr>
+    <tr><td>OS</td><td>Windows / macOS / Linux のどれでも</td></tr>
+    <tr><td>エディタ</td><td>VS Code など、好きなもので</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+C++ のコンパイラも、Qt 本体のインストーラも要りません。
+Qt のライブラリ本体は PySide6 のパッケージに同梱されています。
+</p>
+
+<h2 id="Python-が入っているか確かめる">Python が入っているか確かめる</h2>
+
+<p>ターミナル（Windows なら PowerShell やコマンドプロンプト）で確認します。</p>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">python<span class="w"> </span>--version</span></code></pre></figure>
+
+<p>
+<code>Python 3.11.x</code> のように出れば大丈夫です。
+macOS や Linux では <code>python3</code> と打つ必要があるかもしれません。
+「見つかりません」と言われたら、先に <a href="https://www.python.org/downloads/">python.org</a> から入れてください。
+</p>
+
+<h2 id="作業用のフォルダと仮想環境を作る">作業用のフォルダと仮想環境を作る</h2>
+
+<p>
+いきなり <code>pip install</code> しても動きますが、
+<strong>仮想環境</strong>を作っておくと、プロジェクトごとにパッケージを独立させられます。
+後で「別のプロジェクトのために入れたものが干渉した」という事故を防げます。
+</p>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル（macOS / Linux）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">mkdir<span class="w"> </span>qt-practice</span><span class="cl"><span class="nb">cd</span><span class="w"> </span>qt-practice</span><span class="cl">python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv</span><span class="cl"><span class="nb">source</span><span class="w"> </span>.venv/bin/activate</span></code></pre></figure>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル（Windows PowerShell）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">mkdir<span class="w"> </span>qt-practice</span><span class="cl"><span class="nb">cd</span><span class="w"> </span>qt-practice</span><span class="cl">python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv</span><span class="cl">.venv<span class="se">\S</span>cripts<span class="se">\A</span>ctivate.ps1</span></code></pre></figure>
+
+<p>
+うまくいくと、プロンプトの先頭に <code>(.venv)</code> と出ます。これが「仮想環境の中にいる」印です。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">Windows で「スクリプトの実行が無効」と言われたら</span>
+  <p>
+    PowerShell の既定の設定で止められています。
+    PowerShell で次を 1 回だけ実行すると通るようになります。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">Set-ExecutionPolicy<span class="w"> </span>-Scope<span class="w"> </span>CurrentUser<span class="w"> </span>RemoteSigned</span></code></pre></figure>
+</div>
+
+<h2 id="PySide6-を入れる">PySide6 を入れる</h2>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">pip<span class="w"> </span>install<span class="w"> </span>pyside6</span></code></pre></figure>
+
+<p>
+これだけです。100 MB ほどのダウンロードがあるので、少し待ちます。
+Qt のライブラリ本体も、この後で使う Qt Designer も、全部これに含まれています。
+</p>
+
+<div class="note">
+  <span class="note-title">バージョンを固定したいとき</span>
+  <p>
+    この教材とまったく同じ環境にしたい場合は、バージョンを明示して入れます。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">pip<span class="w"> </span>install<span class="w"> </span><span class="nv">pyside6</span><span class="o">==</span><span class="m">6</span>.11.1</span></code></pre></figure>
+</div>
+
+<h2 id="ちゃんと入ったか画面を出して確かめる">ちゃんと入ったか、画面を出して確かめる</h2>
+
+<p>
+<code>import</code> が通るだけでは不十分です。実際にウィンドウが出るところまで確認しましょう。
+次のファイルを <code>ch01_verify.py</code> という名前で保存して実行してください。
+</p>
+
+<figure class="code-block" data-lang="python" data-src="ch01_verify.py"><div class="code-head"><span class="code-file">ch01_verify.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;環境が正しく整ったかを確認する。</span></span><span class="cl"></span><span class="cl"><span class="sd">この教材と同じバージョンで動いているかを、実際にウィンドウを出して確かめる。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch01_verify.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">pyside_version</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtCore</span><span class="w"> </span><span class="kn">import</span> <span class="n">qVersion</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QVBoxLayout</span><span class="p">,</span> <span class="n">QWidget</span></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">window</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;環境チェック&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">window</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;✅ Qt が正しく動いています&quot;</span><span class="p">))</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PySide6 : </span><span class="si">{</span><span class="n">pyside_version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Qt      : </span><span class="si">{</span><span class="n">qVersion</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Python  : </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span></span><span class="cl"></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">python<span class="w"> </span>ch01_verify.py</span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">環境チェック</span></div><img src="../img/ch01-verify.webp" alt="実行するとこのウィンドウが出る。ここに出るバージョンが、このページ上部のバッジと一致していれば、教材とまったく同じ環境で学べる。" width="179" height="98" loading="lazy" decoding="async"></div><figcaption>実行するとこのウィンドウが出る。ここに出るバージョンが、このページ上部のバッジと一致していれば、教材とまったく同じ環境で学べる。</figcaption></figure>
+
+<p>
+このウィンドウが出れば環境構築は完了です。ウィンドウを閉じればプログラムも終わります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">Linux で「Could not load the Qt platform plugin "xcb"」と出たら</span>
+  <p>
+    Qt が画面を描くために必要な OS 側のライブラリが足りていません。
+    Ubuntu / Debian 系なら次で入ります。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>libegl1<span class="w"> </span>libxkbcommon-x11-0<span class="w"> </span>libxcb-cursor0<span class="w"> </span><span class="se">\</span></span><span class="cl"><span class="w">  </span>libxcb-icccm4<span class="w"> </span>libxcb-image0<span class="w"> </span>libxcb-keysyms1<span class="w"> </span>libxcb-randr0<span class="w"> </span><span class="se">\</span></span><span class="cl"><span class="w">  </span>libxcb-render-util0<span class="w"> </span>libxcb-shape0<span class="w"> </span>libxcb-xinerama0</span></code></pre></figure>
+  <p>Windows と macOS ではこの問題は起きません。</p>
+</div>
+
+<h2 id="ついてくる道具たち">ついてくる道具たち</h2>
+
+<p>
+<code>pip install pyside6</code> をすると、コマンドもいくつか使えるようになります。
+この教材で登場するのは上の 2 つです。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コマンド</th><th>何をするか</th><th>登場する章</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyside6-designer</code></td><td>画面をマウスで作るツールを起動する</td><td>第 9 章</td></tr>
+    <tr><td><code>pyside6-uic</code></td><td>Designer で作った <code>.ui</code> を Python に変換する</td><td>第 9 章</td></tr>
+    <tr><td><code>pyside6-rcc</code></td><td>画像などをプログラムに埋め込む形式に変換する</td><td>—</td></tr>
+    <tr><td><code>pyside6-lupdate</code></td><td>翻訳用の文言を抜き出す</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>
+    <code>ch01_verify.py</code> の <code>QLabel</code> の文字を好きなものに書き換えて、
+    もう一度実行してみてください。保存して <code>python ch01_verify.py</code> を打ち直すだけです。
+    「直す → 実行する」の往復が、これから何百回も繰り返す基本動作になります。
+  </p>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>準備は <code>pip install pyside6</code> の 1 行。Qt 本体も Designer も同梱されている。</li>
+    <li>仮想環境（<code>python -m venv .venv</code>）を作っておくと、後々の事故を防げる。</li>
+    <li>確認は <code>import</code> だけで済ませず、実際にウィンドウを出すところまでやる。</li>
+    <li>Linux で <code>xcb</code> のエラーが出たら、OS 側のライブラリを追加で入れる。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../00-intro/"><span class="pager-dir">← 前の章</span><span class="pager-title">はじめに</span></a>
+<a class="pager-link pager-next" href="../02-first-window/"><span class="pager-dir">次の章 →</span><span class="pager-title">最初のウィンドウ</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-29 時点）
+  </p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

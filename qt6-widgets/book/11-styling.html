@@ -1,0 +1,232 @@
+<p>
+Qt Widgets の見た目は、既定では OS のネイティブな外観になります。
+それで十分なことも多いのですが、
+「ブランドカラーを入れたい」「ダークテーマにしたい」となったら、この章の出番です。
+</p>
+
+<h2>見た目を決める 3 つの層</h2>
+
+<!--figure: style-priority | 下の層ほど強い。まずスタイルで土台を決め、パレットで色の役割を差し替え、最後にスタイルシートで細部を上書きする。 -->
+
+<h2>① スタイル — 全 OS で同じ見た目にする</h2>
+
+<div class="src" data-lang="python">
+app = QApplication(sys.argv)
+app.setStyle("Fusion")
+</div>
+
+<p>
+<strong>Fusion</strong> は Qt が用意している OS 非依存のスタイルです。
+これを指定すると、Windows でも macOS でも Linux でも同じ見た目になります。
+</p>
+
+<div class="note">
+  <span class="note-title">Fusion にするか、ネイティブのままにするか</span>
+  <ul>
+    <li><strong>ネイティブのまま</strong> … OS になじむ。ユーザーが慣れた操作感になる</li>
+    <li><strong>Fusion</strong> … どの環境でも同じ見た目。スクリーンショットやマニュアルとずれない。独自テーマの土台にしやすい</li>
+  </ul>
+  <p>
+    この教材のスクリーンショットは、章をまたいで見た目を揃えるために Fusion で撮影しています。
+  </p>
+</div>
+
+<h2>② パレット — 「役割ごとの色」をまとめて変える</h2>
+
+<p>
+Qt は色を直接持たず、<strong>役割</strong>で管理しています。
+「ウィンドウの地の色」「入力欄の背景」「選択中の色」といった具合です。
+その対応表が <code>QPalette</code> です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>役割</th><th>どこの色か</th></tr></thead>
+  <tbody>
+    <tr><td><code>Window</code></td><td>ウィンドウの地の色</td></tr>
+    <tr><td><code>WindowText</code></td><td>その上に載る文字</td></tr>
+    <tr><td><code>Base</code></td><td>入力欄・リストの背景</td></tr>
+    <tr><td><code>Text</code></td><td>入力欄の中の文字</td></tr>
+    <tr><td><code>Button</code> / <code>ButtonText</code></td><td>ボタンの地と文字</td></tr>
+    <tr><td><code>Highlight</code> / <code>HighlightedText</code></td><td>選択中の背景と文字</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!--code: ch11_dark_palette.py-->
+
+<!--shot: ch11-dark | パレットだけでダークテーマにした画面。個々のウィジェットには一切手を入れていない。 -->
+
+<div class="note pitfall">
+  <span class="note-title">パレットが効かないときは、スタイルを疑う</span>
+  <p>
+    Windows のネイティブスタイルは OS 側が描画を行うため、
+    パレットの色を無視することがあります。
+    ダークテーマを自作するなら、<strong><code>setStyle("Fusion")</code> とセットで使ってください</strong>。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">Disabled の色も指定しておく</span>
+  <p>
+    <code>QPalette.ColorGroup.Disabled</code> を指定しないと、
+    「使えないボタン」の文字色が背景に溶けて読めなくなることがあります。
+    ダークテーマを作るときは必ず設定してください。
+  </p>
+</div>
+
+<h2>③ スタイルシート — CSS によく似た細かい指定</h2>
+
+<p>
+Qt Style Sheets（QSS）は、Web の CSS とよく似た書き方で見た目を指定できる仕組みです。
+</p>
+
+<!--code: ch11_stylesheet.py-->
+
+<!--shot: ch11-stylesheet | スタイルシートだけで作ったログイン画面。角丸、余白、ホバー時の色、無効時の色まで指定している。 -->
+
+<h3>セレクタの書き方</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>QPushButton { … }</code></td><td>すべてのボタン（継承したクラスも含む）</td></tr>
+    <tr><td><code>.QPushButton { … }</code></td><td>ちょうどそのクラスだけ（継承先は除く）</td></tr>
+    <tr><td><code>QPushButton#saveButton { … }</code></td><td><code>objectName</code> が <code>saveButton</code> のもの</td></tr>
+    <tr><td><code>QDialog QPushButton { … }</code></td><td>ダイアログの中にあるボタン</td></tr>
+    <tr><td><code>QPushButton:hover { … }</code></td><td>マウスが乗っているとき</td></tr>
+    <tr><td><code>QPushButton:disabled { … }</code></td><td>無効になっているとき</td></tr>
+    <tr><td><code>QComboBox::drop-down { … }</code></td><td>部品の一部分（コロン 2 つ）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">CSS と同じつもりで書くと外れるところ</span>
+  <ul>
+    <li><code>box-shadow</code>、<code>transition</code>、<code>flex</code>、<code>grid</code> は<strong>使えません</strong>。並べるのはレイアウトの仕事です</li>
+    <li>使える単位は基本的に <code>px</code> だけ。<code>em</code> や <code>%</code> は多くのプロパティで効きません</li>
+    <li><code>border-radius</code> を効かせるには、多くの場合 <code>border</code> も指定する必要があります</li>
+    <li>あるウィジェットに <code>background</code> を指定すると、その子にも影響することがあります</li>
+  </ul>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">1 か所に指定すると、その部品全体の描画が自前になる</span>
+  <p>
+    たとえば <code>QPushButton { background: red; }</code> と書いた瞬間、
+    そのボタンは OS ネイティブの描画をやめて、スタイルシートの指定だけで描かれます。
+    角丸や境界線も自分で指定しないと、のっぺりした四角になります。
+    <strong>色だけ変えるつもりが全部変わってしまう</strong>のは、これが理由です。
+  </p>
+</div>
+
+<h3>適用する範囲</h3>
+
+<div class="src" data-lang="python">
+app.setStyleSheet(STYLE)        # アプリ全体
+window.setStyleSheet(STYLE)     # そのウィンドウと、その中の全部
+button.setStyleSheet(STYLE)     # そのボタンだけ
+</div>
+
+<p>
+外部ファイルに置いて読み込むと、コードと見た目を分けられます。
+</p>
+
+<div class="src" data-lang="python">
+from pathlib import Path
+app.setStyleSheet(Path("theme.qss").read_text(encoding="utf-8"))
+</div>
+
+<h2>標準ボタンを日本語にする</h2>
+
+<p>
+ここまでのスクリーンショットで、ダイアログのボタンが［OK］［Cancel］と英語になっていたのに
+気づいたでしょうか。Qt が用意している文言は、<strong>翻訳ファイルを読み込むだけで日本語になります</strong>。
+自分で訳す必要はありません。
+</p>
+
+<!--code: ch11_japanese.py-->
+
+<!--shot: ch11-japanese | 翻訳を読み込んだ状態。［キャンセル］［適用］［ヘルプ］が日本語になっている。 -->
+
+<!--shot: ch11-japanese-dialog | QMessageBox の標準ボタンも［はい(Y)］［いいえ(N)］になる。 -->
+
+<div class="note pitfall">
+  <span class="note-title">translator は変数に持ち続ける</span>
+  <p>
+    第 7 章と同じ話です。<code>QTranslator</code> をローカル変数のままにすると、
+    関数を抜けた瞬間に回収されて翻訳が消えます。
+    モジュールレベルの変数か <code>self</code> に持たせてください。
+  </p>
+  <p>
+    また、翻訳の読み込みは<strong>ウィジェットを作る前</strong>に行う必要があります。
+    後から入れても、すでに作られた画面の文字は変わりません。
+  </p>
+</div>
+
+<h2>アイコンを使う</h2>
+
+<div class="src" data-lang="python">
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QStyle
+
+# ① 自分で用意した画像から
+button.setIcon(QIcon("icons/save.png"))
+
+# ② Qt が持っている標準アイコンから（追加の画像が要らない）
+icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton)
+button.setIcon(icon)
+
+# ③ OS のアイコンテーマから（主に Linux）
+button.setIcon(QIcon.fromTheme("document-save"))
+</div>
+
+<div class="note">
+  <span class="note-title">高解像度ディスプレイ向けのアイコン</span>
+  <p>
+    <code>save.png</code> と同じ場所に <code>save@2x.png</code> を置いておくと、
+    Qt が高解像度ディスプレイで自動的にそちらを使います。
+    最初から SVG を使えば、この心配自体がなくなります。
+  </p>
+</div>
+
+<h2>高解像度ディスプレイ（High DPI）</h2>
+
+<div class="note">
+  <span class="note-title">Qt6 では、もう何も書かなくてよい</span>
+  <p>
+    Qt5 の記事には、次のようなコードがよく出てきます。
+  </p>
+  <div class="src" data-lang="python">
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)     # Qt5 の書き方
+QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)        # Qt5 の書き方
+  </div>
+  <p>
+    <strong>Qt6 ではこれらは既定で有効になっており、書く必要がありません。</strong>
+    むしろ古い属性は非推奨になっているので、見かけたら削除してください。
+    高解像度対応は、何もしなくても効いています。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch11_stylesheet.py</code> の <code>#41cd52</code> を好きな色に変えて、ホバー時・押下時の色も調整してみる。</li>
+    <li><code>ch11_dark_palette.py</code> の <code>dark_palette()</code> を <code>ch11_stylesheet.py</code> に組み込み、ダークなログイン画面にする。</li>
+    <li><code>ch11_japanese.py</code> の翻訳読み込みの行をコメントアウトして、ボタンが英語に戻ることを確かめる。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>見た目は「スタイル → パレット → スタイルシート」の 3 層。下ほど強い。</li>
+    <li>全 OS で同じ見た目にしたいなら <code>setStyle("Fusion")</code>。</li>
+    <li>ダークテーマは <code>QPalette</code> ＋ Fusion。<code>Disabled</code> の色も忘れずに。</li>
+    <li>スタイルシートは CSS 風だが、影・アニメーション・flex は使えない。1 か所指定すると描画が全部自前になる。</li>
+    <li>標準ボタンの日本語化は <code>QTranslator</code> で <code>qtbase_ja</code> を読むだけ。変数を残すこと。</li>
+    <li>High DPI 対応は Qt6 では既定で有効。Qt5 の属性設定は不要。</li>
+  </ul>
+</div>

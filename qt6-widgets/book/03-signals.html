@@ -1,0 +1,227 @@
+<p>
+前の章のウィンドウは、ただ表示されるだけで何もしませんでした。
+「ボタンが押されたら何かする」を、Qt はどう書くのでしょうか。
+</p>
+
+<p>
+Qt の答えが<strong>シグナルとスロット</strong>です。
+これは Qt が 1990 年代から使い続けている仕組みで、
+Qt がいまも使われ続けている理由のひとつでもあります。
+</p>
+
+<h2>2 つの言葉</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>言葉</th><th>意味</th><th>たとえるなら</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>シグナル</strong></td>
+      <td>「何かが起きた」という通知。ウィジェットが自分から発する</td>
+      <td>「押されました！」という叫び声</td>
+    </tr>
+    <tr>
+      <td><strong>スロット</strong></td>
+      <td>その通知を受けて実行される処理。ただの関数でよい</td>
+      <td>叫び声を聞いて動く人</td>
+    </tr>
+    <tr>
+      <td><strong>connect</strong></td>
+      <td>この 2 つを結びつける操作</td>
+      <td>電話線をつなぐこと</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!--figure: signal-slot | シグナルとスロットの関係。送り手は誰が聞いているかを知らないし、受け手は誰が叫んだかを知らなくてよい。この「お互いを知らなくていい」性質が、部品を差し替えやすくしている。 -->
+
+<h2>ボタンを押して数を数える</h2>
+
+<!--code: ch03_signals.py-->
+
+<!--shot: ch03-signals | ボタンを 3 回押したところ。押すたびに on_clicked が呼ばれ、ラベルの文字が書き換わる。 -->
+
+<p>肝心なのはこの 1 行です。</p>
+
+<div class="src" data-lang="python">
+button.clicked.connect(on_clicked)
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">最頻出のミス: 関数にカッコを付けてしまう</span>
+  <p>
+    <code>connect(on_clicked())</code> と書くと、
+    <strong>その場で関数が実行され、その戻り値（多くは <code>None</code>）が接続されます</strong>。
+    結果、起動した瞬間に 1 回だけ動いて、以後ボタンを押しても何も起きません。
+    渡すのは「関数そのもの」なので、<strong>カッコは付けません</strong>。
+  </p>
+  <div class="src" data-lang="python">
+button.clicked.connect(on_clicked)    # ○ 正しい
+button.clicked.connect(on_clicked())  # ✗ その場で呼ばれてしまう
+  </div>
+</div>
+
+<h2>よく使うシグナル</h2>
+
+<p>
+シグナルはウィジェットごとに決まっています。よく使うものを挙げておきます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ウィジェット</th><th>シグナル</th><th>飛んでくるタイミング</th><th>渡される値</th></tr></thead>
+  <tbody>
+    <tr><td><code>QPushButton</code></td><td><code>clicked</code></td><td>押して離したとき</td><td>（なし）</td></tr>
+    <tr><td><code>QLineEdit</code></td><td><code>textChanged</code></td><td>文字が変わるたび</td><td>変更後の文字列</td></tr>
+    <tr><td><code>QLineEdit</code></td><td><code>returnPressed</code></td><td>Enter が押されたとき</td><td>（なし）</td></tr>
+    <tr><td><code>QCheckBox</code></td><td><code>toggled</code></td><td>チェックが変わったとき</td><td><code>bool</code></td></tr>
+    <tr><td><code>QComboBox</code></td><td><code>currentTextChanged</code></td><td>選択が変わったとき</td><td>選ばれた文字列</td></tr>
+    <tr><td><code>QSlider</code></td><td><code>valueChanged</code></td><td>値が変わったとき</td><td><code>int</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+値が渡されるシグナルは、スロット側でその値を引数として受け取れます。
+</p>
+
+<div class="src" data-lang="python">
+def on_text_changed(text):        # textChanged は文字列を 1 つ渡してくる
+    print("いま入力されているのは:", text)
+
+edit.textChanged.connect(on_text_changed)
+</div>
+
+<div class="note">
+  <span class="note-title">引数はいらないなら受け取らなくていい</span>
+  <p>
+    シグナルが値を渡してきても、スロット側が引数を持っていなければ、
+    Qt は黙って値を捨ててくれます。
+    <code>def on_changed():</code> のように引数なしで書いても動きます。
+  </p>
+</div>
+
+<h2>ウィジェット同士を直接つなぐ</h2>
+
+<p>
+スロットは自分で書いた関数だけでなく、<strong>ウィジェットが最初から持っているメソッド</strong>でもかまいません。
+これを使うと、自分では 1 行も処理を書かずに連動させられます。
+</p>
+
+<div class="src" data-lang="python">
+# チェックボックスの ON/OFF で、ボタンの有効・無効を切り替える
+checkbox.toggled.connect(button.setEnabled)
+
+# スライダーを動かすと、数値入力欄の値も一緒に動く
+slider.valueChanged.connect(spinbox.setValue)
+spinbox.valueChanged.connect(slider.setValue)
+</div>
+
+<h2>自分でシグナルを作る</h2>
+
+<p>
+自作のクラスから「何かが起きた」を知らせたいときは、シグナルを自分で定義します。
+</p>
+
+<!--code: ch03_custom_signal.py-->
+
+<!--shot: ch03-custom-signal | 名前を入れてボタンを押すと、submitted シグナルが飛び、greet スロットが呼ばれる。 -->
+
+<div class="note pitfall">
+  <span class="note-title">シグナルは必ず「クラス直下」で宣言する</span>
+  <p>
+    <code>__init__</code> の中で <code>self.submitted = Signal(str)</code> と書いても<strong>動きません</strong>。
+    Qt はクラスが定義される時点でシグナルを登録する必要があるためです。
+    かならずクラスの直下（メソッドの外）に書いてください。
+  </p>
+  <div class="src" data-lang="python">
+class NameForm(QWidget):
+    submitted = Signal(str)      # ○ クラス直下
+
+    def __init__(self):
+        self.submitted = Signal(str)   # ✗ これでは動かない
+  </div>
+</div>
+
+<div class="note deep">
+  <span class="note-title">@Slot は必須ではない</span>
+  <p>
+    <code>@Slot(str)</code> を付けなくてもスロットとして動きます。
+    付けると Qt 側に型が伝わるので、わずかに速くなり、
+    別スレッドからの呼び出しなど込み入った場面での安全性も上がります。
+    「付けておくと得だが、忘れても壊れない」くらいの理解で十分です。
+  </p>
+</div>
+
+<h2>ループの中で connect するときの罠</h2>
+
+<p>
+ボタンをいくつも作って「何番が押されたか」を知りたい、というのはよくある要求です。
+ここには Python 側の有名な落とし穴があります。
+</p>
+
+<div class="src" data-lang="python" data-cap="✗ これは動かない。どのボタンを押しても「3 番」と出る。">
+for i in range(1, 4):
+    button = QPushButton(f"{i} 番")
+    button.clicked.connect(lambda: label.setText(f"{i} 番が押されました"))
+</div>
+
+<p>
+<code>lambda</code> の中の <code>i</code> は、<strong>作られた時点の値ではなく、呼ばれた時点の値</strong>を見ます。
+ボタンが押されるのはループが終わったずっと後なので、<code>i</code> はすでに最後の値になっています。
+</p>
+
+<p>回避方法は 2 つあります。</p>
+
+<!--code: ch03_lambda_trap.py-->
+
+<div class="note pitfall">
+  <span class="note-title">lambda の第 1 引数に注意</span>
+  <p>
+    <code>clicked</code> シグナルは、実は <code>checked</code>（<code>bool</code>）という値を渡してくることがあります。
+    そのため <code>lambda n=i: ...</code> と書くと、<code>n</code> にその <code>bool</code> が入ってしまいます。
+    上のサンプルで <code>lambda checked=False, n=i: ...</code> と
+    ダミーの引数を先に置いているのはこのためです。
+  </p>
+</div>
+
+<h2>接続を切る</h2>
+
+<p>
+一時的に反応させたくないときは <code>disconnect()</code> で切れます。
+</p>
+
+<div class="src" data-lang="python">
+button.clicked.disconnect(on_clicked)   # この接続だけ切る
+button.clicked.disconnect()             # このシグナルの接続を全部切る
+</div>
+
+<p>
+ただし、値を設定するときに <code>valueChanged</code> が飛んで無限ループになる、
+といった場面では <code>blockSignals()</code> のほうが素直です。
+</p>
+
+<div class="src" data-lang="python">
+slider.blockSignals(True)
+slider.setValue(50)        # ここでは valueChanged が飛ばない
+slider.blockSignals(False)
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch03_signals.py</code> にもう 1 つボタンを足し、押すとカウントが 0 に戻るようにする。</li>
+    <li><code>QLineEdit</code> と <code>QLabel</code> を置き、入力した文字がそのままラベルに映るようにする（ヒント: <code>textChanged</code> と <code>setText</code> を直接つなぐ）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>送り手.シグナル.connect(受け手)</code> が基本形。受け手に<strong>カッコは付けない</strong>。</li>
+    <li>スロットはただの関数でよく、ウィジェットのメソッドを直接つなぐこともできる。</li>
+    <li>自作シグナルは <code>Signal(型)</code> を<strong>クラス直下</strong>に書き、<code>emit()</code> で発射する。</li>
+    <li>ループ内で <code>lambda</code> を使うときは、デフォルト引数か <code>partial</code> で値を捕まえる。</li>
+  </ul>
+</div>

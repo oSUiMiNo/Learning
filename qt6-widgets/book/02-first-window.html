@@ -1,0 +1,177 @@
+<p>
+Qt のプログラムは、どんなに大きくなっても骨格は同じです。
+<strong>①アプリを作る → ②画面を出す → ③イベントループに入る</strong>。
+まずはこの 3 つだけのプログラムを見てみましょう。
+</p>
+
+<h2>6 行でウィンドウを出す</h2>
+
+<!--code: ch02_hello.py-->
+
+<div class="src" data-lang="bash" data-file="ターミナル">
+python ch02_hello.py
+</div>
+
+<!--shot: ch02-hello | 実行結果。文字の大きさぴったりの、小さなウィンドウが出る。タイトルもサイズも指定していないので、こうなる。 -->
+
+<p>
+素っ気ない見た目ですが、これは立派なウィンドウです。
+ドラッグして動かせますし、閉じればプログラムも終わります。
+</p>
+
+<h3>① QApplication — アプリの司令塔</h3>
+
+<div class="src" data-lang="python">
+app = QApplication(sys.argv)
+</div>
+
+<p>
+Qt のアプリには、必ずこれが 1 つだけ必要です。
+画面の設定を管理したり、OS からの入力を受け取ったりする、いわば本体です。
+<strong>どのウィジェットよりも先に作らなければいけません</strong>。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">よくあるエラー: QWidget: Must construct a QApplication before a QWidget</span>
+  <p>
+    「ウィジェットより先に QApplication を作れ」という意味です。
+    <code>QApplication(sys.argv)</code> の行が、
+    ウィジェットを作る行より後ろに書かれていないか確認してください。
+  </p>
+</div>
+
+<h3>② ウィジェット — 画面に置くもの</h3>
+
+<div class="src" data-lang="python">
+label = QLabel("こんにちは、Qt!")
+label.show()
+</div>
+
+<p>
+Qt では、画面に出るものはすべて<strong>ウィジェット</strong>と呼ばれます。
+ボタンも、入力欄も、ウィンドウそのものも、全部ウィジェットです。
+</p>
+
+<p>
+ここで大事なルールがひとつ。
+<strong>親を持たないウィジェットは、それ自体がひとつのウィンドウになります。</strong>
+上のコードで <code>QLabel</code> がウィンドウとして出たのはそのためです。
+親子関係の話は第 7 章でくわしく扱います。
+</p>
+
+<p>
+そして <code>show()</code> を呼ばないと、作っただけでは画面に出ません。これも忘れがちな点です。
+</p>
+
+<h3>③ app.exec() — イベントループ</h3>
+
+<div class="src" data-lang="python">
+sys.exit(app.exec())
+</div>
+
+<p>
+ここがいちばん重要です。この行に到達すると、プログラムは<strong>止まったまま待ち続けます</strong>。
+何を待っているかというと、ユーザーの操作です。
+</p>
+
+<h2>イベントループという考え方</h2>
+
+<p>
+ふつうの Python スクリプトは、上から下まで実行したら終わります。
+GUI アプリはそれでは困ります。ユーザーが操作するまで、終わらずに待っていてほしいからです。
+</p>
+
+<p>
+そのための仕掛けが<strong>イベントループ</strong>です。
+「操作が起きるのを待つ → 起きたら対応する担当者に渡す → また待つ」を、
+アプリが終わるまでひたすら繰り返します。
+</p>
+
+<!--figure: event-loop | イベントループの一周。app.exec() を呼んだ瞬間からこの輪が回り始め、ウィンドウが閉じられるまで止まらない。 -->
+
+<div class="note deep">
+  <span class="note-title">なぜ sys.exit() で包むのか</span>
+  <p>
+    <code>app.exec()</code> はアプリの終了コード（正常なら 0）を返します。
+    それを <code>sys.exit()</code> に渡すことで、
+    シェルやタスクランナーに「正常に終わったか」を正しく伝えられます。
+    単に <code>app.exec()</code> と書いても動きますが、包んでおくのが作法です。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">古い記事にある <code>app.exec_()</code> は Qt6 では使えない</span>
+  <p>
+    Python 2 の時代、<code>exec</code> は予約語だったため、
+    PyQt / PySide では末尾にアンダースコアを付けた <code>exec_()</code> が使われていました。
+    <strong>Qt6（PySide6）では <code>exec()</code> が正しい書き方</strong>です。
+    Web 上のサンプルで <code>exec_()</code> を見かけたら、それは Qt5 以前の記事だと判断できます。
+  </p>
+</div>
+
+<h2>ウィンドウらしくする</h2>
+
+<p>
+タイトルもサイズもないと使いものになりません。中身も並べてみましょう。
+</p>
+
+<!--code: ch02_window.py-->
+
+<!--shot: ch02-window | タイトルバーに文字が入り、サイズも指定した。2 つのラベルは QVBoxLayout によって縦に並んでいる。 -->
+
+<p>新しく出てきたのは 3 つです。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>setWindowTitle("…")</code></td><td>タイトルバーに出る文字</td></tr>
+    <tr><td><code>resize(幅, 高さ)</code></td><td>最初に表示されるときの大きさ（ピクセル）</td></tr>
+    <tr><td><code>QVBoxLayout(window)</code></td><td>中身を縦に並べる係。第 4 章の主題</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">resize と setFixedSize の違い</span>
+  <p>
+    <code>resize()</code> は「最初の大きさ」を決めるだけで、ユーザーは後から変えられます。
+    変えさせたくないときは <code>setFixedSize(幅, 高さ)</code> を使います。
+    ただし固定サイズは、文字を大きくしている環境などで中身がはみ出す原因になるので、
+    よほどの理由がなければ <code>resize()</code> にしておくのが安全です。
+  </p>
+</div>
+
+<h2>スクリーンショットの見た目について</h2>
+
+<div class="note">
+  <span class="note-title">この教材の画面写真は Linux + Fusion スタイル</span>
+  <p>
+    Qt Widgets の見た目は OS ごとに変わります。
+    この教材のスクリーンショットは、どの章でも同じ見た目になるように
+    <strong>Fusion</strong> という Qt 共通のスタイルで撮影しています。
+    あなたの Windows / macOS では、ボタンの角の丸みや配色が違って見えるはずですが、
+    <strong>構造とコードはまったく同じ</strong>です。心配しないでください。
+    見た目を意図的に揃える方法は第 11 章で扱います。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch02_window.py</code> の <code>resize()</code> の数字を変えて、起動時の大きさが変わることを確かめる。</li>
+    <li><code>layout.addWidget(QLabel("3 行目"))</code> を足して、行が増えることを確かめる。</li>
+    <li><code>sys.exit(app.exec())</code> の行をコメントアウトして実行してみる。ウィンドウが一瞬も出ずに終わるはずです。<strong>これがイベントループの正体</strong>です。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>Qt アプリは <code>QApplication</code> → ウィジェット → <code>app.exec()</code> の 3 点セット。</li>
+    <li>親のないウィジェットは、それ自体がウィンドウになる。</li>
+    <li><code>show()</code> を呼ばないと画面には出ない。</li>
+    <li><code>app.exec()</code> はイベントループ。ここでプログラムは「待ち」に入る。</li>
+    <li>Qt6 では <code>exec_()</code> ではなく <code>exec()</code>。<code>exec_()</code> を見たら古い記事。</li>
+  </ul>
+</div>

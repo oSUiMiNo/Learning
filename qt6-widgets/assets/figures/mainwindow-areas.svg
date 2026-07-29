@@ -1,0 +1,39 @@
+<svg viewBox="0 0 720 400" role="img" aria-label="QMainWindow の領域。メニューバー、ツールバー、ドック、中央ウィジェット、ステータスバーの配置。">
+  <rect x="1" y="1" width="718" height="398" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">QMainWindow は、置き場所があらかじめ決まっている</text>
+
+  <rect x="30" y="48" width="660" height="326" rx="10" class="d-box"/>
+
+  <!-- menu bar -->
+  <rect x="42" y="60" width="636" height="34" rx="5" class="d-accent"/>
+  <text x="56" y="82" class="d-code">menuBar()</text>
+  <text x="360" y="82" text-anchor="middle" class="d-mute">メニューバー — 一番上、常に横いっぱい</text>
+
+  <!-- tool bar -->
+  <rect x="42" y="100" width="636" height="34" rx="5" class="d-tip"/>
+  <text x="56" y="122" class="d-code">addToolBar()</text>
+  <text x="360" y="122" text-anchor="middle" class="d-mute">ツールバー — 上下左右どこにでも置ける</text>
+
+  <!-- dock left -->
+  <rect x="42" y="140" width="150" height="182" rx="5" class="d-deep"/>
+  <text x="117" y="222" text-anchor="middle" class="d-code">addDockWidget()</text>
+  <text x="117" y="244" text-anchor="middle" class="d-mute">ドック</text>
+  <text x="117" y="262" text-anchor="middle" class="d-mute">切り離せる脇のパネル</text>
+
+  <!-- central -->
+  <rect x="200" y="140" width="352" height="182" rx="5" class="d-accent"/>
+  <text x="376" y="212" text-anchor="middle" class="d-title">setCentralWidget()</text>
+  <text x="376" y="238" text-anchor="middle" class="d-mute">中央ウィジェット（主役）</text>
+  <text x="376" y="258" text-anchor="middle" class="d-mute">ここだけは必ず 1 つ。残り全部を占める</text>
+
+  <!-- dock right -->
+  <rect x="560" y="140" width="118" height="182" rx="5" class="d-deep"/>
+  <text x="619" y="228" text-anchor="middle" class="d-mute">ドック</text>
+  <text x="619" y="246" text-anchor="middle" class="d-mute">（右）</text>
+
+  <!-- status bar -->
+  <rect x="42" y="328" width="636" height="34" rx="5" class="d-tip"/>
+  <text x="56" y="350" class="d-code">statusBar()</text>
+  <text x="360" y="350" text-anchor="middle" class="d-mute">ステータスバー — 一番下、状況の表示に使う</text>
+</svg>

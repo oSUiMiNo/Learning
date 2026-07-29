@@ -1,0 +1,58 @@
+<svg viewBox="0 0 720 380" role="img" aria-label="レイアウトの入れ子構造。縦レイアウトの中に横レイアウトが入り、その中にウィジェットが並ぶ。">
+  <rect x="1" y="1" width="718" height="378" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">見た目（左）と、コードの構造（右）は 1 対 1 で対応している</text>
+
+  <!-- 見た目 -->
+  <rect x="30" y="48" width="300" height="300" rx="10" class="d-dash"/>
+  <text x="180" y="70" text-anchor="middle" class="d-mute">画面の見た目</text>
+
+  <rect x="48" y="82" width="264" height="34" rx="6" class="d-box"/>
+  <text x="180" y="104" text-anchor="middle" class="d-code">QLabel「やることリスト」</text>
+
+  <rect x="42" y="126" width="276" height="52" rx="8" class="d-accent"/>
+  <text x="52" y="143" class="d-head-accent">横に並べる列</text>
+  <rect x="52" y="146" width="176" height="26" rx="5" class="d-box"/>
+  <text x="140" y="164" text-anchor="middle" class="d-code">QLineEdit</text>
+  <rect x="236" y="146" width="72" height="26" rx="5" class="d-box"/>
+  <text x="272" y="164" text-anchor="middle" class="d-code">追加</text>
+
+  <rect x="48" y="188" width="264" height="96" rx="6" class="d-box"/>
+  <text x="180" y="240" text-anchor="middle" class="d-code">QListWidget</text>
+
+  <rect x="42" y="294" width="276" height="42" rx="8" class="d-accent"/>
+  <rect x="188" y="302" width="60" height="26" rx="5" class="d-box"/>
+  <text x="218" y="320" text-anchor="middle" class="d-code">消す</text>
+  <rect x="256" y="302" width="54" height="26" rx="5" class="d-box"/>
+  <text x="283" y="320" text-anchor="middle" class="d-code">保存</text>
+
+  <!-- コード構造 -->
+  <rect x="366" y="48" width="324" height="300" rx="10" class="d-dash"/>
+  <text x="528" y="70" text-anchor="middle" class="d-mute">レイアウトの木</text>
+
+  <rect x="384" y="84" width="288" height="34" rx="6" class="d-accent"/>
+  <text x="398" y="106" class="d-code">QVBoxLayout（外側・縦）</text>
+
+  <path d="M400 118 v22 h20" class="d-line"/>
+  <rect x="420" y="126" width="252" height="30" rx="6" class="d-box"/>
+  <text x="432" y="146" class="d-code">addWidget(QLabel)</text>
+
+  <path d="M400 118 v52 h20" class="d-line"/>
+  <rect x="420" y="164" width="252" height="30" rx="6" class="d-tip"/>
+  <text x="432" y="184" class="d-code">addLayout(QHBoxLayout)</text>
+
+  <path d="M436 194 v20 h18" class="d-line"/>
+  <rect x="454" y="202" width="218" height="26" rx="6" class="d-box"/>
+  <text x="464" y="220" class="d-code">addWidget(QLineEdit)</text>
+  <path d="M436 194 v44 h18" class="d-line"/>
+  <rect x="454" y="234" width="218" height="26" rx="6" class="d-box"/>
+  <text x="464" y="252" class="d-code">addWidget(QPushButton)</text>
+
+  <path d="M400 118 v152 h20" class="d-line"/>
+  <rect x="420" y="266" width="252" height="30" rx="6" class="d-box"/>
+  <text x="432" y="286" class="d-code">addWidget(QListWidget)</text>
+
+  <path d="M400 118 v190 h20" class="d-line"/>
+  <rect x="420" y="304" width="252" height="30" rx="6" class="d-tip"/>
+  <text x="432" y="324" class="d-code">addLayout(QHBoxLayout)</text>
+</svg>
