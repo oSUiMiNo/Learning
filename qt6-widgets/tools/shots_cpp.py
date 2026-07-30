@@ -24,7 +24,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 CPP = ROOT / "examples" / "cpp"
-OUT_DIR = ROOT.parent / "docs" / "img"
+# 出力先は build.py の DOCS と一致させること（shots.py と同じ場所）。
+OUT_DIR = ROOT.parent / "docs" / "qt6-widgets" / "img"
 BUILD = ROOT / "tools" / ".cpp-build"
 SCALE = 2
 

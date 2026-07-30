@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import glob
 import os
 import subprocess
 import sys
@@ -21,9 +22,17 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
-DOCS = ROOT.parent / "docs"
+SITE = ROOT.parent / "docs"        # 公開ルート（教材一覧のハブ）
+DOCS = SITE / "qt6-widgets"        # この教材のページ
 OUT = ROOT / "tools" / ".preview"
-CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+
+
+def find_chrome() -> str:
+    """Chromium の版を決め打ちにすると、環境が更新された時点で動かなくなる。"""
+    found = sorted(glob.glob("/opt/pw-browsers/chromium-*/chrome-linux/chrome"))
+    if not found:
+        raise SystemExit("Chromium が見つかりません（/opt/pw-browsers を確認してください）")
+    return found[-1]
 
 
 def free_port() -> int:
@@ -45,7 +54,8 @@ def pages() -> list[str]:
 
 def main() -> int:
     if not DOCS.exists():
-        print("docs/ がありません。先に tools/build.py を実行してください。", file=sys.stderr)
+        print("docs/qt6-widgets/ がありません。先に tools/build.py を実行してください。",
+              file=sys.stderr)
         return 1
 
     only = sys.argv[1] if len(sys.argv) > 1 else ""
@@ -53,15 +63,16 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
 
     port = free_port()
+    # ルート（教材一覧）ごと配信して、教材をまたぐリンクも一緒に確かめる。
     server = subprocess.Popen(
-        [sys.executable, "-m", "http.server", "-d", str(DOCS), str(port)],
+        [sys.executable, "-m", "http.server", "-d", str(SITE), str(port)],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(1.2)
 
     problems: list[str] = []
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(executable_path=CHROME)
+            browser = p.chromium.launch(executable_path=find_chrome())
             for theme in ("light", "dark"):
                 for vp_name, (w, h) in VIEWPORTS.items():
                     if theme == "dark" and vp_name == "mobile":
@@ -82,7 +93,7 @@ def main() -> int:
 
                     for rel in targets:
                         errors.clear()
-                        page.goto(f"http://127.0.0.1:{port}/{rel}",
+                        page.goto(f"http://127.0.0.1:{port}/qt6-widgets/{rel}",
                                   wait_until="networkidle")
                         # 遅延読み込みのままだと、画面外の画像が写らない。
                         page.evaluate(

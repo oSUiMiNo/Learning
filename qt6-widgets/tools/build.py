@@ -537,8 +537,9 @@ def main() -> int:
         json.dumps(versions, ensure_ascii=False, indent=2), encoding="utf-8")
 
     total_kb = sum(p.stat().st_size for p in DOCS.rglob("*") if p.is_file()) / 1024
-    print(f"docs/ に {len(pages)} ページを出力しました（サイト全体 {total_kb:.0f} KB）")
-    print(f"確認: python -m http.server -d {DOCS} 8000")
+    print(f"docs/qt6-widgets/ に {len(pages)} ページを出力しました（{total_kb:.0f} KB）")
+    # 公開ルートごと配信すれば、教材一覧からの行き来も確かめられる。
+    print(f"確認: python -m http.server -d {SITE} 8000")
     return 1 if errors else 0
 
 

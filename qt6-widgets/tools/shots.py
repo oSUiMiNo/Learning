@@ -22,7 +22,9 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES = ROOT / "examples"
-OUT_DIR = ROOT.parent / "docs" / "img"
+# 出力先は build.py の DOCS と一致させること。
+# ここがずれると、撮った画像と shots.json を build.py が見つけられない。
+OUT_DIR = ROOT.parent / "docs" / "qt6-widgets" / "img"
 SCALE = 2
 
 

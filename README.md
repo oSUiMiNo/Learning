@@ -49,6 +49,82 @@ Learning/
 `tools/build_hub.py` は教材をまたぐ部分（一覧ページと転送）だけを受け持ちます。
 
 3 冊目を足すときは、`tools/build_hub.py` の `BOOKS` に 1 項目加えれば一覧に並びます。
+章数・通読時間・検証バージョンは各教材の `book/toc.py` と
+`docs/<教材名>/assets/versions.json` から自動で読むので、手で書く必要はありません。
+
+### 旧 URL からの転送
+
+Qt6 Widgets 入門は、2 冊目を足すまで**公開ルートに置かれていました**。
+そのため次のような URL が外部に出ている可能性があります。
+
+```
+https://osuimino.github.io/Learning/03-signals/     ← 旧
+https://osuimino.github.io/Learning/qt6-widgets/03-signals/   ← 新
+```
+
+既存のリンクを切らないよう、旧パス 15 本に転送ページを置いています。
+`<meta http-equiv="refresh">` と `<link rel="canonical">` を書いただけの
+薄い HTML で、JavaScript を切っていても手で辿れるリンクを添えてあります。
+
+転送するパスの一覧は `tools/build_hub.py` の `LEGACY_QT6_SLUGS` が情報源です。
+教材を移動・改名したときは、ここに追記してください。
+
+なお生成された HTML の中のリンクはすべて相対パスなので、
+教材ディレクトリごと移しても内部リンクは壊れません。
+
+## 公開前に走らせるもの
+
+教材を触ったら、公開前にこの順で走らせます。
+どれか 1 つでも落ちたら、その時点で直してください。
+
+```bash
+pip install -r qt6-widgets/requirements-build.txt
+pip install -r rust/requirements-build.txt
+```
+
+### 1. 中身が正しいかを実物で確かめる
+
+```bash
+# Qt6 Widgets 入門
+python qt6-widgets/tools/check_examples.py   # 全サンプルが起動するか
+python qt6-widgets/tools/check_claims.py     # 本文の Qt5 → Qt6 の記述が事実か
+
+# Rust 入門
+python rust/tools/check_examples.py          # build / test / run / fmt / clippy
+python rust/tools/check_errors.py            # 「通らない例」が宣言どおりのエラーで落ちるか
+python rust/tools/check_crates.py            # 外部クレートの API についての記述が実物と合うか
+```
+
+### 2. 素材を撮り直す（コードを変えたときだけ）
+
+```bash
+python qt6-widgets/tools/shots.py            # Xvfb 上で実行してスクリーンショット
+python rust/tools/capture.py                 # コマンドを実行して端末出力を捕獲
+```
+
+### 3. サイトを組み立てる
+
+```bash
+python qt6-widgets/tools/build.py --check    # 先に壊れた箇所だけ調べる
+python rust/tools/build.py --check
+python qt6-widgets/tools/build.py
+python rust/tools/build.py
+python tools/build_hub.py                    # 教材一覧と旧 URL 転送
+```
+
+### 4. ブラウザで検証する
+
+```bash
+python qt6-widgets/tools/preview.py          # 明暗 2 テーマ × デスクトップ/スマホ幅
+python rust/tools/preview.py
+python -m http.server -d docs 8000           # 目視確認
+```
+
+`preview.py` は JavaScript のコンソールエラー・404・横スクロール・
+未展開の指示子を検出し、さらに**表示されているコードが `examples/` の
+実ファイルと 1 バイトも違わないこと**を確かめます。
+Rust 側はこれに加えて、ターミナル枠に「実測」か「再現」のバッジが
+付いていることも検査します。
 
 ## GitHub Pages の公開設定
 

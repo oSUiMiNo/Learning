@@ -74,6 +74,7 @@ cd rust
 | `python tools/build.py` | `book/` と `examples/` と `outputs/` から `../docs/rust/` を生成する |
 | `python tools/build.py --check` | 生成せずに、壊れている箇所だけを調べる |
 | `python tools/preview.py` | 出来上がったサイトをブラウザで巡回して検証する |
+| `python ../tools/build_hub.py` | 教材一覧のハブと旧 URL の転送ページを更新する（リポジトリ直下のスクリプト） |
 
 典型的な流れは次のとおりです。
 
@@ -84,8 +85,12 @@ python tools/check_crates.py     # クレートの記述が実物と合ってい
 python tools/capture.py          # 出力を撮り直す（コードを変えたとき）
 python tools/build.py            # サイトを生成
 python tools/preview.py          # ブラウザで検証
-cd .. && python tools/build_hub.py   # 教材一覧のハブを更新
+python ../tools/build_hub.py     # 教材一覧のハブを更新（章数などが変わったとき）
 ```
+
+ハブに出している章数・通読時間・検証バージョンは `book/toc.py` と
+`docs/rust/assets/versions.json` から読んでいます。
+そのため章を増やしたら `build_hub.py` も走らせてください。
 
 ### `tools/check_errors.py` を用意した理由
 
