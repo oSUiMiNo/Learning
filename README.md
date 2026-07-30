@@ -62,8 +62,9 @@ Learning/
 │   ├── qt6-widgets/       Qt6 Widgets 入門
 │   └── <旧 slug>/         Qt6 本がルートに居た時代の URL からの転送
 ├── rust/              Rust 入門のソース
-├── qt6-widgets/       Qt6 Widgets 入門のソース
 │   └── AUTHORING.md       この教材を作って分かったこと（教材ごとに置く）
+├── qt6-widgets/       Qt6 Widgets 入門のソース
+│   └── AUTHORING.md       同上
 ├── AUTHORING.md       教材づくりの共通ルール（分野を問わず効くこと）
 └── tools/
     └── build_hub.py   教材一覧と旧 URL の転送ページを生成する
