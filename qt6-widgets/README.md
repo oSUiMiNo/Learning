@@ -4,8 +4,8 @@ Python (PySide6 6.11) で Qt Widgets を学ぶ、初心者向けの入門書で�
 公開ページ: https://osuimino.github.io/Learning/qt6-widgets/
 
 > **この教材を直しに来た人へ。**
-> 先に [AUTHORING.md](AUTHORING.md) を読んでください。
-> ここを作る過程で実際に踏んだ間違いと、その対処がまとまっています。
+> 先に [../AUTHORING.md](../AUTHORING.md)（教材づくりの共通ルール）と
+> [AUTHORING.md](AUTHORING.md)（この教材で実際に踏んだこと）を読んでください。
 > とくに「本文の主張は実物で確かめてから書く」の理由は、
 > 実例つきで書いてあるので目を通しておくと事故が減ります。
 
