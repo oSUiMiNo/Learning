@@ -4,7 +4,6 @@
 
 1. **[AUTHORING.md](AUTHORING.md) — 教材づくりの共通ルール**（分野を問わず効くこと）
 2. **その教材の `<教材名>/AUTHORING.md`**（その教材で実際に踏んだこと）
-   - [qt6-widgets/AUTHORING.md](qt6-widgets/AUTHORING.md)
 
 新しい教材を作ったら、`<教材名>/AUTHORING.md` を残してください。
 何を書くかは共通ルールの 8 節にあります。
