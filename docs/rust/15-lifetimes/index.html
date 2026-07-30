@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第15章 ライフタイム — &#x27;a は何を言っているのか | Rust 入門</title>
+<meta name="description" content="初心者がいちばん怖がる記法です。しかし正体は「この参照はいつまで有効か」をコンパイラに伝えるだけのもの。落ち着いて読めば短い話です。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li class="is-current"><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 15 章<span class="dot">·</span>読了目安 16 分</p>
+        <h1>第15章 ライフタイム — &#x27;a は何を言っているのか</h1>
+        <p class="lede">初心者がいちばん怖がる記法です。しかし正体は「この参照はいつまで有効か」をコンパイラに伝えるだけのもの。落ち着いて読めば短い話です。</p>
+      </header>
+      <div class="prose">
+<p>
+<code>'a</code> という記法は、Rust でいちばん怖がられているものです。
+けれど正体は単純です。
+</p>
+
+<p>
+<strong>「この参照はいつまで有効か」をコンパイラに伝えるだけの注釈です。</strong>
+新しい寿命を作るのではなく、すでにある寿命に名前を付けているだけ。
+それが分かれば、あとは短い話です。
+</p>
+
+<h2 id="何を防いでいるのか">何を防いでいるのか</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 270" role="img" aria-label="ライフタイムは参照が有効な区間を表すもの。借りた先が自分より短命だとコンパイルエラーになる。">
+  <rect x="1" y="1" width="718" height="268" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">'a は「新しい寿命」ではなく、既にある寿命への名札</text>
+
+  <!-- 正しい例 -->
+  <rect x="24" y="44" width="672" height="80" rx="9" class="d-tip"/>
+  <text x="44" y="66" class="d-head-tip">通る — 借りた先が、参照より長生きしている</text>
+  <g class="d-code">
+    <text x="44" y="88">let text = String::from("..");</text>
+    <text x="300" y="88">let part = &amp;text;</text>
+    <text x="470" y="88">println!("{part}");</text>
+  </g>
+  <rect x="44" y="98" width="600" height="8" rx="4" class="d-fill-accent"/>
+  <text x="344" y="118" text-anchor="middle" class="d-mute">text が生きている区間。part の区間はこの中にすっぽり収まっている</text>
+
+  <!-- 誤りの例 -->
+  <rect x="24" y="136" width="672" height="100" rx="9" class="d-warn"/>
+  <text x="44" y="158" class="d-head-warn">通らない（E0597）— 借りた先が先に消える</text>
+  <g class="d-code">
+    <text x="44" y="180">{ let inner = ..;  outer = &amp;inner; }</text>
+    <text x="400" y="180">println!("{outer}");</text>
+  </g>
+  <rect x="44" y="190" width="300" height="8" rx="4" class="d-fill-accent"/>
+  <text x="194" y="212" text-anchor="middle" class="d-mute">inner が生きている区間</text>
+
+  <rect x="400" y="190" width="244" height="8" rx="4" class="d-flow-warn"/>
+  <path d="M400 194 L644 194" class="d-flow-warn"/>
+  <text x="522" y="212" text-anchor="middle" class="d-head-warn">outer はここでまだ生きている → はみ出している</text>
+  <text x="344" y="230" text-anchor="middle" class="d-mute">C や C++ ならダングリングポインタになる場面。Rust はここで止める。</text>
+
+  <text x="28" y="258" class="d-mute">迷ったら「借りるのをやめて所有させる（String にする）」のが素直な解決策。少しコピーが増えるだけ。</text>
+</svg>
+<figcaption>ライフタイムは「参照が有効な区間」を表す。借りた先が参照より長生きしていれば通る。内側のブロックで作った値を外に持ち出そうとすると、参照の区間が借用先からはみ出すので止められる。</figcaption></figure>
+
+<p>
+実際にはみ出させてみると、こう言われます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0597-does-not-live-long-enough.rs</span>
+<span class="a-b a-91">error[E0597]</span><span class="a-b">: `inner` does not live long enough</span>
+  <span class="a-b a-94">--&gt; </span>e0597-does-not-live-long-enough.rs:14:17
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">13</span> <span class="a-b a-94">|</span>         let inner = String::from(&quot;短い命&quot;);
+   <span class="a-b a-94">|</span>             <span class="a-b a-94">-----</span> <span class="a-b a-94">binding `inner` declared here</span>
+<span class="a-b a-94">14</span> <span class="a-b a-94">|</span>         outer = &amp;inner; // inner はこのブロックの終わりで消える
+   <span class="a-b a-94">|</span>                 <span class="a-b a-91">^^^^^^</span> <span class="a-b a-91">borrowed value does not live long enough</span>
+<span class="a-b a-94">15</span> <span class="a-b a-94">|</span>     }
+   <span class="a-b a-94">|</span>     <span class="a-b a-94">-</span> <span class="a-b a-94">`inner` dropped here while still borrowed</span>
+<span class="a-b a-94">16</span> <span class="a-b a-94">|</span>
+<span class="a-b a-94">17</span> <span class="a-b a-94">|</span>     println!(&quot;{outer}&quot;); // 消えたものを見ようとしている
+   <span class="a-b a-94">|</span>                <span class="a-b a-94">-----</span> <span class="a-b a-94">borrow later used here</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0597`.</span></code></pre></div><figcaption>内側のブロックで作った値への参照を、ブロックの外で使った場合。「inner does not live long enough」「borrow later used here」と、どこで消えてどこで使ったかが両方示される。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">C# ではこれが起きない理由</span>
+  <p>
+    C# で同じことを書いても問題ありません。
+    GC が「まだ誰かが参照している」ことを知っているので、
+    オブジェクトは生き続けます。
+  </p>
+  <p>
+    Rust には GC が無いので、<code>inner</code> はブロックを抜けた時点で片付けられます。
+    その後に <code>outer</code> を使えば、<strong>片付けた場所を読むことになります</strong>。
+    C や C++ ならダングリングポインタで、
+    運が良ければ動き、運が悪いとおかしな値を読んだり落ちたりします。
+  </p>
+  <p>
+    ライフタイムは、それをコンパイル時に止めるための仕組みです。
+  </p>
+</div>
+
+<h2 id="ほとんどの場合書かなくてよい">ほとんどの場合、書かなくてよい</h2>
+
+<p>
+先に安心する話をします。<strong>ライフタイムはほとんど書かなくて済みます。</strong>
+コンパイラが推測できる場合は省略できて、その規則（省略規則）が実用上ほぼ全部を覆います。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">first_word</span><span class="p">(</span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">text</span><span class="p">.</span><span class="n">split_whitespace</span><span class="p">().</span><span class="n">next</span><span class="p">().</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">)</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">引数が 1 つなら書かなくてよい</figcaption></figure>
+
+<div class="note">
+  <span class="note-title">省略規則（3 つ）</span>
+  <ol>
+    <li>引数の各参照には、それぞれ別のライフタイムが割り当てられる。</li>
+    <li><strong>引数の参照が 1 つだけなら</strong>、戻り値のライフタイムはそれになる。</li>
+    <li><strong>メソッドで <code>&amp;self</code> があるなら</strong>、戻り値のライフタイムは <code>&amp;self</code> のものになる。</li>
+  </ol>
+  <p>
+    実務のコードは大半がこの 2 番目か 3 番目に当てはまります。
+    だから <code>'a</code> を書く場面は意外に少ないのです。
+  </p>
+</div>
+
+<h2 id="書かされる場面">書かされる場面</h2>
+
+<p>
+規則に当てはまらないのは、<strong>参照の引数が 2 つ以上あって、参照を返すとき</strong>です。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0106-missing-lifetime.rs</span>
+<span class="a-b a-91">error[E0106]</span><span class="a-b">: missing lifetime specifier</span>
+ <span class="a-b a-94">--&gt; </span>e0106-missing-lifetime.rs:9:32
+  <span class="a-b a-94">|</span>
+<span class="a-b a-94">9</span> <span class="a-b a-94">|</span> fn longer(a: &amp;str, b: &amp;str) -&gt; &amp;str {
+  <span class="a-b a-94">|</span>              <span class="a-b a-94">----</span>     <span class="a-b a-94">----</span>     <span class="a-b a-91">^</span> <span class="a-b a-91">expected named lifetime parameter</span>
+  <span class="a-b a-94">|</span>
+  <span class="a-b a-94">= </span><span class="a-b">help</span>: this function&#x27;s return type contains a borrowed value, but the signature does not say whether it is borrowed from `a` or `b`
+<span class="a-b a-96">help</span>: consider introducing a named lifetime parameter
+  <span class="a-b a-94">|</span>
+<span class="a-b a-94">9</span> <span class="a-b a-94">| </span>fn longer<span class="a-92">&lt;&#x27;a&gt;</span>(a: &amp;<span class="a-92">&#x27;a </span>str, b: &amp;<span class="a-92">&#x27;a </span>str) -&gt; &amp;<span class="a-92">&#x27;a </span>str {
+  <span class="a-b a-94">|</span>          <span class="a-92">++++</span>     <span class="a-92">++</span>          <span class="a-92">++</span>          <span class="a-92">++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0106`.</span></code></pre></div><figcaption>引数が 2 つあるのに戻り値の参照の出どころを書いていない場合。「expected named lifetime parameter」と、どう書けばよいかの例まで示される。</figcaption></figure>
+
+<p>
+コンパイラの提案どおりに書けば通ります。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">longer</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note">
+  <span class="note-title">この 'a が言っていること</span>
+  <p>
+    「<code>a</code> と <code>b</code> と戻り値は、<strong>同じくらい生きる</strong>」
+    ── もっと正確に言えば
+    「戻り値は、<code>a</code> と <code>b</code> のうち<strong>短いほうが生きている間だけ</strong>有効」
+    です。
+  </p>
+  <p>
+    これを書くことで、呼び出し側では次のような使い方が止められます。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">long</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;うさぎとかめ&quot;</span><span class="p">);</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="p">;</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">short</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;かめ&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">longer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">long</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">short</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{result}&quot;</span><span class="p">);</span></span></code></pre><figcaption class="code-cap">✗ short が先に消えるので、result は使えない</figcaption></figure>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">'a は「長さ」を指定するものではない</span>
+  <p>
+    よくある誤解です。<code>'a</code> と書くことで参照が長生きするようになる、
+    ということは<strong>ありません</strong>。
+  </p>
+  <p>
+    <code>'a</code> は「これらの寿命には関係がある」と<strong>宣言している</strong>だけで、
+    実際の寿命は変わりません。
+    コンパイラはその宣言と実際の寿命を突き合わせて、矛盾があれば怒ります。
+  </p>
+  <p>
+    だから「エラーが出たから <code>'a</code> を足す」では直りません。
+    <strong>直すのは寿命そのもの</strong>（もっと外側で値を作る、所有させる）です。
+  </p>
+</div>
+
+<h2 id="構造体に参照を持たせる">構造体に参照を持たせる</h2>
+
+<p>
+構造体が参照を持つなら、ライフタイムが必須になります。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Excerpt</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">part</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Excerpt</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">part</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">part</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// 省略規則 3 で書かなくてよい</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+これは「この構造体は、借りている元より長生きできない」という宣言です。
+</p>
+
+<div class="note">
+  <span class="note-title">迷ったら「所有させる」</span>
+  <p>
+    ライフタイムで詰まったときの<strong>いちばん実用的な逃げ道</strong>がこれです。
+    参照をやめて、所有する型にしてしまいます。
+  </p>
+  <div class="compare">
+    <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">参照を持つ</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Excerpt</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">part</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">速いが、ライフタイムの管理が要る</figcaption></figure>
+    <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">所有する</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Excerpt</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">part</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">少しコピーが増えるが、悩まなくてよい</figcaption></figure>
+  </div>
+  <p>
+    <code>String</code> にすれば <code>'a</code> が消えます。
+    <code>.to_string()</code> のコストを払うだけです。
+  </p>
+  <p>
+    <strong>初心者のうちは、構造体のフィールドは <code>String</code> にしておくことを勧めます。</strong>
+    参照を持たせるのは、性能が本当に問題になってからで構いません。
+    第 8 章で「構造体のフィールドは <code>String</code>」と書いたのはこの理由です。
+  </p>
+</div>
+
+<h2 id="static">'static</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">motto</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="s">&quot;速く、安全に&quot;</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+<code>'static</code> は「プログラムが終わるまで生きる」という意味です。
+文字列リテラルは実行ファイルに埋め込まれているので、これになります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">'static を安易に付けないこと</span>
+  <p>
+    エラーを消すために <code>'static</code> を付けたくなることがありますが、
+    それは「この値は永遠に生きます」という強い主張です。
+    ふつうのローカル変数には当てはまらないので、たいてい別のエラーに変わるだけです。
+  </p>
+  <p>
+    <code>&amp;'static str</code> が正しいのは、文字列リテラルや
+    <code>const</code>／<code>static</code> で定義したものを返すときだけです。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="15-lifetimes/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! ライフタイム。&#39;a が何を言っているのかを、動く形で確かめます。</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 引数が 2 つあると、返す参照がどちらから来たのか書かないと決まらない。</span></span><span class="cl"><span class="sd">/// &#39;a は「この 3 つの参照は同じくらい生きる」という約束。</span></span><span class="cl"><span class="sd">/// 新しい寿命を作るのではなく、既にある寿命に名前を付けているだけ。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">longer</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">a</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">b</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 引数が 1 つなら書かなくてよい（省略規則）。</span></span><span class="cl"><span class="sd">/// 返す参照の出どころが 1 つしかないので、迷う余地がない。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">first_word</span><span class="p">(</span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">text</span><span class="p">.</span><span class="n">split_whitespace</span><span class="p">().</span><span class="n">next</span><span class="p">().</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">)</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 参照を持つ構造体には、必ずライフタイムが要る。</span></span><span class="cl"><span class="sd">/// 「この構造体は、借りている元より長生きできない」という宣言。</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Excerpt</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">part</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Excerpt</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="na">a</span><span class="w"> </span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">part</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">source</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="sc">&#39;。&#39;</span><span class="p">).</span><span class="n">next</span><span class="p">().</span><span class="n">unwrap_or</span><span class="p">(</span><span class="n">source</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="bp">Self</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">source</span><span class="p">,</span><span class="w"> </span><span class="n">part</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="sd">/// &amp;self のライフタイムが返り値に伝わる（省略規則の 3 番目）</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">part</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">part</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">ratio</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">part</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">()</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">source</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">()</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// &#39;static は「プログラムが終わるまで生きる」。</span></span><span class="cl"><span class="sd">/// 文字列リテラルは実行ファイルに埋め込まれているのでこれになる。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">motto</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="s">&quot;速く、安全に&quot;</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 2 つの参照から片方を返す ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">long</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;うさぎとかめ&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">short</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;かめ&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  長いほう = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">longer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">long</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">short</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 省略できる場合 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sentence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Rust は速い&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  最初の語 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">first_word</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sentence</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. 参照を持つ構造体 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;所有権は難しくない。慣れの問題である。&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">excerpt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Excerpt</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">text</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  最初の文 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">excerpt</span><span class="p">.</span><span class="n">part</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  全体に対する割合 = {:.0}%&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">excerpt</span><span class="p">.</span><span class="n">ratio</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">100.0</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. &#39;static ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">motto</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. 借用の寿命が足りないとどうなるか ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 下のコードはコンパイルできない（E0597）。</span></span><span class="cl"><span class="w">    </span><span class="c1">// examples/errors/e0597-does-not-live-long-enough.rs で実際に確かめている。</span></span><span class="cl"><span class="w">    </span><span class="c1">//</span></span><span class="cl"><span class="w">    </span><span class="c1">//     let outer;</span></span><span class="cl"><span class="w">    </span><span class="c1">//     {</span></span><span class="cl"><span class="w">    </span><span class="c1">//         let inner = String::from(&quot;短い命&quot;);</span></span><span class="cl"><span class="w">    </span><span class="c1">//         outer = &amp;inner;</span></span><span class="cl"><span class="w">    </span><span class="c1">//     }</span></span><span class="cl"><span class="w">    </span><span class="c1">//     println!(&quot;{outer}&quot;);</span></span><span class="cl"><span class="w">    </span><span class="c1">//</span></span><span class="cl"><span class="w">    </span><span class="c1">// 「消えたものを指す参照」がコンパイル時に見つかる、というのが要点。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  内側で作った値を外に持ち出す参照は、コンパイル時に止まる&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. 参照を持たせない選択 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// ライフタイムで悩んだら、借りるのをやめて所有させるのが素直な解決策。</span></span><span class="cl"><span class="w">    </span><span class="c1">// 少しコピーが増えるが、まず動かすことのほうが大事。</span></span><span class="cl"><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">OwnedExcerpt</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">part</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">owned</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OwnedExcerpt</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">part</span><span class="p">:</span><span class="w"> </span><span class="nc">excerpt</span><span class="p">.</span><span class="n">part</span><span class="p">().</span><span class="n">to_string</span><span class="p">(),</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  所有してしまえばライフタイムは要らない: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">owned</span><span class="p">.</span><span class="n">part</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note deep">
+  <span class="note-title">ライフタイムのエラーで詰まったときの手順</span>
+  <ol>
+    <li><strong>コンパイラの提案をそのまま書く。</strong>E0106 なら書き方の例が出ている。</li>
+    <li><strong>値を作る場所を外側に移す。</strong>ブロックの外で <code>let</code> する。</li>
+    <li><strong>参照をやめて所有させる。</strong><code>&amp;str</code> → <code>String</code>、<code>&amp;[T]</code> → <code>Vec&lt;T&gt;</code>。</li>
+    <li><strong>それでも駄目なら設計を見直す。</strong>参照を持つ構造体をやめる、第 18 章の <code>Rc</code> を使う。</li>
+  </ol>
+  <p>
+    2 番目と 3 番目でほぼ解決します。
+    <code>'a</code> を増やして解決しようとすると、たいてい迷路に入ります。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/15-lifetimes</code> を動かしてください。</li>
+    <li><code>longer</code> の <code>'a</code> を全部消して、E0106 を出してください。エラーメッセージが<strong>そのまま直し方を示している</strong>ことを確認してください。</li>
+    <li><code>Excerpt</code> の定義から <code>&lt;'a&gt;</code> を消して、どうなるか見てください。</li>
+    <li><code>examples/errors/e0597-does-not-live-long-enough.rs</code> を <code>rustc</code> で直接コンパイルして、エラー全文を読んでください。</li>
+    <li><code>Excerpt</code> を <code>String</code> を持つ形に書き換えて、<code>'a</code> が全部消えることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>'a</code> は「参照が有効な区間」に名前を付けるだけ。<strong>寿命を伸ばす機能ではない</strong>。</li>
+    <li>省略規則があるので、実際に書く場面は少ない。</li>
+    <li>書かされるのは「参照の引数が 2 つ以上あって、参照を返すとき」。</li>
+    <li>参照を持つ構造体には必須。ただし<strong><code>String</code> にすれば悩まなくて済む</strong>。</li>
+    <li>詰まったら「外側で作る → 所有させる」の順に試す。<code>'a</code> を増やしても直らない。</li>
+    <li><code>'static</code> はリテラルや定数を返すときだけ。安易に付けない。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../14-traits/"><span class="pager-dir">← 前の章</span><span class="pager-title">★ トレイト</span></a>
+<a class="pager-link pager-next" href="../16-modules/"><span class="pager-dir">次の章 →</span><span class="pager-title">モジュールとクレート</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

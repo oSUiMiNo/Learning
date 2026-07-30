@@ -1,0 +1,271 @@
+<p>
+「持ち主はひとりだけ」という規則は強力ですが、それでは書けない形もあります。
+</p>
+
+<ul>
+  <li>再帰的なデータ構造（木、連結リスト）</li>
+  <li>複数の場所から同じものを見たい（親子の相互参照、キャッシュ）</li>
+  <li>外から見ると不変なのに、中身を書き換えたい</li>
+</ul>
+
+<p>
+そのための道具が用意されています。<strong>4 つ覚えれば足ります。</strong>
+</p>
+
+<h2>使い分け</h2>
+
+<!--figure: smart-pointers | 使い分けのフローチャート。持ち主が 1 人なら Box、複数なら Rc（単一スレッド）か Arc（複数スレッド）。さらに共有したうえで書き換えたいなら、内側に RefCell か Mutex を包む。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>型</th><th>役目</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>Box&lt;T&gt;</code></td><td>中身をヒープに置く。持ち主は 1 人</td><td>ふつうの参照型（ただし共有はしない）</td></tr>
+    <tr><td><code>Rc&lt;T&gt;</code></td><td>参照カウントで共有。単一スレッド</td><td><strong>ふつうの参照型</strong></td></tr>
+    <tr><td><code>Arc&lt;T&gt;</code></td><td>同じ。スレッドをまたげる</td><td>ふつうの参照型</td></tr>
+    <tr><td><code>RefCell&lt;T&gt;</code></td><td>借用の検査を実行時に回す</td><td>—（C# は常にこれ相当）</td></tr>
+    <tr><td><code>Weak&lt;T&gt;</code></td><td>カウントを増やさない参照</td><td><code>WeakReference</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Box — 再帰的なデータ構造</h2>
+
+<p>
+次の <code>enum</code> は、<code>Box</code> が無いと<strong>定義できません</strong>。
+</p>
+
+<div class="src" data-lang="rust">
+enum Tree {
+    Leaf(i32),
+    Node(Box&lt;Tree&gt;, Box&lt;Tree&gt;),
+}
+</div>
+
+<div class="note deep">
+  <span class="note-title">なぜ Box が必要なのか</span>
+  <p>
+    Rust はコンパイル時に「この型は何バイトか」を決めます。
+    <code>Node(Tree, Tree)</code> と書くと、
+    <code>Tree</code> の大きさを決めるために <code>Tree</code> の大きさが必要になり、
+    無限に続いてしまいます。
+  </p>
+  <p>
+    <code>Box&lt;Tree&gt;</code> はポインタなので、常に 8 バイトです。
+    大きさが決まるので定義できるようになります。
+  </p>
+  <p>
+    C# ではクラスが常に参照なので、この問題が起きません。
+    かわりに<strong>すべてのオブジェクトが必ずヒープに置かれます</strong>。
+    Rust は「ヒープに置くかどうか」を選べる、という違いです。
+  </p>
+</div>
+
+<h2>Rc — 複数の持ち主</h2>
+
+<div class="src" data-lang="rust">
+let doc = Rc::new(Document { title: String::from("仕様書") });
+let viewer_a = Rc::clone(&amp;doc);    // 中身は複製しない。カウントが増える
+let viewer_b = Rc::clone(&amp;doc);
+println!("{}", Rc::strong_count(&amp;doc));   // 3
+</div>
+
+<div class="note csharp">
+  <span class="note-title">これが C# の「ふつう」</span>
+  <p>
+    C# でクラスのインスタンスを 3 つの変数に代入すれば、
+    3 か所から同じものが見えます。それが既定の動作です。
+  </p>
+  <p>
+    Rust では<strong>それを明示的に選ぶ</strong>ことになります。
+    <code>Rc</code> と書くことで「これは共有されている」ことがコードに現れます。
+  </p>
+  <p>
+    <code>Rc::clone(&amp;doc)</code> と書く慣習にも意味があります。
+    <code>doc.clone()</code> でも同じですが、
+    前者だと「中身の複製ではなくカウントの増加だ」と読み手に伝わります。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">Rc は書き換えられない</span>
+  <p>
+    <code>Rc&lt;T&gt;</code> から得られるのは <code>&amp;T</code> だけです。
+    <strong>複数の持ち主がいるので、書き換えを許すと借用規則が破れます。</strong>
+  </p>
+  <p>
+    共有したうえで書き換えたいときは、内側に <code>RefCell</code> を包みます。
+    それが次の話です。
+  </p>
+</div>
+
+<h2>RefCell — 内部可変性</h2>
+
+<p>
+<code>RefCell</code> は「借用の検査をコンパイル時ではなく<strong>実行時</strong>に行う」箱です。
+</p>
+
+<div class="src" data-lang="rust">
+struct Counter {
+    hits: RefCell&lt;u32&gt;,
+}
+
+impl Counter {
+    fn hit(&amp;self) {                    // &amp;self なのに書き換えられる
+        *self.hits.borrow_mut() += 1;
+    }
+}
+</div>
+
+<div class="note">
+  <span class="note-title">なぜこれが要るのか</span>
+  <p>
+    「外から見ると不変なのに、中では状態を持ちたい」場面があります。
+    キャッシュ、呼び出し回数の記録、遅延初期化などです。
+  </p>
+  <p>
+    C# なら <code>private int _hits;</code> を書けば済みます。
+    Rust では <code>&amp;self</code> のメソッドから書き換えられないので、
+    <code>RefCell</code> で「実行時に検査する」ことを選びます。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">RefCell は破ると panic する</span>
+  <p>
+    検査が実行時なので、規則を破ると<strong>コンパイルは通り、実行時に落ちます</strong>。
+  </p>
+  <div class="src" data-lang="rust">
+let cell = RefCell::new(1);
+let first = cell.borrow();       // 読む借用
+let second = cell.borrow_mut();  // 書く借用 → 実行時に panic
+  </div>
+  <p>
+    メッセージは <code>already borrowed: BorrowMutError</code> です。
+    落ちてほしくないなら <code>try_borrow_mut()</code> を使って
+    <code>Result</code> で受けてください。
+  </p>
+  <p>
+    <strong>コンパイル時の安全を、実行時の安全と引き換えにしている</strong>ことを
+    忘れないでください。使うのは本当に必要な場面だけです。
+  </p>
+</div>
+
+<h2>Rc + RefCell — 定番の組み合わせ</h2>
+
+<div class="src" data-lang="rust">
+let shared = Rc::new(RefCell::new(Vec::new()));
+let writer = Rc::clone(&amp;shared);
+writer.borrow_mut().push("追記した");
+println!("{:?}", shared.borrow());
+</div>
+
+<p>
+「共有したうえで書き換えたい」ときの形です。
+C# のふつうのオブジェクト共有に、いちばん近い状態になります。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">C# の楽さと引き換えているもの</span>
+  <p>
+    <code>Rc&lt;RefCell&lt;T&gt;&gt;</code> は、C# なら何も書かずに得られる状態です。
+    Rust ではそれが冗長に見えます。
+  </p>
+  <p>
+    ただし C# 側にも代償があります。
+    「このオブジェクトはどこから書き換えられるのか」が分からないという代償です。
+    Rust では <code>Rc&lt;RefCell&lt;T&gt;&gt;</code> と型に書いてあるので、
+    <strong>共有可変であることが一目で分かります</strong>。
+  </p>
+  <p>
+    そして重要なのは、<strong>ほとんどの場面ではこれが要らない</strong>ことです。
+    まず所有権と借用で書けないか考えてください。
+    <code>Rc&lt;RefCell&lt;T&gt;&gt;</code> が増えてきたら、設計を見直す合図です。
+  </p>
+</div>
+
+<h2>Weak — 循環参照を避ける</h2>
+
+<div class="note pitfall">
+  <span class="note-title">Rc だけでは漏れる</span>
+  <p>
+    親が子を <code>Rc</code> で持ち、子が親を <code>Rc</code> で持つと、
+    カウントが 0 にならず<strong>永遠に解放されません</strong>。
+  </p>
+  <p>
+    C# の GC は循環参照を検出できるので問題ありませんが、
+    <strong>参照カウント方式では検出できません</strong>。
+    ここは C# より弱い部分です。
+  </p>
+  <p>
+    片方を <code>Weak</code> にすれば解決します。
+  </p>
+  <div class="src" data-lang="rust">
+struct Child {
+    parent: RefCell&lt;Weak&lt;Parent&gt;&gt;,   // 弱い参照
+}
+
+// 使うときは upgrade する。相手が消えていれば None
+if let Some(found) = child.parent.borrow().upgrade() { }
+  </div>
+</div>
+
+<h2>Deref — Box が透過的に見える理由</h2>
+
+<div class="note deep">
+  <span class="note-title">なぜ box.method() と書けるのか</span>
+  <p>
+    <code>Box&lt;String&gt;</code> に対して <code>.len()</code> と書けます。
+    <code>Box</code> に <code>len()</code> は無いのに動きます。
+  </p>
+  <p>
+    これは <code>Deref</code> トレイトのおかげです。
+    メソッドが見つからないとき、Rust は
+    <strong>自動的に参照を外して探しに行きます</strong>（自動参照外し）。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>この型に</th><th>これが自動で使える</th></tr></thead>
+    <tbody>
+      <tr><td><code>Box&lt;T&gt;</code></td><td><code>T</code> のメソッド</td></tr>
+      <tr><td><code>Rc&lt;T&gt;</code></td><td><code>T</code> のメソッド</td></tr>
+      <tr><td><code>String</code></td><td><code>&amp;str</code> のメソッド</td></tr>
+      <tr><td><code>Vec&lt;T&gt;</code></td><td><code>&amp;[T]</code> のメソッド</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>String</code> に <code>&amp;str</code> のメソッドが使えるのも、これが理由です。
+    第 8 章で「引数は <code>&amp;str</code> で受ければ <code>String</code> も渡せる」
+    と書いたのは、この仕組みによるものです。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 18-smart-pointers/src/main.rs-->
+
+<!--term: run-smart-pointers | 実行結果。Rc のカウントが増えて減る様子、RefCell が実行時に借用を弾く様子、Weak で循環を避けている様子が順に出ている。 -->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/18-smart-pointers</code> を動かして、<code>Rc</code> のカウントの変化を確認してください。</li>
+    <li><code>enum Tree</code> の <code>Box</code> を外して、E0072（無限のサイズ）を出してください。</li>
+    <li><code>let first = cell.borrow();</code> の後の <code>try_borrow_mut()</code> を <code>borrow_mut()</code> に変えて、<strong>実行時に panic する</strong>ことを確認してください。</li>
+    <li><code>Child</code> の <code>Weak&lt;Parent&gt;</code> を <code>Rc&lt;Parent&gt;</code> に変えて、<code>strong_count</code> がどうなるか観察してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>Box&lt;T&gt;</code> はヒープに置くだけ。再帰的なデータ構造に必要。</li>
+    <li><code>Rc&lt;T&gt;</code> は参照カウントで共有。<strong>C# の参照型の既定の動作</strong>にあたる。</li>
+    <li><code>Rc</code> は読み専用。書きたいなら <code>Rc&lt;RefCell&lt;T&gt;&gt;</code>。</li>
+    <li><code>RefCell</code> は検査が実行時。破ると <strong>panic</strong> する。</li>
+    <li>循環参照は参照カウントでは解放されない。片方を <code>Weak</code> にする。</li>
+    <li><code>Rc&lt;RefCell&lt;T&gt;&gt;</code> が増えてきたら、設計を見直す合図。</li>
+    <li><code>Deref</code> のおかげで <code>Box</code> や <code>String</code> は中身のメソッドが透過的に使える。</li>
+  </ul>
+</div>

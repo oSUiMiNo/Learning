@@ -1,0 +1,292 @@
+<p>
+<code>mod</code> は namespace に似ていますが、役目が 2 つあります。
+<strong>ファイル分割の仕組みでもあり、公開範囲の仕組みでもあります。</strong>
+</p>
+
+<p>
+そして C# といちばん違うのは、<strong>既定が非公開</strong>だという点です。
+<code>pub</code> を書いたものだけが外に出ます。
+</p>
+
+<h2>用語の整理</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Rust</th><th>意味</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><strong>パッケージ</strong></td><td><code>Cargo.toml</code> 1 つぶん</td><td>プロジェクト（.csproj）</td></tr>
+    <tr><td><strong>クレート</strong></td><td>コンパイルの単位。実行ファイルかライブラリ</td><td>アセンブリ（.dll / .exe）</td></tr>
+    <tr><td><strong>モジュール</strong></td><td>クレートの中の入れ物</td><td>namespace</td></tr>
+    <tr><td><strong>ワークスペース</strong></td><td>複数パッケージのまとめ</td><td>ソリューション（.sln）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">名前空間とファイルの関係が違う</span>
+  <p>
+    C# では namespace とフォルダ構成は<strong>無関係</strong>です（慣習で揃えるだけ）。
+    どのファイルにどの namespace を書いても通ります。
+  </p>
+  <p>
+    Rust では<strong>モジュールの木がファイル構成と一致します</strong>。
+    <code>mod geometry;</code> と書けば <code>geometry.rs</code> か
+    <code>geometry/mod.rs</code> が読まれます。
+  </p>
+  <p>
+    そのぶん自由度は下がりますが、「この型はどのファイルにあるか」が
+    パスから確実に分かるという利点があります。
+  </p>
+</div>
+
+<h2>ファイル分割</h2>
+
+<!--figure: module-tree | 左がファイル構成、右がモジュールパス。mod で「ここに取り込む」宣言をし、use で短い名前を付ける。既定は非公開で、pub を付けたものだけが外へ出る。 -->
+
+<p>
+この章のサンプルは 3 ファイルに分かれています。まず入口です。
+</p>
+
+<!--code: 16-modules/src/main.rs-->
+
+<p>
+<code>mod geometry;</code> の 1 行が「<code>geometry.rs</code> を読み込む」宣言です。
+</p>
+
+<!--code: 16-modules/src/geometry.rs-->
+
+<p>
+さらに入れ子のモジュールは、同名のフォルダに置きます。
+</p>
+
+<!--code: 16-modules/src/geometry/area.rs-->
+
+<div class="note pitfall">
+  <span class="note-title">mod と use は別のもの</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>やること</th><th>C# なら</th></tr></thead>
+    <tbody>
+      <tr><td><code>mod foo;</code></td><td><strong>ファイルを木に組み込む</strong></td><td>（対応するものが無い）</td></tr>
+      <tr><td><code>use foo::Bar;</code></td><td>名前を短く使えるようにする</td><td><code>using</code> ディレクティブ</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <strong><code>mod</code> を書き忘れると、ファイルは存在してもコンパイルされません。</strong>
+    「ファイルを作ったのに <code>use</code> で見つからない」という詰まり方の原因はこれです。
+  </p>
+  <p>
+    逆に <code>use</code> は書かなくても、フルパスで書けば動きます。
+    <code>use</code> は純粋に短く書くためのものです。
+  </p>
+</div>
+
+<h2>公開範囲</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>見える範囲</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td>（何も書かない）</td><td><strong>同じモジュールの中だけ</strong></td><td><code>private</code></td></tr>
+    <tr><td><code>pub</code></td><td>どこからでも</td><td><code>public</code></td></tr>
+    <tr><td><code>pub(crate)</code></td><td>同じクレートの中だけ</td><td><code>internal</code></td></tr>
+    <tr><td><code>pub(super)</code></td><td>親モジュールまで</td><td>—</td></tr>
+    <tr><td><code>pub(in path)</code></td><td>指定したモジュール以下</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">既定が違う</span>
+  <p>
+    C# のクラスメンバは既定で <code>private</code>、型は既定で <code>internal</code> です。
+    Rust は<strong>すべて既定で「そのモジュールの中だけ」</strong>です。
+  </p>
+  <p>
+    つまり <code>pub struct Point</code> と書いても、
+    <strong>フィールドは <code>pub</code> を付けないと外から見えません</strong>。
+  </p>
+  <div class="src" data-lang="rust">
+pub struct Point {
+    x: f64,      // 外からは触れない
+    pub y: f64,  // 外から触れる
+}
+  </div>
+  <p>
+    「型は公開するが中身は隠す」を素直に書けます。
+    C# でプロパティを書いてフィールドを隠すのと同じ効果が、既定で得られます。
+  </p>
+</div>
+
+<p>
+実行結果を見ると、非公開のものも「公開関数を通せば使える」ことが分かります。
+</p>
+
+<!--term: run-modules | 実行結果。secret_scale は非公開だが、それを内部で使っている公開関数 doubled_distance を通せば結果が得られる。pub(crate) の coords も、同じクレート内の area モジュールからは使える。 -->
+
+<h2>パスの書き方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>crate::geometry::area</code></td><td>クレートの根から辿る（絶対パス）</td></tr>
+    <tr><td><code>self::area</code></td><td>いまのモジュールから</td></tr>
+    <tr><td><code>super::Point</code></td><td>親モジュールから</td></tr>
+    <tr><td><code>geometry::Point</code></td><td>いまのモジュールから見える名前で（相対パス）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">use の便利な書き方</span>
+  <div class="src" data-lang="rust">
+use std::collections::{HashMap, HashSet};      // まとめて
+use std::io::{self, Write};                    // io 自身も一緒に
+use std::collections::HashMap as Map;          // 別名を付ける（C# の using X = Y）
+use std::fmt::*;                               // 全部（避けたほうがよい）
+pub use crate::geometry::Point;                // 再公開（外から見えるようにする）
+  </div>
+  <p>
+    最後の <code>pub use</code> が便利です。
+    内部の構成を隠しつつ、使いやすい名前で公開できます。
+    ライブラリの <code>lib.rs</code> でよく使われる書き方です。
+  </p>
+</div>
+
+<h2>外部クレートを使う</h2>
+
+<p>
+crates.io からライブラリを持ってきます。第 3 章で見た <code>cargo add</code> です。
+</p>
+
+<div class="src" data-lang="bash" data-file="PowerShell">
+cargo add rand
+</div>
+
+<p>
+足したら、<code>use</code> で名前を持ってくるだけです。
+</p>
+
+<div class="src" data-lang="rust">
+use rand::RngExt;
+
+let n = rand::rng().random_range(1..=100);
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">2015 エディションの extern crate は不要</span>
+  <p>
+    古い記事には、ファイルの先頭に次のように書くよう指示されているものがあります。
+  </p>
+  <div class="src" data-lang="rust" data-file="2015 エディションの書き方">
+extern crate rand;
+  </div>
+  <p>
+    <strong>2018 エディション以降は不要です。</strong>
+    <code>Cargo.toml</code> に書いてあれば、そのまま <code>use</code> できます。
+  </p>
+  <p>
+    いま <code>cargo new</code> で作ると 2024 エディションになるので、
+    <code>extern crate</code> を見かけたら「その記事は 2018 年より前のもの」と判断できます。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">クレートを探すとき</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>場所</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://crates.io/">crates.io</a></td><td>公式のレジストリ。ダウンロード数が目安になる</td></tr>
+      <tr><td><a href="https://docs.rs/">docs.rs</a></td><td><strong>全クレートの API ドキュメントが自動生成されている</strong></td></tr>
+      <tr><td><a href="https://blessed.rs/crates">blessed.rs</a></td><td>用途ごとの「定番」を人がまとめたもの</td></tr>
+      <tr><td><a href="https://lib.rs/">lib.rs</a></td><td>crates.io の別の見せ方。分類が見やすい</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <strong>docs.rs は必ず使ってください。</strong>
+    公開されているすべてのクレートの、すべての版のドキュメントが揃っています。
+    <code>cargo doc --open</code> でローカルにも作れます。
+  </p>
+</div>
+
+<h2>ライブラリと実行ファイル</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ファイル</th><th>役目</th></tr></thead>
+  <tbody>
+    <tr><td><code>src/main.rs</code></td><td>実行ファイルの入口。<code>fn main()</code> がある</td></tr>
+    <tr><td><code>src/lib.rs</code></td><td>ライブラリの入口。外から使われる</td></tr>
+    <tr><td><code>src/bin/*.rs</code></td><td>追加の実行ファイル</td></tr>
+    <tr><td><code>tests/*.rs</code></td><td>結合テスト（第 17 章）</td></tr>
+    <tr><td><code>examples/*.rs</code></td><td>使用例。<code>cargo run --example 名前</code> で動く</td></tr>
+    <tr><td><code>benches/*.rs</code></td><td>性能測定</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">両方置くのが定石</span>
+  <p>
+    実務では <code>lib.rs</code> に中身を書き、<code>main.rs</code> は薄い入口にします。
+  </p>
+  <div class="src" data-lang="rust" data-file="src/main.rs">
+fn main() -&gt; anyhow::Result&lt;()&gt; {
+    my_tool::run()
+}
+  </div>
+  <p>
+    こうすると、中身がライブラリなので<strong>結合テストから呼べるようになります</strong>。
+    <code>main.rs</code> だけに書くとテストしづらくなります。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">ワークスペース</span>
+  <p>
+    複数のパッケージをまとめて扱いたいときは、
+    ルートに <code>Cargo.toml</code> を置いてワークスペースにします。
+  </p>
+  <div class="src" data-lang="toml" data-file="Cargo.toml">
+[workspace]
+resolver = "3"
+members = ["core", "cli", "server"]
+  </div>
+  <p>
+    <code>target/</code> が 1 つに集約されるのでビルドが速くなり、
+    ディスクの節約にもなります。
+    この教材の <code>examples/</code> も 20 個のプロジェクトをワークスペースにまとめています。
+  </p>
+  <p>
+    <code>resolver = "3"</code> は依存解決の新しい方式です。
+    2024 エディションではこれを指定します。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/16-modules</code> を動かしてください。</li>
+    <li><code>geometry.rs</code> の <code>pub struct Point</code> の <code>x</code> に <code>pub</code> を付けて、<code>main.rs</code> から <code>a.x</code> と書けるようになることを確認してください。</li>
+    <li><code>main.rs</code> から <code>mod geometry;</code> を消して、どうなるか見てください。</li>
+    <li><code>doubled_distance</code> から <code>pub</code> を消して、E0603 を出してください。</li>
+    <li>新しいモジュール <code>src/util.rs</code> を作って、<code>main.rs</code> から呼べるようにしてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>mod</code> はファイルを木に組み込む。<code>use</code> は名前を短くする。<strong>別のもの</strong>。</li>
+    <li>モジュールの木は<strong>ファイル構成と一致する</strong>。C# の namespace とは違う。</li>
+    <li>既定は非公開。<code>pub</code> / <code>pub(crate)</code>（＝<code>internal</code>）を付けて出す。</li>
+    <li><code>pub struct</code> のフィールドは、個別に <code>pub</code> が必要。</li>
+    <li><code>extern crate</code> は 2018 エディション以降不要。あったら古い記事。</li>
+    <li>中身は <code>lib.rs</code>、<code>main.rs</code> は薄い入口にするとテストしやすい。</li>
+    <li>クレートを調べるときは <strong>docs.rs</strong>。</li>
+  </ul>
+</div>

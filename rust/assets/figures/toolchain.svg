@@ -1,0 +1,44 @@
+<svg viewBox="0 0 720 250" role="img" aria-label="rustup が toolchain を管理し、その中に rustc, cargo, clippy, rustfmt が入っているという構成図。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">rustup を 1 つ入れれば、下の全部が付いてくる</text>
+
+  <!-- rustup -->
+  <rect x="24" y="44" width="150" height="70" rx="9" class="d-accent"/>
+  <text x="99" y="70" text-anchor="middle" class="d-mono-title">rustup</text>
+  <text x="99" y="90" text-anchor="middle" class="d-mute">版の管理役</text>
+  <text x="99" y="106" text-anchor="middle" class="d-mute">.NET SDK の入れ替え係</text>
+
+  <path d="M174 79 L216 79" class="d-flow"/>
+  <path d="M216 79 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <!-- toolchain -->
+  <rect x="216" y="44" width="480" height="130" rx="9" class="d-box"/>
+  <text x="236" y="66" class="d-title">toolchain（stable / beta / nightly）</text>
+  <text x="236" y="84" class="d-mute">この教材が使うのは stable</text>
+
+  <rect x="236" y="96" width="102" height="62" rx="7" class="d-tip"/>
+  <text x="287" y="118" text-anchor="middle" class="d-code">rustc</text>
+  <text x="287" y="136" text-anchor="middle" class="d-mute">コンパイラ</text>
+  <text x="287" y="151" text-anchor="middle" class="d-mute">csc に相当</text>
+
+  <rect x="350" y="96" width="102" height="62" rx="7" class="d-tip"/>
+  <text x="401" y="118" text-anchor="middle" class="d-code">cargo</text>
+  <text x="401" y="136" text-anchor="middle" class="d-mute">ビルドと依存</text>
+  <text x="401" y="151" text-anchor="middle" class="d-mute">dotnet + NuGet</text>
+
+  <rect x="464" y="96" width="102" height="62" rx="7" class="d-box"/>
+  <text x="515" y="118" text-anchor="middle" class="d-code">clippy</text>
+  <text x="515" y="136" text-anchor="middle" class="d-mute">書き方の助言</text>
+  <text x="515" y="151" text-anchor="middle" class="d-mute">アナライザ</text>
+
+  <rect x="578" y="96" width="98" height="62" rx="7" class="d-box"/>
+  <text x="627" y="118" text-anchor="middle" class="d-code">rustfmt</text>
+  <text x="627" y="136" text-anchor="middle" class="d-mute">整形</text>
+  <text x="627" y="151" text-anchor="middle" class="d-mute">dotnet format</text>
+
+  <!-- windows extra -->
+  <rect x="24" y="192" width="672" height="44" rx="9" class="d-warn"/>
+  <text x="44" y="212" class="d-head-warn">Windows だけ、もう 1 つ要る</text>
+  <text x="44" y="228" class="d-mute">最後にリンクする作業は OS 付属の道具が担う。Microsoft C++ ビルドツール（Visual Studio の一部）が必要。</text>
+</svg>

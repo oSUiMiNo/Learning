@@ -1,0 +1,35 @@
+<svg viewBox="0 0 720 260" role="img" aria-label="null と Option の比較。null は型に現れないため検査できないが、Option は Some か None の 2 択として型に現れるので扱い漏れがコンパイルエラーになる。">
+  <rect x="1" y="1" width="718" height="258" rx="14" class="d-box-plain"/>
+
+  <!-- C# -->
+  <rect x="20" y="20" width="330" height="170" rx="10" class="d-cs"/>
+  <text x="185" y="44" text-anchor="middle" class="d-head-cs">C# — null は型に現れない</text>
+  <rect x="44" y="58" width="282" height="30" rx="7" class="d-box"/>
+  <text x="185" y="78" text-anchor="middle" class="d-code">User FindUser(int id)</text>
+
+  <rect x="44" y="98" width="134" height="30" rx="7" class="d-box"/>
+  <text x="111" y="118" text-anchor="middle" class="d-code">User</text>
+  <rect x="192" y="98" width="134" height="30" rx="7" class="d-warn"/>
+  <text x="259" y="118" text-anchor="middle" class="d-code">null</text>
+
+  <text x="185" y="150" text-anchor="middle" class="d-mute">どちらが返るか、署名からは分からない</text>
+  <text x="185" y="172" text-anchor="middle" class="d-head-warn">.Name を書いた瞬間に落ちる可能性</text>
+
+  <!-- Rust -->
+  <rect x="370" y="20" width="330" height="170" rx="10" class="d-accent"/>
+  <text x="535" y="44" text-anchor="middle" class="d-head-accent">Rust — Option が型に現れる</text>
+  <rect x="394" y="58" width="282" height="30" rx="7" class="d-box"/>
+  <text x="535" y="78" text-anchor="middle" class="d-code">fn find_user(id: u32) -&gt; Option&lt;User&gt;</text>
+
+  <rect x="394" y="98" width="134" height="30" rx="7" class="d-tip"/>
+  <text x="461" y="118" text-anchor="middle" class="d-code">Some(user)</text>
+  <rect x="542" y="98" width="134" height="30" rx="7" class="d-box"/>
+  <text x="609" y="118" text-anchor="middle" class="d-code">None</text>
+
+  <text x="535" y="150" text-anchor="middle" class="d-mute">2 択であることが型に書いてある</text>
+  <text x="535" y="172" text-anchor="middle" class="d-head-accent">中身を出すには必ず開ける手続きが要る</text>
+
+  <!-- 下 -->
+  <rect x="20" y="206" width="680" height="40" rx="10" class="d-dash"/>
+  <text x="40" y="230" class="d-code">match / if let / unwrap_or / map / ?  ← どれかで「無かった場合」を通らないと、中身に触れない</text>
+</svg>

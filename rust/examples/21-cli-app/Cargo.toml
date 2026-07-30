@@ -1,0 +1,16 @@
+[package]
+name = "ch21_cli_app"
+version = "0.1.0"
+edition = "2024"
+
+# 引数なしで起動するとサブコマンド不足で終了するため、
+# tools/check_examples.py の自動実行からは外す。
+# このツールの動作確認は tools/capture.py が実際の引数付きで行っている。
+[package.metadata.book]
+run = false
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.4", features = ["derive"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"

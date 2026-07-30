@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第2章 エディタの準備 — rust-analyzer に働かせる | Rust 入門</title>
+<meta name="description" content="Rust は「エディタが賢いと一気に楽になる」言語です。型を目で見えるようにして、コンパイル前に間違いを潰せる状態を作ります。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li class="is-current"><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 2 章<span class="dot">·</span>読了目安 11 分</p>
+        <h1>第2章 エディタの準備 — rust-analyzer に働かせる</h1>
+        <p class="lede">Rust は「エディタが賢いと一気に楽になる」言語です。型を目で見えるようにして、コンパイル前に間違いを潰せる状態を作ります。</p>
+      </header>
+      <div class="prose">
+<p>
+先に結論を書きます。<strong>Rust はエディタの支援があるかどうかで、難易度がまるで変わります。</strong>
+</p>
+
+<p>
+理由は単純です。Rust は型推論が強く、コードには型がほとんど書かれていません。
+しかも所有権と借用の規則があるので、
+「この変数はいま何型で、借りているのか持っているのか」が分かるかどうかが、
+そのまま読みやすさになります。エディタがそれを教えてくれれば、
+コンパイルする前に間違いに気づけます。
+</p>
+
+<h2 id="VS-Code-と-rust-analyzer">VS Code と rust-analyzer</h2>
+
+<p>
+公式に推奨されている構成は <strong>VS Code ＋ rust-analyzer 拡張</strong>です。
+拡張は 1 つだけ入れれば十分です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>値</th></tr></thead>
+  <tbody>
+    <tr><td>拡張の名前</td><td><strong>rust-analyzer</strong></td></tr>
+    <tr><td>発行元</td><td>The Rust Programming Language</td></tr>
+    <tr><td>拡張 ID</td><td><code>rust-lang.rust-analyzer</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+コマンドで入れることもできます。
+</p>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">code<span class="w"> </span>--install-extension<span class="w"> </span>rust-lang.rust-analyzer</span></code></pre></figure>
+
+<div class="note pitfall">
+  <span class="note-title">「Rust」という名前の拡張を入れないこと</span>
+  <p>
+    以前は <code>rust-lang.rust</code> という名前の拡張がありました（中身は RLS という古い仕組み）。
+    これは<strong>すでに非推奨で、開発も止まっています</strong>。
+  </p>
+  <p>
+    古い記事には「Rust 拡張を入れる」と書かれていることがありますが、
+    いま入れるべきなのは <strong>rust-analyzer</strong> です。
+    名前が似ているので、発行元と ID で確かめてください。
+    両方入れると競合して補完がおかしくなります。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">ほかのエディタでもよい場合</span>
+  <p>
+    rust-analyzer は言語サーバ（LSP）なので、対応しているエディタなら同じ支援が受けられます。
+  </p>
+  <ul>
+    <li><strong>RustRover</strong>（JetBrains 製）… Rust 専用の IDE。非商用なら無料で使えます。IntelliJ 系に慣れているならこちら。</li>
+    <li><strong>Zed</strong> … rust-analyzer を内蔵しており、設定なしで動きます。</li>
+    <li><strong>Neovim / Helix</strong> … LSP の設定を書けば同じように動きます。</li>
+  </ul>
+  <p>この教材のコードはエディタに依存しないので、好きなものを選んでください。</p>
+</div>
+
+<h2 id="入れると何が変わるか">入れると何が変わるか</h2>
+
+<p>
+rust-analyzer が効いていると、次のことが起きます。
+このうち最初の 2 つが、Rust を学ぶうえで決定的に効きます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>できること</th><th>なぜ効くか</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>型が薄い文字で表示される</strong><br>（インレイヒント）</td>
+      <td>書いていない型が目に見える。<code>let x = ...</code> の <code>x</code> が
+          <code>String</code> なのか <code>&amp;str</code> なのかが即分かる</td>
+    </tr>
+    <tr>
+      <td><strong>保存前にエラーが出る</strong></td>
+      <td>所有権の違反がその場で赤くなる。コンパイルを待たなくてよい</td>
+    </tr>
+    <tr>
+      <td>メソッド補完</td>
+      <td>そのトレイトが実装されているものだけが出るので、探しやすい</td>
+    </tr>
+    <tr>
+      <td>定義へ移動（F12）</td>
+      <td>標準ライブラリの中身まで読める。実装が全部読めるのは Rust の強み</td>
+    </tr>
+    <tr>
+      <td>クイックフィックス</td>
+      <td><code>.clone()</code> の挿入や <code>use</code> の追加を提案してくれる</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">インレイヒントを必ず有効にしておく</span>
+  <p>
+    型が薄く表示される機能は、Rust の学習では特に効きます。
+    <strong>既定で有効ですが、消えている場合</strong>は設定を確認してください。
+    <code>Ctrl</code> + <code>,</code> で設定を開き、
+    <code>editor.inlayHints.enabled</code> を <code>on</code> にします。
+  </p>
+  <p>
+    <code>Ctrl</code> + <code>Alt</code> を押している間だけ表示する、という設定
+    （<code>onUnlessPressed</code>）も便利です。
+  </p>
+</div>
+
+<h2 id="おすすめの設定">おすすめの設定</h2>
+
+<p>
+プロジェクトの <code>.vscode/settings.json</code> に置いておくと、
+保存するだけで整形と静的解析がかかるようになります。
+</p>
+
+<figure class="code-block" data-lang="json"><div class="code-head"><span class="code-file">.vscode/settings.json</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">  </span><span class="nt">&quot;editor.formatOnSave&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span></span><span class="cl"><span class="w">  </span><span class="nt">&quot;[rust]&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="nt">&quot;editor.defaultFormatter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rust-lang.rust-analyzer&quot;</span></span><span class="cl"><span class="w">  </span><span class="p">},</span></span><span class="cl"><span class="w">  </span><span class="nt">&quot;rust-analyzer.check.command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;clippy&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">  </span><span class="nt">&quot;rust-analyzer.inlayHints.typeHints.enable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span></span><span class="cl"><span class="w">  </span><span class="nt">&quot;rust-analyzer.inlayHints.parameterHints.enable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+3 行目の <code>check.command</code> を <code>clippy</code> にしておくのが要点です。
+既定の <code>cargo check</code> より多くのことを指摘してくれます。
+</p>
+
+<h2 id="付いてくる道具たち">付いてくる道具たち</h2>
+
+<p>
+rustup を入れた時点で、次のコマンドが使えるようになっています。
+エディタからも呼ばれますが、意味を知っておくと役に立ちます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コマンド</th><th>やること</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>cargo build</code></td><td>ビルドする</td><td><code>dotnet build</code></td></tr>
+    <tr><td><code>cargo run</code></td><td>ビルドして実行する</td><td><code>dotnet run</code></td></tr>
+    <tr><td><code>cargo check</code></td><td><strong>型検査だけして、実行ファイルは作らない</strong></td><td>—</td></tr>
+    <tr><td><code>cargo test</code></td><td>テストを走らせる</td><td><code>dotnet test</code></td></tr>
+    <tr><td><code>cargo fmt</code></td><td>整形する</td><td><code>dotnet format</code></td></tr>
+    <tr><td><code>cargo clippy</code></td><td>書き方の助言をもらう</td><td>アナライザ / IDE0xxx</td></tr>
+    <tr><td><code>cargo doc --open</code></td><td>自分のコードのドキュメントを作って開く</td><td>DocFX 相当</td></tr>
+    <tr><td><code>cargo add &lt;名前&gt;</code></td><td>依存を追加する</td><td><code>dotnet add package</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">cargo check は速い</span>
+  <p>
+    <code>cargo check</code> は型検査だけを行い、実行ファイルを作りません。
+    そのぶん <code>cargo build</code> よりずっと速いので、
+    「まず通るかどうかだけ知りたい」ときに便利です。
+    rust-analyzer が裏で走らせているのもこれです。
+  </p>
+</div>
+
+<h2 id="clippy-は何を言ってくるのか">clippy は何を言ってくるのか</h2>
+
+<p>
+clippy は「動くけれど、こう書いたほうがよい」を教えてくれます。
+実際に少し雑なコードを書いて、走らせた結果がこれです。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\sloppy&gt;</span> cargo clippy</span>
+<span class="a-b a-92">    Checking</span> sloppy v0.1.0 (C:\rust\sloppy)
+<span class="a-b a-33">warning</span><span class="a-b">: length comparison to zero</span>
+ <span class="a-b a-94">--&gt; </span>src/main.rs:3:8
+  <span class="a-b a-94">|</span>
+<span class="a-b a-94">3</span> <span class="a-b a-94">|</span>     if numbers.len() == 0 {
+  <span class="a-b a-94">|</span>        <span class="a-b a-33">^^^^^^^^^^^^^^^^^^</span> <span class="a-b a-33">help: using `is_empty` is clearer and more explicit: `numbers.is_empty()`</span>
+  <span class="a-b a-94">|</span>
+  <span class="a-b a-94">= </span><span class="a-b">help</span>: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#len_zero
+  <span class="a-b a-94">= </span><span class="a-b">note</span>: `#[warn(clippy::len_zero)]` on by default
+
+<span class="a-b a-33">warning</span><span class="a-b">: useless use of `vec!`</span>
+ <span class="a-b a-94">--&gt; </span>src/main.rs:2:19
+  <span class="a-b a-94">|</span>
+<span class="a-b a-94">2</span> <span class="a-b a-94">|</span>     let numbers = vec![1, 2, 3];
+  <span class="a-b a-94">|</span>                   <span class="a-b a-33">^^^^^^^^^^^^^</span> <span class="a-b a-33">help: you can use an array directly: `[1, 2, 3]`</span>
+  <span class="a-b a-94">|</span>
+  <span class="a-b a-94">= </span><span class="a-b">help</span>: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#useless_vec
+  <span class="a-b a-94">= </span><span class="a-b">note</span>: `#[warn(clippy::useless_vec)]` on by default
+
+<span class="a-b a-33">warning</span>: `sloppy` (bin &quot;sloppy&quot;) generated 2 warnings (run `cargo clippy --fix --bin &quot;sloppy&quot; -p sloppy -- ` to apply 2 suggestions)
+<span class="a-b a-92">    Finished</span> `dev` profile [unoptimized + debuginfo] target(s) in 0.12s</code></pre></div><figcaption>わざと雑に書いたコードに cargo clippy をかけた結果。len() == 0 は is_empty() にせよ、要素を追加しない Vec は配列でよい、という 2 点を指摘している。help の行に直し方まで書いてあるのが特徴。</figcaption></figure>
+
+<p>
+注目してほしいのは <code>help:</code> の行です。
+<strong>ただ「駄目だ」と言うのではなく、どう書けばよいかまで示してくれます。</strong>
+指摘の意味が分からないときは、末尾の URL を開けば解説が読めます。
+</p>
+
+<div class="note">
+  <span class="note-title">自動で直してもらう</span>
+  <p>
+    出力の最後に書いてあるとおり、直せるものは自動で直せます。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">cargo<span class="w"> </span>clippy<span class="w"> </span>--fix</span></code></pre></figure>
+  <p>
+    納得できない指摘は無効にできます。理由をコメントに書いておくと後で助かります。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1">// ここでは push を見せたいので、あえて vec! を使わない</span></span><span class="cl"><span class="cp">#[allow(clippy::vec_init_then_push)]</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">demo</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span></span></code></pre></figure>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">clippy は「うるさいアナライザ」ではない</span>
+  <p>
+    C# のアナライザは、チームによっては切ってしまうこともあります。
+    Rust の clippy は<strong>初心者にとって教師として機能します</strong>。
+  </p>
+  <p>
+    「なぜこの書き方が良くないのか」を毎回教えてくれるので、
+    指摘に従っているうちに Rust らしい書き方が身につきます。
+    この教材のサンプルコードも、全部 clippy の指摘ゼロで通しています。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li>rust-analyzer を入れて、適当な <code>let x = 5;</code> の行を書いてみてください。<code>x</code> の後ろに <code>: i32</code> が薄く出れば成功です。</li>
+    <li><code>let s = "hello".to_string();</code> と書いて、<code>s</code> の型が <code>String</code> と出ることを確認してください。<code>let s = "hello";</code> なら <code>&amp;str</code> になります。この違いが第 8 章の主題です。</li>
+    <li>わざと <code>let x = 5; x = 6;</code> と書いて、保存する前に赤い波線が出ることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>入れるのは <strong>rust-analyzer</strong>（<code>rust-lang.rust-analyzer</code>）。古い「Rust」拡張は入れない。</li>
+    <li>インレイヒントで型が見えるようにすると、Rust の学習は一気に楽になる。</li>
+    <li><code>rust-analyzer.check.command</code> を <code>clippy</code> にしておく。</li>
+    <li><code>cargo check</code> は型検査だけなので速い。</li>
+    <li>clippy は直し方まで教えてくれる教師。逆らわずに従うのが早い。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../01-setup/"><span class="pager-dir">← 前の章</span><span class="pager-title">環境構築</span></a>
+<a class="pager-link pager-next" href="../03-cargo/"><span class="pager-dir">次の章 →</span><span class="pager-title">Cargo と最初の一本</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

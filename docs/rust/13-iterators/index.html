@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第13章 イテレータとクロージャ — LINQ に似ている話 | Rust 入門</title>
+<meta name="description" content="`Where` は `filter`、`Select` は `map`。遅延評価まで同じです。この章はたぶん、C# 経験がいちばん効きます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li class="is-current"><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 13 章<span class="dot">·</span>読了目安 16 分</p>
+        <h1>第13章 イテレータとクロージャ — LINQ に似ている話</h1>
+        <p class="lede">`Where` は `filter`、`Select` は `map`。遅延評価まで同じです。この章はたぶん、C# 経験がいちばん効きます。</p>
+      </header>
+      <div class="prose">
+<p>
+この章は、たぶん C# の経験がいちばん効きます。
+</p>
+
+<p>
+<strong>LINQ を知っていれば、Rust のイテレータはほぼそのまま読めます。</strong>
+遅延評価という性質まで同じです。名前が違うだけで、考え方は同一です。
+</p>
+
+<h2 id="対応表">対応表</h2>
+
+<div class="note csharp">
+  <span class="note-title">LINQ とイテレータアダプタの対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>LINQ</th><th>Rust</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td><code>Where</code></td><td><code>filter</code></td><td></td></tr>
+      <tr><td><code>Select</code></td><td><code>map</code></td><td></td></tr>
+      <tr><td><code>SelectMany</code></td><td><code>flat_map</code></td><td></td></tr>
+      <tr><td><code>First</code></td><td><code>next().unwrap()</code></td><td></td></tr>
+      <tr><td><code>FirstOrDefault</code></td><td><strong><code>find</code></strong></td><td>null ではなく <code>Option</code></td></tr>
+      <tr><td><code>Any</code></td><td><code>any</code></td><td></td></tr>
+      <tr><td><code>All</code></td><td><code>all</code></td><td></td></tr>
+      <tr><td><code>Count</code></td><td><code>count</code></td><td></td></tr>
+      <tr><td><code>Sum</code></td><td><code>sum</code></td><td>型注釈が要ることが多い</td></tr>
+      <tr><td><code>Max</code> / <code>Min</code></td><td><code>max</code> / <code>min</code></td><td><code>Option</code> を返す</td></tr>
+      <tr><td><code>Average</code></td><td>—</td><td>自分で <code>sum / count</code></td></tr>
+      <tr><td><code>OrderBy</code></td><td><code>sort_by_key</code>（<code>Vec</code> 側）</td><td>イテレータでは並べられない</td></tr>
+      <tr><td><code>OrderByDescending</code></td><td><code>sort_by_key(\|x\| Reverse(..))</code></td><td></td></tr>
+      <tr><td><code>Take</code> / <code>Skip</code></td><td><code>take</code> / <code>skip</code></td><td></td></tr>
+      <tr><td><code>TakeWhile</code> / <code>SkipWhile</code></td><td><code>take_while</code> / <code>skip_while</code></td><td></td></tr>
+      <tr><td><code>Distinct</code></td><td>—</td><td><code>HashSet</code> に <code>collect</code>、または <code>itertools</code></td></tr>
+      <tr><td><code>Reverse</code></td><td><code>rev</code></td><td></td></tr>
+      <tr><td><code>Zip</code></td><td><code>zip</code></td><td></td></tr>
+      <tr><td><code>Aggregate</code></td><td><code>fold</code></td><td></td></tr>
+      <tr><td><code>GroupBy</code></td><td>—</td><td><code>fold</code> で書く、または <code>itertools</code></td></tr>
+      <tr><td><code>ToList</code></td><td><code>collect::&lt;Vec&lt;_&gt;&gt;()</code></td><td></td></tr>
+      <tr><td><code>ToDictionary</code></td><td><code>collect::&lt;HashMap&lt;_, _&gt;&gt;()</code></td><td></td></tr>
+      <tr><td><code>Select((x, i) =&gt; ..)</code></td><td><code>enumerate()</code></td><td>添字が先に来る</td></tr>
+      <tr><td>—</td><td><code>step_by</code></td><td>C# には無い</td></tr>
+      <tr><td>—</td><td><code>windows</code> / <code>chunks</code></td><td>スライス側のメソッド</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    無いのは <code>Distinct</code>・<code>GroupBy</code>・<code>Average</code> の 3 つだけです。
+    どれも <code>fold</code> か <code>itertools</code> クレートで書けます。
+  </p>
+</div>
+
+<h2 id="そのまま読める">そのまま読める</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">devs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">Department</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;開発&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">Name</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">ToList</span><span class="p">();</span></span></code></pre></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">devs</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">iter</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">department</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;開発&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">collect</span><span class="p">();</span></span></code></pre></figure>
+</div>
+
+<p>
+違うのは 2 点だけです。
+</p>
+
+<ul>
+  <li>先頭に <code>.iter()</code> が要る（C# はコレクションが直接 <code>IEnumerable</code>）</li>
+  <li>最後の <code>collect()</code> に<strong>何に集めるかの型が必要</strong></li>
+</ul>
+
+<div class="note pitfall">
+  <span class="note-title">collect() には型を教える</span>
+  <p>
+    <code>collect()</code> は <code>Vec</code> にも <code>HashMap</code> にも
+    <code>String</code> にもなれるので、型を書かないと決まりません。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">iter</span><span class="p">.</span><span class="n">collect</span><span class="p">();</span><span class="w">          </span><span class="c1">// 変数に型を書く</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">iter</span><span class="p">.</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;&gt;</span><span class="p">();</span><span class="w">        </span><span class="c1">// turbofish で書く</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">iter</span><span class="p">.</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">();</span><span class="w">           </span><span class="c1">// 中身は推論させる</span></span></code></pre></figure>
+  <p>
+    <code>::&lt;&gt;</code> という記法は「ターボフィッシュ」と呼ばれます。
+    <code>type annotations needed</code> と言われたら、これを足してください。
+  </p>
+</div>
+
+<h2 id="3-種類の-iter">3 種類の iter</h2>
+
+<p>
+第 12 章の <code>for</code> の 3 通りと同じ区別です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>要素の型</th><th>元のコレクション</th><th>使う場面</th></tr></thead>
+  <tbody>
+    <tr><td><code>.iter()</code></td><td><code>&amp;T</code></td><td>残る</td><td><strong>ふつうはこれ</strong></td></tr>
+    <tr><td><code>.iter_mut()</code></td><td><code>&amp;mut T</code></td><td>残る</td><td>中身を書き換える</td></tr>
+    <tr><td><code>.into_iter()</code></td><td><code>T</code></td><td><strong>消える</strong></td><td>中身を別の場所へ移す</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">クロージャの引数が &amp;&amp;T になる話</span>
+  <p>
+    <code>.iter().filter(|p| ...)</code> と書くと、
+    <code>p</code> の型は <code>&amp;&amp;T</code>（参照の参照）になります。
+    <code>iter()</code> が <code>&amp;T</code> を出し、<code>filter</code> がさらに借りるからです。
+  </p>
+  <p>
+    ふだんは気にしなくてよく、Rust が自動で参照を外して
+    <code>p.department</code> のように書けます。
+    ただし比較でエラーが出たときは、<code>*</code> や <code>&amp;</code> の数を疑ってください。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="o">|</span><span class="n">n</span><span class="o">|</span><span class="w"> </span><span class="o">**</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w">       </span><span class="c1">// 明示的に外す</span></span><span class="cl"><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="o">|&amp;&amp;</span><span class="n">n</span><span class="o">|</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w">       </span><span class="c1">// 引数の側で外す（読みやすい）</span></span><span class="cl"><span class="p">.</span><span class="n">copied</span><span class="p">().</span><span class="n">filter</span><span class="p">(</span><span class="o">|</span><span class="n">n</span><span class="o">|</span><span class="w"> </span><span class="o">*</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w">  </span><span class="c1">// copied() で先に値にしてしまう</span></span></code></pre></figure>
+</div>
+
+<h2 id="遅延評価も同じ">遅延評価も同じ</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 300" role="img" aria-label="イテレータアダプタの遅延評価。filter や map をつないだ時点では何も起きず、collect や sum で初めて 1 要素ずつ流れる。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">つないだだけでは動かない。最後の 1 つが引っぱると動く</text>
+
+  <!-- パイプライン -->
+  <rect x="28" y="46" width="118" height="52" rx="9" class="d-box"/>
+  <text x="87" y="70" text-anchor="middle" class="d-code">.iter()</text>
+  <text x="87" y="88" text-anchor="middle" class="d-mute">元のデータ</text>
+
+  <path d="M146 72 L184 72" class="d-flow-dash"/>
+  <path d="M184 72 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="184" y="46" width="128" height="52" rx="9" class="d-dash"/>
+  <text x="248" y="70" text-anchor="middle" class="d-code">.filter(..)</text>
+  <text x="248" y="88" text-anchor="middle" class="d-mute">Where</text>
+
+  <path d="M312 72 L350 72" class="d-flow-dash"/>
+  <path d="M350 72 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="350" y="46" width="128" height="52" rx="9" class="d-dash"/>
+  <text x="414" y="70" text-anchor="middle" class="d-code">.map(..)</text>
+  <text x="414" y="88" text-anchor="middle" class="d-mute">Select</text>
+
+  <path d="M478 72 L516 72" class="d-flow"/>
+  <path d="M516 72 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="516" y="46" width="176" height="52" rx="9" class="d-fill-accent"/>
+  <text x="604" y="70" text-anchor="middle" class="d-code" fill="#fff">.collect() / .sum()</text>
+  <text x="604" y="88" text-anchor="middle" class="d-code" fill="#fff">ToList / Sum</text>
+
+  <text x="248" y="122" text-anchor="middle" class="d-mute">点線の箱は「予定を覚えただけ」</text>
+  <text x="604" y="122" text-anchor="middle" class="d-head-accent">ここが引き金</text>
+
+  <!-- 流れ方 -->
+  <rect x="28" y="140" width="664" height="86" rx="10" class="d-tip"/>
+  <text x="48" y="164" class="d-head-tip">流れ方は「全部まとめて」ではなく「1 つずつ最後まで」</text>
+  <g class="d-code">
+    <text x="48" y="188">要素 1 → filter 通過 → map → 出力</text>
+    <text x="48" y="208">要素 2 → filter で捨てられる（map は呼ばれない）</text>
+    <text x="400" y="188">要素 3 → filter 通過 → map → 出力</text>
+    <text x="400" y="208">… 以下同じ</text>
+  </g>
+
+  <!-- 下 -->
+  <rect x="28" y="240" width="664" height="46" rx="10" class="d-dash"/>
+  <text x="48" y="260" class="d-head-accent">LINQ と同じ性質</text>
+  <text x="48" y="278" class="d-mute">中間の Vec が作られないので、長い連鎖でも余計な確保が起きない。C# の IEnumerable と同じ考え方。</text>
+</svg>
+<figcaption>filter や map をつないだ時点では何も起きず、collect や sum が引っぱったときに 1 要素ずつ流れる。しかも「全部 filter → 全部 map」ではなく「要素 1 つが最後まで流れてから次の要素」という順番になる。LINQ とまったく同じ性質。</figcaption></figure>
+
+<p>
+実行してみると、遅延評価が目で見えます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\13-iterators&gt;</span> cargo run --quiet</span>
+── 1. Where / Select はそのまま filter / map ──
+  開発の人 = [&quot;すずき&quot;, &quot;さとう&quot;]
+
+── 2. 遅延評価も同じ ──
+  ここまで何も出ていないことに注目
+    （map が動いた: すずき）
+    （map が動いた: たなか）
+    （map が動いた: さとう）
+    （map が動いた: いとう）
+    （map が動いた: やまだ）
+  合計 = 2790
+
+── 3. 集約 ──
+  人数     = 5
+  最高給与 = Some(710)
+  平均給与 = 558.0
+  700 超えがいるか = true
+  全員 400 超えか  = true
+
+── 4. First / FirstOrDefault は find ──
+  総務の人 = Some(&quot;やまだ&quot;)
+
+── 5. OrderBy は sort_by_key ──
+  給与順 = さとう(710) &gt; すずき(620) &gt; いとう(530) &gt; たなか(480) &gt; やまだ(450)
+
+── 6. GroupBy は fold で書く ──
+  営業: [&quot;たなか&quot;, &quot;いとう&quot;]
+  総務: [&quot;やまだ&quot;]
+  開発: [&quot;すずき&quot;, &quot;さとう&quot;]
+
+── 7. Take / Skip / Zip ──
+  take(3)      = [1, 2, 3]
+  skip(7)      = [8, 9, 10]
+  step_by(3)   = [1, 4, 7, 10]
+  zip          = [&quot;1a&quot;, &quot;2b&quot;, &quot;3c&quot;]
+
+── 8. クロージャは環境を捕まえる ──
+  500 以上は 3 人
+  給与: 620
+
+── 9. 失敗しうる変換を collect でまとめる ──
+  全部数値   = Ok([1, 2, 3])
+  ひとつ駄目 = true</code></pre></div><figcaption>実行結果。2 番目の項目で、map をつないだ直後には何も出力されず、sum() を呼んだ時点で初めて map が動いていることが分かる。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">LINQ と同じ落とし穴も同じように存在する</span>
+  <p>
+    C# で「<code>IEnumerable</code> を 2 回なめたら 2 回クエリが走った」という経験があると思います。
+    Rust では<strong>そもそも 2 回なめられません</strong>。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">x</span><span class="o">|</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">iter</span><span class="p">.</span><span class="n">count</span><span class="p">();</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">iter</span><span class="p">.</span><span class="n">count</span><span class="p">();</span><span class="w">   </span><span class="c1">// E0382。iter は move された</span></span></code></pre><figcaption class="code-cap">✗ 1 回目の count() で iter が消費されている</figcaption></figure>
+  <p>
+    イテレータは <code>next()</code> を呼ぶと進む「使い切り」のものなので、
+    消費するメソッドは所有権をもらいます。
+    2 回使いたければ <code>collect()</code> して <code>Vec</code> にするか、
+    もう一度 <code>v.iter()</code> から作り直します。
+  </p>
+  <p>
+    C# なら実行時に静かに 2 回走って遅くなるところが、
+    Rust ではコンパイルエラーになる、ということです。
+  </p>
+</div>
+
+<h2 id="GroupBy-が無い場合の書き方">GroupBy が無い場合の書き方</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">byDept</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">GroupBy</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">Department</span><span class="p">);</span></span></code></pre></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust（fold で書く）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">by_dept</span><span class="p">:</span><span class="w"> </span><span class="nc">BTreeMap</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">=</span></span><span class="cl"><span class="w">    </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">fold</span><span class="p">(</span><span class="n">BTreeMap</span><span class="p">::</span><span class="n">new</span><span class="p">(),</span><span class="w"> </span><span class="o">|</span><span class="k">mut</span><span class="w"> </span><span class="n">acc</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">acc</span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">department</span><span class="p">).</span><span class="n">or_default</span><span class="p">().</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">acc</span></span><span class="cl"><span class="w">    </span><span class="p">});</span></span></code></pre></figure>
+</div>
+
+<div class="note">
+  <span class="note-title">itertools を入れれば楽になる</span>
+  <p>
+    <code>itertools</code> クレートを足すと、LINQ に近いメソッドが増えます。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">cargo<span class="w"> </span>add<span class="w"> </span>itertools</span></code></pre></figure>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>itertools</th><th>LINQ</th></tr></thead>
+    <tbody>
+      <tr><td><code>unique()</code></td><td><code>Distinct()</code></td></tr>
+      <tr><td><code>chunk_by()</code></td><td><code>GroupBy()</code>（隣り合うものだけ）</td></tr>
+      <tr><td><code>into_group_map()</code></td><td><code>GroupBy()</code>（全部）</td></tr>
+      <tr><td><code>sorted()</code></td><td><code>OrderBy()</code></td></tr>
+      <tr><td><code>join(", ")</code></td><td><code>string.Join()</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2 id="失敗しうる変換をまとめる">失敗しうる変換をまとめる</h2>
+
+<p>
+これは C# にない、便利な性質です。
+<code>Vec&lt;Result&lt;T, E&gt;&gt;</code> を <code>Result&lt;Vec&lt;T&gt;, E&gt;</code> にたためます。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1">// 1 つでも失敗すれば、全体が Err になる</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">numbers</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;3&quot;</span><span class="p">]</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">iter</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">s</span><span class="o">|</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">())</span></span><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">collect</span><span class="p">();</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">C# だと自分で書くしかない</span>
+  <p>
+    C# で「全部変換できたら成功、1 つでも駄目なら失敗」を書くには、
+    ループを回して例外を捕まえるか、<code>TryParse</code> を並べる必要があります。
+  </p>
+  <p>
+    Rust では <code>collect()</code> の型を <code>Result&lt;Vec&lt;_&gt;, _&gt;</code> にするだけです。
+    しかも<strong>最初の失敗で打ち切ります</strong>（残りは処理しない）。
+    <code>Option</code> でも同じことができます。
+  </p>
+</div>
+
+<h2 id="クロージャ">クロージャ</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+  <tbody>
+    <tr><td><code>x =&gt; x * 2</code></td><td><code>|x| x * 2</code></td></tr>
+    <tr><td><code>(x, y) =&gt; x + y</code></td><td><code>|x, y| x + y</code></td></tr>
+    <tr><td><code>x =&gt; { ...; return y; }</code></td><td><code>|x| { ...; y }</code></td></tr>
+    <tr><td><code>() =&gt; 42</code></td><td><code>|| 42</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">move を付けると捕まえた値をもらう</span>
+  <p>
+    クロージャは既定で、使っている変数を<strong>借用します</strong>。
+    <code>move</code> を付けると所有権をもらいます。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;給与&quot;</span><span class="p">);</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">describe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">move</span><span class="w"> </span><span class="o">|</span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="o">|</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{label}: {n}&quot;</span><span class="p">);</span></span><span class="cl"><span class="c1">// ここで label は使えない（move されたから）</span></span></code></pre></figure>
+  <p>
+    スレッドに渡すとき（第 19 章）や、
+    クロージャを関数から返すときには <code>move</code> が必要になります。
+    <strong>「closure may outlive the current function」と言われたら <code>move</code> を足す</strong>
+    と覚えておいてください。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">3 つのクロージャのトレイト</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>トレイト</th><th>捕まえ方</th><th>何回呼べるか</th></tr></thead>
+    <tbody>
+      <tr><td><code>Fn</code></td><td><code>&amp;T</code> で借りる</td><td>何回でも</td></tr>
+      <tr><td><code>FnMut</code></td><td><code>&amp;mut T</code> で借りる</td><td>何回でも（状態が変わる）</td></tr>
+      <tr><td><code>FnOnce</code></td><td>所有権をもらう</td><td><strong>1 回だけ</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# の <code>Func&lt;T, R&gt;</code> / <code>Action&lt;T&gt;</code> に当たりますが、
+    Rust は<strong>「捕まえた値をどう扱うか」でさらに 3 つに分かれます</strong>。
+    ふだんはコンパイラが選んでくれるので、意識するのは
+    引数の型として書くときだけです。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="13-iterators/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! イテレータとクロージャ。LINQ を知っていれば、ほぼそのまま読めます。</span></span><span class="cl"></span><span class="cl"><span class="cp">#[derive(Debug)]</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Employee</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">department</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">salary</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">staff</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Employee</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">vec!</span><span class="p">[</span></span><span class="cl"><span class="w">        </span><span class="n">Employee</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;すずき&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">department</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;開発&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">salary</span><span class="p">:</span><span class="w"> </span><span class="mi">620</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">        </span><span class="n">Employee</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;たなか&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">department</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;営業&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">salary</span><span class="p">:</span><span class="w"> </span><span class="mi">480</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">        </span><span class="n">Employee</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;さとう&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">department</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;開発&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">salary</span><span class="p">:</span><span class="w"> </span><span class="mi">710</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">        </span><span class="n">Employee</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;いとう&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">department</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;営業&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">salary</span><span class="p">:</span><span class="w"> </span><span class="mi">530</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">        </span><span class="n">Employee</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;やまだ&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">department</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;総務&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">salary</span><span class="p">:</span><span class="w"> </span><span class="mi">450</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="p">]</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">people</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">staff</span><span class="p">();</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. Where / Select はそのまま filter / map ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// LINQ: people.Where(p =&gt; p.Department == &quot;開発&quot;).Select(p =&gt; p.Name)</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">devs</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">iter</span><span class="p">()</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">department</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;開発&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">)</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  開発の人 = {devs:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 遅延評価も同じ ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// ここではまだ 1 件も処理されていない。collect や for で初めて走る。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">pipeline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;    （map が動いた: {}）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">p</span><span class="p">.</span><span class="n">salary</span></span><span class="cl"><span class="w">    </span><span class="p">});</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ここまで何も出ていないことに注目&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">total</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pipeline</span><span class="p">.</span><span class="n">sum</span><span class="p">();</span><span class="w"> </span><span class="c1">// ここで初めて動く</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  合計 = {total}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. 集約 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  人数     = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">len</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  最高給与 = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">salary</span><span class="p">).</span><span class="n">max</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  平均給与 = {:.1}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">salary</span><span class="p">).</span><span class="n">sum</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">len</span><span class="p">()</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// Any / All</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  700 超えがいるか = {}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">any</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">salary</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">700</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  全員 400 超えか  = {}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">all</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">salary</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">400</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. First / FirstOrDefault は find ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// LINQ の FirstOrDefault は null を返すが、Rust は Option を返す</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">found</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">find</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">department</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;総務&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  総務の人 = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">found</span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. OrderBy は sort_by_key ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">sorted</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="n">Employee</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">sorted</span><span class="p">.</span><span class="n">sort_by_key</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">cmp</span><span class="p">::</span><span class="n">Reverse</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">salary</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">ranking</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sorted</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">iter</span><span class="p">()</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{}({})&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">salary</span><span class="p">))</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  給与順 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ranking</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot; &gt; &quot;</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. GroupBy は fold で書く ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 標準ライブラリに group_by は無いので、fold で畳み込む。</span></span><span class="cl"><span class="w">    </span><span class="c1">// itertools クレートを入れれば chunk_by なども使える。</span></span><span class="cl"><span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">BTreeMap</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">by_department</span><span class="p">:</span><span class="w"> </span><span class="nc">BTreeMap</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">=</span></span><span class="cl"><span class="w">        </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">fold</span><span class="p">(</span><span class="n">BTreeMap</span><span class="p">::</span><span class="n">new</span><span class="p">(),</span><span class="w"> </span><span class="o">|</span><span class="k">mut</span><span class="w"> </span><span class="n">acc</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">acc</span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">department</span><span class="p">).</span><span class="n">or_default</span><span class="p">().</span><span class="n">push</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="p">);</span></span><span class="cl"><span class="w">            </span><span class="n">acc</span></span><span class="cl"><span class="w">        </span><span class="p">});</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">department</span><span class="p">,</span><span class="w"> </span><span class="n">names</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="n">by_department</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {department}: {names:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. Take / Skip / Zip ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">numbers</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..=</span><span class="mi">10</span><span class="p">).</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  take(3)      = {:?}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">numbers</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">take</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  skip(7)      = {:?}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">numbers</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">skip</span><span class="p">(</span><span class="mi">7</span><span class="p">).</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  step_by(3)   = {:?}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">numbers</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">step_by</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">letters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;a&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;b&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;c&quot;</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">zipped</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numbers</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">iter</span><span class="p">()</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">zip</span><span class="p">(</span><span class="n">letters</span><span class="p">.</span><span class="n">iter</span><span class="p">())</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{n}{s}&quot;</span><span class="p">))</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  zip          = {zipped:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 8. クロージャは環境を捕まえる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">threshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">500</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="c1">// threshold を借用して覚えている</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">is_high</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">|</span><span class="n">p</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Employee</span><span class="o">|</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">salary</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">threshold</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">people</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">filter</span><span class="p">(</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="w"> </span><span class="n">is_high</span><span class="p">(</span><span class="n">p</span><span class="p">)).</span><span class="n">count</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {threshold} 以上は {count} 人&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// move を付けると、捕まえた値の所有権をもらう</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;給与&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">describe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">move</span><span class="w"> </span><span class="o">|</span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="o">|</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{label}: {n}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">describe</span><span class="p">(</span><span class="mi">620</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 9. 失敗しうる変換を collect でまとめる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// Vec&lt;Result&lt;T, E&gt;&gt; を Result&lt;Vec&lt;T&gt;, E&gt; にたたむことができる。</span></span><span class="cl"><span class="w">    </span><span class="c1">// 1 つでも失敗すれば全体が Err になる。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">all_ok</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;3&quot;</span><span class="p">].</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">s</span><span class="o">|</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">()).</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">has_bad</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;に&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;3&quot;</span><span class="p">].</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">s</span><span class="o">|</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">()).</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  全部数値   = {all_ok:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ひとつ駄目 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">has_bad</span><span class="p">.</span><span class="n">is_err</span><span class="p">());</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/13-iterators</code> を動かして、遅延評価が起きている箇所を目で確認してください。</li>
+    <li><code>collect()</code> の型注釈を消して、どんなエラーになるか見てください。</li>
+    <li>「開発部の平均給与」を求めるコードを書いてください（<code>filter</code> → <code>map</code> → <code>sum</code> と <code>count</code>）。</li>
+    <li>C# の <code>people.Select((p, i) =&gt; $"{i}: {p.Name}")</code> に相当するコードを <code>enumerate()</code> で書いてください。</li>
+    <li><code>let iter = v.iter(); iter.count(); iter.count();</code> と書いて、2 回使えないことを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>Where</code>→<code>filter</code>、<code>Select</code>→<code>map</code>、<code>ToList</code>→<code>collect</code>。<strong>LINQ の知識がそのまま使える</strong>。</li>
+    <li>遅延評価も同じ。<code>collect</code> や <code>sum</code> が引き金。</li>
+    <li><code>collect()</code> には集める先の型を教える（ターボフィッシュ <code>::&lt;&gt;</code>）。</li>
+    <li><code>iter()</code>（借りる）/ <code>iter_mut()</code> / <code>into_iter()</code>（もらう）の 3 種類。</li>
+    <li>イテレータは<strong>使い切り</strong>。2 回なめようとするとコンパイルエラー。</li>
+    <li><code>Vec&lt;Result&gt;</code> を <code>Result&lt;Vec&gt;</code> にたためる。C# に無い便利さ。</li>
+    <li><code>Distinct</code> / <code>GroupBy</code> は標準に無い。<code>fold</code> か <code>itertools</code> で。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../12-collections/"><span class="pager-dir">← 前の章</span><span class="pager-title">コレクション</span></a>
+<a class="pager-link pager-next" href="../14-traits/"><span class="pager-dir">次の章 →</span><span class="pager-title">★ トレイト</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

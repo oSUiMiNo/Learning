@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第3章 シグナルとスロット — 部品どうしをつなぐ | Qt6 Widgets 入門</title>
+<meta name="description" content="「ボタンが押されたら何かする」を Qt はどう表現するのか。Qt のいちばんの発明であり、Qt6 で書き方が変わった部分でもあります。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li class="is-current"><a href="../03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="../04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="../05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li><a href="../06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="../07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="../08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li><a href="../09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="../10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="../11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="../12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="../13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+<li><a href="../14-cpp/"><span class="nav-num">第14章</span><span class="nav-label">付録: C++ の場合</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 3 章<span class="dot">·</span>読了目安 12 分</p>
+        <h1>第3章 シグナルとスロット — 部品どうしをつなぐ</h1>
+        <p class="lede">「ボタンが押されたら何かする」を Qt はどう表現するのか。Qt のいちばんの発明であり、Qt6 で書き方が変わった部分でもあります。</p>
+      </header>
+      <div class="prose">
+<p>
+前の章のウィンドウは、ただ表示されるだけで何もしませんでした。
+「ボタンが押されたら何かする」を、Qt はどう書くのでしょうか。
+</p>
+
+<p>
+Qt の答えが<strong>シグナルとスロット</strong>です。
+これは Qt が 1990 年代から使い続けている仕組みで、
+Qt がいまも使われ続けている理由のひとつでもあります。
+</p>
+
+<h2 id="2-つの言葉">2 つの言葉</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>言葉</th><th>意味</th><th>たとえるなら</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>シグナル</strong></td>
+      <td>「何かが起きた」という通知。ウィジェットが自分から発する</td>
+      <td>「押されました！」という叫び声</td>
+    </tr>
+    <tr>
+      <td><strong>スロット</strong></td>
+      <td>その通知を受けて実行される処理。ただの関数でよい</td>
+      <td>叫び声を聞いて動く人</td>
+    </tr>
+    <tr>
+      <td><strong>connect</strong></td>
+      <td>この 2 つを結びつける操作</td>
+      <td>電話線をつなぐこと</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 720 300" role="img" aria-label="シグナルとスロットの関係図。送り手のシグナルを受け手のスロットに connect でつなぐ。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <!-- sender -->
+  <rect x="34" y="34" width="210" height="120" rx="10" class="d-box"/>
+  <text x="139" y="60" text-anchor="middle" class="d-title">送り手（発信する側）</text>
+  <text x="139" y="82" text-anchor="middle" class="d-code">QPushButton</text>
+  <rect x="58" y="98" width="162" height="38" rx="19" class="d-accent"/>
+  <text x="139" y="122" text-anchor="middle" class="d-code">clicked シグナル</text>
+
+  <!-- receiver -->
+  <rect x="476" y="34" width="210" height="120" rx="10" class="d-box"/>
+  <text x="581" y="60" text-anchor="middle" class="d-title">受け手（反応する側）</text>
+  <text x="581" y="82" text-anchor="middle" class="d-code">自分で書いた関数</text>
+  <rect x="500" y="98" width="162" height="38" rx="19" class="d-tip"/>
+  <text x="581" y="122" text-anchor="middle" class="d-code">on_clicked スロット</text>
+
+  <!-- connection -->
+  <path d="M244 117 L476 117" class="d-flow"/>
+  <path d="M476 117 l-10 -5 v10 z" class="d-arrowhead"/>
+  <rect x="278" y="86" width="164" height="30" rx="15" class="d-accent"/>
+  <text x="360" y="106" text-anchor="middle" class="d-code">connect()</text>
+  <text x="360" y="140" text-anchor="middle" class="d-mute">押された瞬間に呼び出される</text>
+
+  <!-- code -->
+  <rect x="34" y="182" width="652" height="88" rx="10" class="d-dash"/>
+  <text x="56" y="208" class="d-head-accent">つなぐのは、この 1 行だけ</text>
+  <text x="56" y="236" class="d-code">button.clicked.connect(on_clicked)</text>
+
+  <path d="M62 244 v10 h48" class="d-line"/>
+  <text x="116" y="258" class="d-mute">送り手</text>
+  <path d="M118 244 v22 h44" class="d-line"/>
+  <text x="168" y="270" class="d-mute">シグナル名</text>
+  <path d="M228 244 v10 h56" class="d-line"/>
+  <text x="290" y="258" class="d-mute">受け手（カッコを付けずに渡す）</text>
+</svg>
+<figcaption>シグナルとスロットの関係。送り手は誰が聞いているかを知らないし、受け手は誰が叫んだかを知らなくてよい。この「お互いを知らなくていい」性質が、部品を差し替えやすくしている。</figcaption></figure>
+
+<h2 id="ボタンを押して数を数える">ボタンを押して数を数える</h2>
+
+<figure class="code-block" data-lang="python" data-src="ch03_signals.py"><div class="code-head"><span class="code-file">ch03_signals.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;シグナルとスロット — ボタンが押されたら数を増やす。</span></span><span class="cl"></span><span class="cl"><span class="sd">「押されたよ」という通知（シグナル）と、</span></span><span class="cl"><span class="sd">「押されたときにやること」（スロット）をつなぐのが connect。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch03_signals.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">QApplication</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QPushButton</span><span class="p">,</span> <span class="n">QVBoxLayout</span><span class="p">,</span></span><span class="cl">                               <span class="n">QWidget</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">window</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;シグナルとスロット&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">360</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">label</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;まだ押されていません&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">button</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">&quot;押してください&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">button</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;countButton&quot;</span><span class="p">)</span>  <span class="c1"># 教材の自動撮影で使うための名前</span></span><span class="cl"></span><span class="cl"><span class="n">layout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">window</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">label</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">button</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="k">def</span><span class="w"> </span><span class="nf">on_clicked</span><span class="p">():</span></span><span class="cl"><span class="w">    </span><span class="sd">&quot;&quot;&quot;スロット。ただの関数でよい。&quot;&quot;&quot;</span></span><span class="cl">    <span class="k">global</span> <span class="n">count</span></span><span class="cl">    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span></span><span class="cl">    <span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> 回押されました&quot;</span><span class="p">)</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="c1"># ここが接続。button の clicked シグナルが出たら on_clicked を呼ぶ。</span></span><span class="cl"><span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">on_clicked</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">シグナルとスロット</span></div><img src="../img/ch03-signals.webp" alt="ボタンを 3 回押したところ。押すたびに on_clicked が呼ばれ、ラベルの文字が書き換わる。" width="360" height="150" loading="lazy" decoding="async"></div><figcaption>ボタンを 3 回押したところ。押すたびに on_clicked が呼ばれ、ラベルの文字が書き換わる。</figcaption></figure>
+
+<p>肝心なのはこの 1 行です。</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">on_clicked</span><span class="p">)</span></span></code></pre></figure>
+
+<div class="note pitfall">
+  <span class="note-title">最頻出のミス: 関数にカッコを付けてしまう</span>
+  <p>
+    <code>connect(on_clicked())</code> と書くと、
+    <strong>その場で関数が実行され、その戻り値（多くは <code>None</code>）が接続されます</strong>。
+    結果、起動した瞬間に 1 回だけ動いて、以後ボタンを押しても何も起きません。
+    渡すのは「関数そのもの」なので、<strong>カッコは付けません</strong>。
+  </p>
+  <figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">on_clicked</span><span class="p">)</span>    <span class="c1"># ○ 正しい</span></span><span class="cl"><span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">on_clicked</span><span class="p">())</span>  <span class="c1"># ✗ その場で呼ばれてしまう</span></span></code></pre></figure>
+</div>
+
+<h2 id="よく使うシグナル">よく使うシグナル</h2>
+
+<p>
+シグナルはウィジェットごとに決まっています。よく使うものを挙げておきます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ウィジェット</th><th>シグナル</th><th>飛んでくるタイミング</th><th>渡される値</th></tr></thead>
+  <tbody>
+    <tr><td><code>QPushButton</code></td><td><code>clicked</code></td><td>押して離したとき</td><td>（なし）</td></tr>
+    <tr><td><code>QLineEdit</code></td><td><code>textChanged</code></td><td>文字が変わるたび</td><td>変更後の文字列</td></tr>
+    <tr><td><code>QLineEdit</code></td><td><code>returnPressed</code></td><td>Enter が押されたとき</td><td>（なし）</td></tr>
+    <tr><td><code>QCheckBox</code></td><td><code>toggled</code></td><td>チェックが変わったとき</td><td><code>bool</code></td></tr>
+    <tr><td><code>QComboBox</code></td><td><code>currentTextChanged</code></td><td>選択が変わったとき</td><td>選ばれた文字列</td></tr>
+    <tr><td><code>QSlider</code></td><td><code>valueChanged</code></td><td>値が変わったとき</td><td><code>int</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+値が渡されるシグナルは、スロット側でその値を引数として受け取れます。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">def</span><span class="w"> </span><span class="nf">on_text_changed</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>        <span class="c1"># textChanged は文字列を 1 つ渡してくる</span></span><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;いま入力されているのは:&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">edit</span><span class="o">.</span><span class="n">textChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">on_text_changed</span><span class="p">)</span></span></code></pre></figure>
+
+<div class="note">
+  <span class="note-title">引数はいらないなら受け取らなくていい</span>
+  <p>
+    シグナルが値を渡してきても、スロット側が引数を持っていなければ、
+    Qt は黙って値を捨ててくれます。
+    <code>def on_changed():</code> のように引数なしで書いても動きます。
+  </p>
+</div>
+
+<h2 id="ウィジェット同士を直接つなぐ">ウィジェット同士を直接つなぐ</h2>
+
+<p>
+スロットは自分で書いた関数だけでなく、<strong>ウィジェットが最初から持っているメソッド</strong>でもかまいません。
+これを使うと、自分では 1 行も処理を書かずに連動させられます。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1"># チェックボックスの ON/OFF で、ボタンの有効・無効を切り替える</span></span><span class="cl"><span class="n">checkbox</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">button</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># スライダーを動かすと、数値入力欄の値も一緒に動く</span></span><span class="cl"><span class="n">slider</span><span class="o">.</span><span class="n">valueChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">spinbox</span><span class="o">.</span><span class="n">setValue</span><span class="p">)</span></span><span class="cl"><span class="n">spinbox</span><span class="o">.</span><span class="n">valueChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">slider</span><span class="o">.</span><span class="n">setValue</span><span class="p">)</span></span></code></pre></figure>
+
+<h2 id="自分でシグナルを作る">自分でシグナルを作る</h2>
+
+<p>
+自作のクラスから「何かが起きた」を知らせたいときは、シグナルを自分で定義します。
+</p>
+
+<figure class="code-block" data-lang="python" data-src="ch03_custom_signal.py"><div class="code-head"><span class="code-file">ch03_custom_signal.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;自分でシグナルを作る — Signal と @Slot。</span></span><span class="cl"></span><span class="cl"><span class="sd">自作のシグナルは「クラス変数」として宣言する。</span></span><span class="cl"><span class="sd">インスタンス変数（self.xxx = Signal()）にしても動かないので注意。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch03_custom_signal.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtCore</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signal</span><span class="p">,</span> <span class="n">Slot</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">QApplication</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QLineEdit</span><span class="p">,</span> <span class="n">QPushButton</span><span class="p">,</span></span><span class="cl">                               <span class="n">QVBoxLayout</span><span class="p">,</span> <span class="n">QWidget</span><span class="p">)</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">NameForm</span><span class="p">(</span><span class="n">QWidget</span><span class="p">):</span></span><span class="cl">    <span class="c1"># ★ クラス直下で宣言する。str は「このシグナルが文字列を1つ運ぶ」という意味。</span></span><span class="cl">    <span class="n">submitted</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span></span><span class="cl"></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></span><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;自作シグナル&quot;</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">380</span><span class="p">,</span> <span class="mi">170</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">edit</span> <span class="o">=</span> <span class="n">QLineEdit</span><span class="p">()</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;nameEdit&quot;</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="o">.</span><span class="n">setPlaceholderText</span><span class="p">(</span><span class="s2">&quot;名前を入れて［あいさつ］を押す&quot;</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="n">button</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">&quot;あいさつ&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">button</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;greetButton&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_emit_submitted</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;―&quot;</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="n">layout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></span><span class="cl">        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="p">)</span></span><span class="cl">        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">button</span><span class="p">)</span></span><span class="cl">        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="c1"># 自分のシグナルを、自分のスロットにつなぐ。</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">submitted</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">greet</span><span class="p">)</span></span><span class="cl"></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="nf">_emit_submitted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></span><span class="cl">        <span class="c1"># emit() でシグナルを「発射」する。</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">submitted</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="o">.</span><span class="n">text</span><span class="p">())</span></span><span class="cl"></span><span class="cl">    <span class="nd">@Slot</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="nf">greet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></span><span class="cl"><span class="w">        </span><span class="sd">&quot;&quot;&quot;@Slot を付けると Qt 側に型が伝わり、わずかに速く・安全になる。&quot;&quot;&quot;</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;こんにちは、</span><span class="si">{</span><span class="n">name</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;ななし&#39;</span><span class="si">}</span><span class="s2"> さん！&quot;</span><span class="p">)</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"><span class="n">form</span> <span class="o">=</span> <span class="n">NameForm</span><span class="p">()</span></span><span class="cl"><span class="n">form</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">自作シグナル</span></div><img src="../img/ch03-custom-signal.webp" alt="名前を入れてボタンを押すと、submitted シグナルが飛び、greet スロットが呼ばれる。" width="380" height="170" loading="lazy" decoding="async"></div><figcaption>名前を入れてボタンを押すと、submitted シグナルが飛び、greet スロットが呼ばれる。</figcaption></figure>
+
+<div class="note pitfall">
+  <span class="note-title">シグナルは必ず「クラス直下」で宣言する</span>
+  <p>
+    <code>__init__</code> の中で <code>self.submitted = Signal(str)</code> と書いても<strong>動きません</strong>。
+    Qt はクラスが定義される時点でシグナルを登録する必要があるためです。
+    かならずクラスの直下（メソッドの外）に書いてください。
+  </p>
+  <figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">NameForm</span><span class="p">(</span><span class="n">QWidget</span><span class="p">):</span></span><span class="cl">    <span class="n">submitted</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>      <span class="c1"># ○ クラス直下</span></span><span class="cl"></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">submitted</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>   <span class="c1"># ✗ これでは動かない</span></span></code></pre></figure>
+</div>
+
+<div class="note deep">
+  <span class="note-title">@Slot は必須ではない</span>
+  <p>
+    <code>@Slot(str)</code> を付けなくてもスロットとして動きます。
+    付けると Qt 側に型が伝わるので、わずかに速くなり、
+    別スレッドからの呼び出しなど込み入った場面での安全性も上がります。
+    「付けておくと得だが、忘れても壊れない」くらいの理解で十分です。
+  </p>
+</div>
+
+<h2 id="ループの中で-connect-するときの罠">ループの中で connect するときの罠</h2>
+
+<p>
+ボタンをいくつも作って「何番が押されたか」を知りたい、というのはよくある要求です。
+ここには Python 側の有名な落とし穴があります。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span></span><span class="cl">    <span class="n">button</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> 番&quot;</span><span class="p">)</span></span><span class="cl">    <span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> 番が押されました&quot;</span><span class="p">))</span></span></code></pre><figcaption class="code-cap">✗ これは動かない。どのボタンを押しても「3 番」と出る。</figcaption></figure>
+
+<p>
+<code>lambda</code> の中の <code>i</code> は、<strong>作られた時点の値ではなく、呼ばれた時点の値</strong>を見ます。
+ボタンが押されるのはループが終わったずっと後なので、<code>i</code> はすでに最後の値になっています。
+</p>
+
+<p>回避方法は 2 つあります。</p>
+
+<figure class="code-block" data-lang="python" data-src="ch03_lambda_trap.py"><div class="code-head"><span class="code-file">ch03_lambda_trap.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;ループの中で connect するときの罠と、その回避方法。</span></span><span class="cl"></span><span class="cl"><span class="sd">ボタンを 3 つ作って「何番のボタンが押されたか」を表示したい。</span></span><span class="cl"><span class="sd">lambda の中で変数をそのまま使うと、全部同じ値になってしまう。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch03_lambda_trap.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">QApplication</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QPushButton</span><span class="p">,</span> <span class="n">QVBoxLayout</span><span class="p">,</span></span><span class="cl">                               <span class="n">QWidget</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">window</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;lambda の罠&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">360</span><span class="p">,</span> <span class="mi">210</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">window</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">label</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;どれかを押してください&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">label</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span></span><span class="cl">    <span class="c1"># ✗ NG: lambda: label.setText(f&quot;{i} 番&quot;) と書くと、</span></span><span class="cl">    <span class="c1">#        呼ばれた時点の i（＝ループ終了後の 3）を見てしまう。</span></span><span class="cl">    <span class="c1">#</span></span><span class="cl">    <span class="c1"># ○ OK その1: デフォルト引数で「今の値」を捕まえる</span></span><span class="cl">    <span class="n">button</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> 番のボタン&quot;</span><span class="p">)</span></span><span class="cl">    <span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">checked</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">i</span><span class="p">:</span> <span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> 番が押されました&quot;</span><span class="p">))</span></span><span class="cl">    <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">button</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># ○ OK その2: functools.partial を使う（引数の意図がはっきりする）</span></span><span class="cl"><span class="n">extra</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">&quot;partial で接続したボタン&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">extra</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> 番が押されました&quot;</span><span class="p">),</span> <span class="mi">99</span><span class="p">))</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<div class="note pitfall">
+  <span class="note-title">lambda の第 1 引数に注意</span>
+  <p>
+    <code>clicked</code> シグナルは、実は <code>checked</code>（<code>bool</code>）という値を渡してくることがあります。
+    そのため <code>lambda n=i: ...</code> と書くと、<code>n</code> にその <code>bool</code> が入ってしまいます。
+    上のサンプルで <code>lambda checked=False, n=i: ...</code> と
+    ダミーの引数を先に置いているのはこのためです。
+  </p>
+</div>
+
+<h2 id="接続を切る">接続を切る</h2>
+
+<p>
+一時的に反応させたくないときは <code>disconnect()</code> で切れます。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="n">on_clicked</span><span class="p">)</span>   <span class="c1"># この接続だけ切る</span></span><span class="cl"><span class="n">button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>             <span class="c1"># このシグナルの接続を全部切る</span></span></code></pre></figure>
+
+<p>
+ただし、値を設定するときに <code>valueChanged</code> が飛んで無限ループになる、
+といった場面では <code>blockSignals()</code> のほうが素直です。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">slider</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></span><span class="cl"><span class="n">slider</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>        <span class="c1"># ここでは valueChanged が飛ばない</span></span><span class="cl"><span class="n">slider</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span></span></code></pre></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch03_signals.py</code> にもう 1 つボタンを足し、押すとカウントが 0 に戻るようにする。</li>
+    <li><code>QLineEdit</code> と <code>QLabel</code> を置き、入力した文字がそのままラベルに映るようにする（ヒント: <code>textChanged</code> と <code>setText</code> を直接つなぐ）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>送り手.シグナル.connect(受け手)</code> が基本形。受け手に<strong>カッコは付けない</strong>。</li>
+    <li>スロットはただの関数でよく、ウィジェットのメソッドを直接つなぐこともできる。</li>
+    <li>自作シグナルは <code>Signal(型)</code> を<strong>クラス直下</strong>に書き、<code>emit()</code> で発射する。</li>
+    <li>ループ内で <code>lambda</code> を使うときは、デフォルト引数か <code>partial</code> で値を捕まえる。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../02-first-window/"><span class="pager-dir">← 前の章</span><span class="pager-title">最初のウィンドウ</span></a>
+<a class="pager-link pager-next" href="../04-layouts/"><span class="pager-dir">次の章 →</span><span class="pager-title">レイアウト</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-30 時点）
+  </p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

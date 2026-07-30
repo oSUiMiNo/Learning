@@ -1,0 +1,15 @@
+{
+  "name": "rustc-explain",
+  "title": "Windows PowerShell",
+  "note": "rustc --explain でエラーの解説を読む",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc --explain E0382",
+      "output": "A variable was used after its contents have been moved elsewhere.\n\nErroneous code example:\n\n```\nstruct MyStruct { s: u32 }\n\nfn main() {\n    let mut x = MyStruct{ s: 5u32 };\n    let y = x;\n    x.s = 6;\n    println!(\"{}\", x.s);\n}\n```\n\nSince `MyStruct` is a type that is not marked `Copy`, the data gets moved out\nof `x` when we set `y`. This is fundamental to Rust's ownership system: outside\nof workarounds like `Rc`, a value cannot be owned by more than one variable.\n\nSometimes we don't need to move the value. Using a reference, we can let another\nfunction borrow the value without changing its ownership. In the example below,\nwe don't actually have to move our string to `calculate_length`, we can give it\na reference to it with `&` instead.\n\n…（続く）"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

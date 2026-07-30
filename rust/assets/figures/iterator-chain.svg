@@ -1,0 +1,49 @@
+<svg viewBox="0 0 720 300" role="img" aria-label="イテレータアダプタの遅延評価。filter や map をつないだ時点では何も起きず、collect や sum で初めて 1 要素ずつ流れる。">
+  <rect x="1" y="1" width="718" height="298" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">つないだだけでは動かない。最後の 1 つが引っぱると動く</text>
+
+  <!-- パイプライン -->
+  <rect x="28" y="46" width="118" height="52" rx="9" class="d-box"/>
+  <text x="87" y="70" text-anchor="middle" class="d-code">.iter()</text>
+  <text x="87" y="88" text-anchor="middle" class="d-mute">元のデータ</text>
+
+  <path d="M146 72 L184 72" class="d-flow-dash"/>
+  <path d="M184 72 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="184" y="46" width="128" height="52" rx="9" class="d-dash"/>
+  <text x="248" y="70" text-anchor="middle" class="d-code">.filter(..)</text>
+  <text x="248" y="88" text-anchor="middle" class="d-mute">Where</text>
+
+  <path d="M312 72 L350 72" class="d-flow-dash"/>
+  <path d="M350 72 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="350" y="46" width="128" height="52" rx="9" class="d-dash"/>
+  <text x="414" y="70" text-anchor="middle" class="d-code">.map(..)</text>
+  <text x="414" y="88" text-anchor="middle" class="d-mute">Select</text>
+
+  <path d="M478 72 L516 72" class="d-flow"/>
+  <path d="M516 72 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="516" y="46" width="176" height="52" rx="9" class="d-fill-accent"/>
+  <text x="604" y="70" text-anchor="middle" class="d-code" fill="#fff">.collect() / .sum()</text>
+  <text x="604" y="88" text-anchor="middle" class="d-code" fill="#fff">ToList / Sum</text>
+
+  <text x="248" y="122" text-anchor="middle" class="d-mute">点線の箱は「予定を覚えただけ」</text>
+  <text x="604" y="122" text-anchor="middle" class="d-head-accent">ここが引き金</text>
+
+  <!-- 流れ方 -->
+  <rect x="28" y="140" width="664" height="86" rx="10" class="d-tip"/>
+  <text x="48" y="164" class="d-head-tip">流れ方は「全部まとめて」ではなく「1 つずつ最後まで」</text>
+  <g class="d-code">
+    <text x="48" y="188">要素 1 → filter 通過 → map → 出力</text>
+    <text x="48" y="208">要素 2 → filter で捨てられる（map は呼ばれない）</text>
+    <text x="400" y="188">要素 3 → filter 通過 → map → 出力</text>
+    <text x="400" y="208">… 以下同じ</text>
+  </g>
+
+  <!-- 下 -->
+  <rect x="28" y="240" width="664" height="46" rx="10" class="d-dash"/>
+  <text x="48" y="260" class="d-head-accent">LINQ と同じ性質</text>
+  <text x="48" y="278" class="d-mute">中間の Vec が作られないので、長い連鎖でも余計な確保が起きない。C# の IEnumerable と同じ考え方。</text>
+</svg>

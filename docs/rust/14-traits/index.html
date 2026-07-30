@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第14章 トレイトとジェネリクス — インターフェースとの違い | Rust 入門</title>
+<meta name="description" content="トレイトはインターフェースによく似ていますが、「後から他人の型に実装できる」点が決定的に違います。単相化の話も避けずにやります。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li class="is-current"><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 14 章<span class="dot">·</span>読了目安 18 分</p>
+        <h1>第14章 トレイトとジェネリクス — インターフェースとの違い</h1>
+        <p class="lede">トレイトはインターフェースによく似ていますが、「後から他人の型に実装できる」点が決定的に違います。単相化の話も避けずにやります。</p>
+      </header>
+      <div class="prose">
+<p>
+トレイトはインターフェースによく似ています。
+「このメソッドを持っていること」を約束する仕組み、という点は同じです。
+</p>
+
+<p>
+違いは 1 つですが、それが決定的です。
+<strong>トレイトは、他人が作った型にも後から実装できます。</strong>
+C# の拡張メソッドでは真似できない範囲まで、これができます。
+</p>
+
+<h2 id="まず似ているところ">まず似ているところ</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">interface</span><span class="w"> </span><span class="n">IGreet</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="nf">Name</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="nf">Hello</span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">$&quot;こんにちは、{Name()} さん&quot;</span><span class="p">;</span><span class="w">  </span><span class="c1">// C# 8 以降</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">Person</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">IGreet</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="nf">Name</span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;すずき&quot;</span><span class="p">;</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">trait</span><span class="w"> </span><span class="n">Greet</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;こんにちは、{} さん&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">name</span><span class="p">())</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Greet</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">Person</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;すずき&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">()</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+</div>
+
+<p>
+既定実装まで含めて、ほぼ同じです。
+書き方の違いは <code>impl Trait for Type</code> という形だけです。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">実装を型の宣言と切り離す</span>
+  <p>
+    C# は <code>class Person : IGreet</code> と、クラス宣言に書きます。
+    Rust は <code>impl Greet for Person</code> と、<strong>別の場所に書きます</strong>。
+  </p>
+  <p>
+    つまり型を定義したファイルと、トレイトを実装するファイルを分けられます。
+    これが次の節の話につながります。
+  </p>
+</div>
+
+<h2 id="決定的な違い--他人の型に実装できる">決定的な違い — 他人の型に実装できる</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1">// 標準ライブラリの i32 に、自分のトレイトを実装する</span></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Greet</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;整数の {self}&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="c1">// これで 42.hello() と書けるようになる</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">拡張メソッドとの違い</span>
+  <p>
+    C# の拡張メソッドも <code>int</code> にメソッドを足せます。しかし決定的に違います。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C# の拡張メソッド</th><th>Rust のトレイト実装</th></tr></thead>
+    <tbody>
+      <tr><td>メソッドを足せる</td><td>できる</td><td>できる</td></tr>
+      <tr><td><strong>インターフェースを実装させる</strong></td><td><strong>できない</strong></td><td><strong>できる</strong></td></tr>
+      <tr><td>ジェネリクスの制約に使える</td><td>使えない</td><td><strong>使える</strong></td></tr>
+      <tr><td>多態に使える</td><td>使えない</td><td>使える（<code>dyn Trait</code>）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# では「<code>int</code> に <code>IGreet</code> を後から実装させる」ことは不可能です。
+    だから <code>List&lt;IGreet&gt;</code> に <code>int</code> を入れることもできません。
+  </p>
+  <p>
+    Rust ならできます。この違いのおかげで、
+    <strong>ライブラリの型を自分のシステムに組み込むのがはるかに楽</strong>です。
+    たとえば <code>serde</code> は「あらゆる型を JSON にできる」仕組みを、
+    この性質だけで実現しています。
+  </p>
+</div>
+
+<h2 id="孤児則--できないこともある">孤児則 — できないこともある</h2>
+
+<p>
+無制限ではありません。1 つ制約があります。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 250" role="img" aria-label="孤児則。型かトレイトの少なくとも一方が自分のクレートのものであれば実装できるが、両方が他人のものだと実装できない。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">「型」と「トレイト」の少なくとも一方が自分のものなら実装できる</text>
+
+  <!-- 3 patterns OK -->
+  <rect x="24" y="46" width="216" height="92" rx="9" class="d-tip"/>
+  <text x="132" y="68" text-anchor="middle" class="d-head-tip">できる</text>
+  <text x="132" y="90" text-anchor="middle" class="d-code">自分の型</text>
+  <text x="132" y="108" text-anchor="middle" class="d-code">× 標準のトレイト</text>
+  <text x="132" y="128" text-anchor="middle" class="d-mute">impl Display for MyType</text>
+
+  <rect x="252" y="46" width="216" height="92" rx="9" class="d-tip"/>
+  <text x="360" y="68" text-anchor="middle" class="d-head-tip">できる</text>
+  <text x="360" y="90" text-anchor="middle" class="d-code">標準の型</text>
+  <text x="360" y="108" text-anchor="middle" class="d-code">× 自分のトレイト</text>
+  <text x="360" y="128" text-anchor="middle" class="d-mute">impl MyTrait for i32</text>
+
+  <rect x="480" y="46" width="216" height="92" rx="9" class="d-warn"/>
+  <text x="588" y="68" text-anchor="middle" class="d-head-warn">できない</text>
+  <text x="588" y="90" text-anchor="middle" class="d-code">標準の型</text>
+  <text x="588" y="108" text-anchor="middle" class="d-code">× 標準のトレイト</text>
+  <text x="588" y="128" text-anchor="middle" class="d-mute">impl Display for Vec&lt;T&gt;</text>
+
+  <!-- 説明 -->
+  <rect x="24" y="152" width="672" height="40" rx="9" class="d-dash"/>
+  <text x="44" y="170" class="d-head-accent">なぜ禁じられているのか</text>
+  <text x="44" y="186" class="d-mute">2 つのクレートが同じ組み合わせに別々の実装を書けてしまうと、どちらを使うか決められなくなるため。</text>
+
+  <rect x="24" y="202" width="672" height="34" rx="9" class="d-box"/>
+  <text x="44" y="224" class="d-mute">回避策: 自分の型で包む（newtype）。<tspan class="d-code">struct MyVec(Vec&lt;i32&gt;);</tspan> にすれば自分の型なので実装できる。</text>
+</svg>
+<figcaption>「型」と「トレイト」の少なくとも一方が自分のクレートのものであれば実装できる。両方が他人のものだと実装できない。2 つのクレートが同じ組み合わせに別々の実装を書けてしまうと、どちらを使うか決められなくなるため。</figcaption></figure>
+
+<div class="note">
+  <span class="note-title">孤児則を回避する — newtype</span>
+  <p>
+    「標準の <code>Vec</code> に標準の <code>Display</code> を実装したい」ときは、
+    自分の型で包みます（第 9 章のタプル構造体）。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">MyVec</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">::</span><span class="n">Display</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">MyVec</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">fmt</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">::</span><span class="n">Formatter</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">::</span><span class="nb">Result</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;[{}]&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="mf">0.</span><span class="n">iter</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">n</span><span class="o">|</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">to_string</span><span class="p">())</span></span><span class="cl"><span class="w">            </span><span class="p">.</span><span class="n">collect</span><span class="p">::</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;&gt;</span><span class="p">().</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;, &quot;</span><span class="p">))</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <p>
+    包んだぶんの実行時コストはゼロです。
+    <strong>コンパイル後は生の <code>Vec</code> と同じ</strong>になります。
+  </p>
+</div>
+
+<h2 id="ジェネリクスとトレイト境界">ジェネリクスとトレイト境界</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">void</span><span class="w"> </span><span class="n">GreetAll</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">IEnumerable</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">items</span><span class="p">)</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">IGreet</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">foreach</span><span class="w"> </span><span class="p">(</span><span class="kt">var</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">items</span><span class="p">)</span></span><span class="cl"><span class="w">        </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">Hello</span><span class="p">());</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">greet_all</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">Greet</span><span class="o">&gt;</span><span class="p">(</span><span class="n">items</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="n">T</span><span class="p">])</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">items</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">item</span><span class="p">.</span><span class="n">hello</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+</div>
+
+<p>
+書き方は 3 通りあり、どれも同じ意味です。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">a</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">Greet</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">              </span><span class="c1">// 型引数の後ろに書く</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">b</span><span class="p">(</span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">impl</span><span class="w"> </span><span class="n">Greet</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">               </span><span class="c1">// impl Trait。短い</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">c</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">Greet</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">      </span><span class="c1">// where で後ろにまとめる</span></span></code></pre></figure>
+
+<div class="note">
+  <span class="note-title">使い分け</span>
+  <ul>
+    <li>境界が 1 つで短いなら <code>impl Trait</code></li>
+    <li>同じ型を複数の引数で使うなら <code>&lt;T: Trait&gt;</code></li>
+    <li>境界が長い・複数あるなら <code>where</code></li>
+  </ul>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">describe</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span></span><span class="cl"><span class="nc">where</span></span><span class="cl"><span class="w">    </span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">Display</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">PartialOrd</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">,</span><span class="w">   </span><span class="c1">// + でつなぐ</span></span><span class="cl"><span class="p">{</span><span class="w"> </span><span class="p">}</span></span></code></pre></figure>
+</div>
+
+<h2 id="単相化--C-のジェネリクスとの違い">単相化 — C# のジェネリクスとの違い</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 320" role="img" aria-label="ジェネリクスによる単相化と dyn Trait による動的ディスパッチの比較。前者は型ごとに実体が作られ、後者は vtable を経由する。">
+  <rect x="1" y="1" width="718" height="318" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">同じトレイトを使う 2 つの呼び出し方</text>
+
+  <!-- 左: 単相化 -->
+  <rect x="20" y="44" width="330" height="212" rx="10" class="d-accent"/>
+  <text x="185" y="68" text-anchor="middle" class="d-title">静的（単相化）</text>
+  <text x="185" y="88" text-anchor="middle" class="d-code">fn f&lt;T: Greet&gt;(x: T)</text>
+
+  <rect x="46" y="102" width="278" height="28" rx="7" class="d-box"/>
+  <text x="185" y="121" text-anchor="middle" class="d-mute">コンパイラが型ごとに複製する</text>
+
+  <path d="M120 130 L92 154" class="d-line"/>
+  <path d="M250 130 L278 154" class="d-line"/>
+
+  <rect x="40" y="158" width="126" height="30" rx="7" class="d-tip"/>
+  <text x="103" y="178" text-anchor="middle" class="d-code">f_person()</text>
+  <rect x="204" y="158" width="126" height="30" rx="7" class="d-tip"/>
+  <text x="267" y="178" text-anchor="middle" class="d-code">f_robot()</text>
+
+  <text x="185" y="212" text-anchor="middle" class="d-head-accent">呼び出しは直接。実行時コスト 0</text>
+  <text x="185" y="232" text-anchor="middle" class="d-mute">代わりにコードの量とビルド時間が増える</text>
+  <text x="185" y="248" text-anchor="middle" class="d-mute">型が違うものを 1 つの Vec に混ぜられない</text>
+
+  <!-- 右: dyn -->
+  <rect x="370" y="44" width="330" height="212" rx="10" class="d-deep"/>
+  <text x="535" y="68" text-anchor="middle" class="d-title">動的（dyn Trait）</text>
+  <text x="535" y="88" text-anchor="middle" class="d-code">fn f(x: &amp;dyn Greet)</text>
+
+  <rect x="396" y="102" width="278" height="28" rx="7" class="d-box"/>
+  <text x="535" y="121" text-anchor="middle" class="d-mute">実体は 1 つ。表を見て飛ぶ</text>
+
+  <path d="M535 130 L535 152" class="d-flow-deep"/>
+  <path d="M535 152 l-5 -9 h10 z" class="d-arrowhead-deep"/>
+
+  <rect x="424" y="156" width="222" height="34" rx="7" class="d-box"/>
+  <text x="535" y="171" text-anchor="middle" class="d-code">vtable</text>
+  <text x="535" y="185" text-anchor="middle" class="d-mute">name → ここ / hello → ここ</text>
+
+  <text x="535" y="212" text-anchor="middle" class="d-head-deep">C# のインターフェース呼び出しに近い</text>
+  <text x="535" y="232" text-anchor="middle" class="d-mute">ポインタ 1 段ぶん遅いが、コードは太らない</text>
+  <text x="535" y="248" text-anchor="middle" class="d-mute">Vec&lt;Box&lt;dyn Greet&gt;&gt; で混ぜられる</text>
+
+  <!-- 下 -->
+  <rect x="20" y="270" width="680" height="36" rx="10" class="d-dash"/>
+  <text x="40" y="293" class="d-mute">迷ったら静的（ジェネリクス）から。「違う型を 1 つの箱にまとめたい」と思ったときだけ dyn に切り替える。</text>
+</svg>
+<figcaption>ジェネリクスは型ごとに実体が複製される（単相化）ので呼び出しが直接になり、実行時コストがゼロ。dyn Trait は vtable を経由するので C# のインターフェース呼び出しに近い。違う型を 1 つの Vec に混ぜたいときだけ dyn を使う。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">.NET のジェネリクスとの比較</span>
+  <p>
+    .NET は<strong>参照型については 1 つの実体を共有</strong>し、
+    値型については型ごとにコードを作ります。
+  </p>
+  <p>
+    Rust は<strong>常に型ごとに作ります</strong>（単相化）。だから
+  </p>
+  <ul>
+    <li>呼び出しは直接。インライン展開もされる。<strong>実行時コストがゼロ</strong></li>
+    <li>そのぶん実行ファイルが大きくなり、ビルドが遅くなる</li>
+    <li>実行時に型情報が残らない。<strong>C# の <code>typeof(T)</code> のようなことは基本できない</strong></li>
+  </ul>
+  <p>
+    3 つ目が実務で効きます。C# のリフレクションに相当するものは Rust にはほぼ無く、
+    「型に応じて動きを変える」ことはコンパイル時に決めます。
+  </p>
+</div>
+
+<h2 id="dyn-Trait--違う型を混ぜる">dyn Trait — 違う型を混ぜる</h2>
+
+<p>
+ジェネリクスでは「1 つの <code>Vec</code> に <code>Person</code> と <code>Robot</code> を混ぜる」ことができません。
+そのときは <code>dyn</code> を使います。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">mixed</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Greet</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span></span><span class="cl"><span class="w">    </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Person</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">first</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;さとう&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">}),</span></span><span class="cl"><span class="w">    </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Robot</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="mi">99</span><span class="w"> </span><span class="p">}),</span></span><span class="cl"><span class="w">    </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">5_</span><span class="k">i32</span><span class="p">),</span></span><span class="cl"><span class="p">];</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">List&lt;IGreet&gt; に相当するもの</span>
+  <p>
+    C# の <code>List&lt;IGreet&gt;</code> がそのまま <code>Vec&lt;Box&lt;dyn Greet&gt;&gt;</code> です。
+    <code>Box</code> が必要なのは、<strong>要素の大きさが型によって違うから</strong>です。
+  </p>
+  <p>
+    C# では参照型なのでポインタ 1 個ぶんに揃っていますが、
+    Rust の値は型ごとに大きさが違うので、
+    ヒープに置いてポインタで揃える必要があります。それが <code>Box</code> の役目です。
+  </p>
+  <p>
+    借用でよければ <code>&amp;dyn Greet</code> と書けて、<code>Box</code> は要りません。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">dyn にできないトレイトがある</span>
+  <p>
+    <code>dyn Trait</code> にするには、そのトレイトが
+    <strong>オブジェクト安全</strong>である必要があります。主な条件は次の 2 つです。
+  </p>
+  <ul>
+    <li>メソッドがジェネリック型引数を持たない</li>
+    <li><code>self</code> を値で受け取るメソッドが無い（<code>Sized</code> が要るため）</li>
+  </ul>
+  <p>
+    <code>the trait cannot be made into an object</code> と言われたら、これです。
+    ジェネリックなメソッドがあるトレイトは <code>dyn</code> にできません。
+  </p>
+</div>
+
+<h2 id="知っておくべき標準トレイト">知っておくべき標準トレイト</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>トレイト</th><th>役目</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>Display</code></td><td><code>{}</code> での表示。<strong>derive できない</strong></td><td><code>ToString()</code></td></tr>
+    <tr><td><code>Debug</code></td><td><code>{:?}</code> での表示。derive できる</td><td>—</td></tr>
+    <tr><td><code>Clone</code> / <code>Copy</code></td><td>複製</td><td><code>ICloneable</code> / 値型</td></tr>
+    <tr><td><code>PartialEq</code> / <code>Eq</code></td><td>等値比較</td><td><code>IEquatable</code></td></tr>
+    <tr><td><code>PartialOrd</code> / <code>Ord</code></td><td>大小比較</td><td><code>IComparable</code></td></tr>
+    <tr><td><code>Default</code></td><td>既定値</td><td>既定コンストラクタ</td></tr>
+    <tr><td><code>From</code> / <code>Into</code></td><td>型変換</td><td>暗黙・明示の変換演算子</td></tr>
+    <tr><td><code>Iterator</code></td><td>反復</td><td><code>IEnumerator</code></td></tr>
+    <tr><td><code>IntoIterator</code></td><td><code>for</code> で回せるようにする</td><td><code>IEnumerable</code></td></tr>
+    <tr><td><code>Drop</code></td><td>後片付け</td><td><code>IDisposable</code></td></tr>
+    <tr><td><code>Deref</code></td><td><code>*</code> と自動参照外し</td><td>—</td></tr>
+    <tr><td><code>Send</code> / <code>Sync</code></td><td>スレッド安全性（第 19 章）</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">From を実装すると Into が無料で付いてくる</span>
+  <p>
+    <code>impl From&lt;A&gt; for B</code> を書くと、
+    自動的に <code>a.into()</code> で <code>B</code> が作れるようになります。
+    逆は成り立たないので、<strong>実装するのは常に <code>From</code> 側</strong>です。
+  </p>
+  <p>
+    第 11 章の <code>?</code> がエラー型を自動変換していたのは、この仕組みです。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="14-traits/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! トレイトとジェネリクス。インターフェースとの違いに絞って確かめます。</span></span><span class="cl"></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">::</span><span class="n">Display</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="sd">/// トレイトの定義。C# の interface に相当する。</span></span><span class="cl"><span class="k">trait</span><span class="w"> </span><span class="n">Greet</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="sd">/// 実装側が必ず書くメソッド</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="sd">/// 既定の実装つきメソッド。</span></span><span class="cl"><span class="w">    </span><span class="sd">/// C# 8 以降の default interface method と同じ発想だが、</span></span><span class="cl"><span class="w">    </span><span class="sd">/// Rust には最初からある。</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;こんにちは、{} さん&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">name</span><span class="p">())</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Person</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">first</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Robot</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Greet</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">Person</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">first</span><span class="p">.</span><span class="n">clone</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Greet</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">Robot</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;ユニット {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">id</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="sd">/// 既定の実装を上書きすることもできる</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;ピー・ガガ・{} 起動&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">name</span><span class="p">())</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 標準ライブラリの型に、自分のトレイトを後から実装できる。</span></span><span class="cl"><span class="sd">/// C# では不可能（拡張メソッドで似せるのが精一杯）。</span></span><span class="cl"><span class="sd">/// これがトレイトとインターフェースの決定的な違い。</span></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Greet</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;整数の {self}&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// ジェネリクス + トレイト境界。</span></span><span class="cl"><span class="sd">/// コンパイル時に型ごとの実体が作られる（単相化）。</span></span><span class="cl"><span class="sd">/// 実行時のコストはゼロで、C# のジェネリクスより静的。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">greet_all</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">Greet</span><span class="o">&gt;</span><span class="p">(</span><span class="n">items</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="n">T</span><span class="p">])</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">items</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">item</span><span class="p">.</span><span class="n">hello</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// impl Trait で書くと、境界を短く書ける。上と同じ意味。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">shout</span><span class="p">(</span><span class="n">item</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">impl</span><span class="w"> </span><span class="n">Greet</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">item</span><span class="p">.</span><span class="n">hello</span><span class="p">().</span><span class="n">to_uppercase</span><span class="p">()</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// dyn Trait は実行時に決まる。vtable を経由するので</span></span><span class="cl"><span class="sd">/// C# のインターフェース呼び出しに近い。</span></span><span class="cl"><span class="sd">/// 型が違うものを 1 つの Vec に混ぜたいときはこれを使う。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">greet_mixed</span><span class="p">(</span><span class="n">items</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Greet</span><span class="o">&gt;</span><span class="p">])</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">items</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">item</span><span class="p">.</span><span class="n">hello</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 複数の境界は + でつなぐ。where で後ろに書いてもよい。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">describe</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span></span><span class="cl"><span class="nc">where</span></span><span class="cl"><span class="w">    </span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">Display</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">PartialOrd</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">,</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{value} は大きい&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{value} は小さい&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 同じトレイトを別の型が実装する ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">greet_all</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span></span><span class="cl"><span class="w">        </span><span class="n">Person</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">first</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;すずき&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">        </span><span class="n">Person</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">first</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;たなか&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="p">]);</span></span><span class="cl"><span class="w">    </span><span class="n">greet_all</span><span class="p">(</span><span class="o">&amp;</span><span class="p">[</span><span class="n">Robot</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="w"> </span><span class="p">}]);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 標準の型にも後から実装できる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">42.</span><span class="n">hello</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. impl Trait ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">shout</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Robot</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">}));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. dyn Trait で違う型を混ぜる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">mixed</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Greet</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span></span><span class="cl"><span class="w">        </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Person</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">first</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;さとう&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">}),</span></span><span class="cl"><span class="w">        </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Robot</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="mi">99</span><span class="w"> </span><span class="p">}),</span></span><span class="cl"><span class="w">        </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">5_</span><span class="k">i32</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="n">greet_mixed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mixed</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. 複数のトレイト境界 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">describe</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">describe</span><span class="p">(</span><span class="mi">500</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. 標準トレイトを derive で手に入れる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="cp">#[derive(Debug, Clone, PartialEq, PartialOrd)]</span></span><span class="cl"><span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">Version</span><span class="p">(</span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="kt">u32</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Version</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Version</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {a:?} &lt; {b:?} = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">b</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. 孤児則 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  「型」と「トレイト」の少なくとも一方が自分のものでないと実装できない&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  例: 標準の Display を標準の Vec に実装することはできない&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\14-traits&gt;</span> cargo run --quiet</span>
+── 1. 同じトレイトを別の型が実装する ──
+  こんにちは、すずき さん
+  こんにちは、たなか さん
+  ピー・ガガ・ユニット 7 起動
+
+── 2. 標準の型にも後から実装できる ──
+  こんにちは、整数の 42 さん
+
+── 3. impl Trait ──
+  ピー・ガガ・ユニット 1 起動
+
+── 4. dyn Trait で違う型を混ぜる ──
+  こんにちは、さとう さん
+  ピー・ガガ・ユニット 99 起動
+  こんにちは、整数の 5 さん
+
+── 5. 複数のトレイト境界 ──
+  5 は小さい
+  500 は大きい
+
+── 6. 標準トレイトを derive で手に入れる ──
+  Version(1, 2) &lt; Version(1, 10) = true
+
+── 7. 孤児則 ──
+  「型」と「トレイト」の少なくとも一方が自分のものでないと実装できない
+  例: 標準の Display を標準の Vec に実装することはできない</code></pre></div><figcaption>実行結果。42.hello() が動いているところに注目。標準ライブラリの i32 に、自分のトレイトを後から実装した結果。</figcaption></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/14-traits</code> を動かしてください。</li>
+    <li><code>impl Greet for String</code> を足して、<code>"あ".to_string().hello()</code> を呼んでみてください。</li>
+    <li><code>impl std::fmt::Display for Vec&lt;i32&gt;</code> を書こうとして、孤児則のエラー（E0117）を見てください。</li>
+    <li><code>trait Greet</code> に <code>fn convert&lt;T&gt;(&amp;self) -&gt; T;</code> のようなジェネリックなメソッドを足して、<code>dyn Greet</code> が使えなくなることを確認してください。</li>
+    <li><code>greet_all</code> を <code>&amp;[Box&lt;dyn Greet&gt;]</code> を受け取る形に書き換えてみてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>トレイトはインターフェースに似ているが、<strong>他人の型にも後から実装できる</strong>。</li>
+    <li>ただし孤児則がある。「型かトレイトの一方は自分のもの」であること。回避策は newtype。</li>
+    <li>ジェネリクスは<strong>単相化</strong>される。実行時コストゼロだが、実行時の型情報は残らない。</li>
+    <li>違う型を 1 つの箱に混ぜたいときだけ <code>dyn Trait</code>。C# の <code>List&lt;IFoo&gt;</code> に相当。</li>
+    <li>境界の書き方は <code>&lt;T: Trait&gt;</code> / <code>impl Trait</code> / <code>where</code> の 3 通り。意味は同じ。</li>
+    <li><code>Display</code> は derive できない。人間向けの表示は自分で決めるもの。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../13-iterators/"><span class="pager-dir">← 前の章</span><span class="pager-title">イテレータ</span></a>
+<a class="pager-link pager-next" href="../15-lifetimes/"><span class="pager-dir">次の章 →</span><span class="pager-title">★ ライフタイム</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

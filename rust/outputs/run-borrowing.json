@@ -1,0 +1,15 @@
+{
+  "name": "run-borrowing",
+  "title": "Windows PowerShell",
+  "note": "examples/07-borrowing の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\07-borrowing>",
+      "command": "cargo run --quiet",
+      "output": "── 1. 読む借用は何本でも ──\r\n  a の合計 = 15\r\n  b の要素数 = 5\r\n  元の numbers も使える = [1, 2, 3, 4, 5]\r\n\r\n── 2. 書く借用は 1 本だけ ──\r\n  倍にした = [20, 40, 60]\r\n  合計を末尾に足した = [20, 40, 60, 120]\r\n  ← 個数を変える操作は &mut [i32] ではできず、&mut Vec<i32> が必要\r\n\r\n── 3. 借用は「最後に使った所」で終わる ──\r\n  先頭は 1\r\n  追加後 = [1, 2, 3, 4]\r\n\r\n── 4. スライスは「窓」であって複製ではない ──\r\n  元の文字列 = Rust はたのしい\r\n  切り出した窓 = Rust\r\n  窓は元データを指しているだけなので、コピーは起きていない\r\n\r\n── 5. &mut 越しに書き換える ──\r\n  counter = 2\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

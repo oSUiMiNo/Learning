@@ -1,0 +1,15 @@
+{
+  "name": "run-ownership",
+  "title": "Windows PowerShell",
+  "note": "examples/06-ownership の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\06-ownership>",
+      "command": "cargo run --quiet",
+      "output": "── 1. Copy される型 ──\r\n  a = 10, b = 10（どちらも使える）\r\n\r\n── 2. move される型 ──\r\n  s2 = こんにちは（s1 はもう使えない）\r\n\r\n── 3. clone すれば両方残る ──\r\n  original = 複製したい\r\n  copy     = 複製したい\r\n\r\n── 4. 関数に渡すと所有権も渡る ──\r\n  もらった: あげる文字列\r\n\r\n── 5. 参照なら渡しても残る ──\r\n  見せてもらった: 貸すだけの文字列（長さ 24 バイト）\r\n  呼び出し側でもまだ使える: 貸すだけの文字列\r\n\r\n── 6. もらって返せば戻ってくる ──\r\n  返ってきた: やった!\r\n\r\n── 7. スコープと片付け ──\r\n  ブロックの中にいます\r\n  [drop] 内側のブロックの値 を片付けました\r\n  ブロックを抜けました\r\n\r\n  main の終わりに向かいます\r\n  [drop] main の値 を片付けました\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

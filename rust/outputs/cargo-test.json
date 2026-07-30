@@ -1,0 +1,15 @@
+{
+  "name": "cargo-test",
+  "title": "Windows PowerShell",
+  "note": "examples/17-testing の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\17-testing>",
+      "command": "cargo test",
+      "output": "\u001b[1m\u001b[92m    Finished\u001b[0m `test` profile [unoptimized + debuginfo] target(s) in 0.02s\r\n\u001b[1m\u001b[92m     Running\u001b[0m unittests src/lib.rs (C:\\rust\\target\\debug\\deps\\ch17_testing-436452698a6ed2e7)\r\n\r\nrunning 7 tests\r\ntest tests::ゼロ除算はエラーになる ... \u001b[32mok\u001b(B\u001b[m\r\ntest tests::税込み金額を計算できる ... \u001b[32mok\u001b(B\u001b[m\r\ntest tests::日本語も逆さにできる ... \u001b[32mok\u001b(B\u001b[m\r\ntest tests::結果型を返すテスト ... \u001b[32mok\u001b(B\u001b[m\r\ntest tests::重いテスト ... \u001b[33mignored, 時間がかかるので、明示的に指定したときだけ走らせる\u001b(B\u001b[m\r\ntest tests::端数は切り捨てる ... \u001b[32mok\u001b(B\u001b[m\r\ntest tests::負の数を渡すと落ちる - should panic ... \u001b[32mok\u001b(B\u001b[m\r\n\r\ntest result: \u001b[32mok\u001b(B\u001b[m. 6 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.11s\r\n\r\n\u001b[1m\u001b[92m     Running\u001b[0m tests/integration.rs (C:\\rust\\target\\debug\\deps\\integration-51cda8795e23e147)\r\n\r\nrunning 2 tests\r\ntest 公開されている関数だけで一連の処理ができる ... \u001b[32mok\u001b(B\u001b[m\r\ntest 税率がゼロなら金額は変わらない ... \u001b[32mok\u001b(B\u001b[m\r\n\r\ntest result: \u001b[32mok\u001b(B\u001b[m. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\u001b[1m\u001b[92m   Doc-tests\u001b[0m ch17_testing\r\n\r\nrunning 4 tests\r\ntest 17-testing/src/lib.rs - divide (line 45) ... \u001b[32mok\u001b(B\u001b[m\r\ntest 17-testing/src/lib.rs - reverse (line 31) ... \u001b[32mok\u001b(B\u001b[m\r\ntest 17-testing/src/lib.rs - with_tax (line 13) ... \u001b[32mok\u001b(B\u001b[m\r\ntest 17-testing/src/lib.rs - must_be_positive (line 60) - should panic ... \u001b[32mok\u001b(B\u001b[m\r\n\r\ntest result: \u001b[32mok\u001b(B\u001b[m. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s\r\n\r\nall doctests ran in 0.34s; merged doctests compilation took 0.25s\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

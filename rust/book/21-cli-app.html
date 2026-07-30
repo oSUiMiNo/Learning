@@ -1,0 +1,318 @@
+<p>
+ここまでの全部入りです。ToDo を管理する小さな CLI ツールを作り、
+単体で配布できる実行ファイルまで持っていきます。
+</p>
+
+<p>
+使うものは 3 つのクレートだけです。
+どれも Rust では定番で、この組み合わせを覚えておけば
+ほとんどのコマンドライン道具が書けます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>クレート</th><th>役目</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>clap</code></td><td>引数の解析とヘルプの生成</td><td><code>System.CommandLine</code></td></tr>
+    <tr><td><code>serde</code> ＋ <code>serde_json</code></td><td>JSON との相互変換</td><td><code>System.Text.Json</code></td></tr>
+    <tr><td><code>anyhow</code></td><td>エラー処理を楽にする</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>準備</h2>
+
+<div class="src" data-lang="bash" data-file="PowerShell">
+cargo new todo
+cd todo
+cargo add clap --features derive
+cargo add serde --features derive
+cargo add serde_json anyhow
+</div>
+
+<p>
+<code>--features derive</code> が要点です。
+これを付けると<strong>属性を書くだけで</strong>引数解析や JSON 変換が生成されます。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">clap は v3 と v4 で書き方が違う</span>
+  <p>
+    <code>clap</code> は v3 → v4 で derive の API が変わりました。
+    古い記事には次のような書き方が載っています。
+  </p>
+  <div class="src" data-lang="rust" data-file="clap v3 の書き方">
+#[derive(Parser)]
+#[clap(author, version, about)]     // clap(...) だった
+struct Cli {
+    #[clap(short, long)]
+    name: String,
+}
+  </div>
+  <p>
+    <strong>v4 では <code>#[command(...)]</code> と <code>#[arg(...)]</code> に分かれました。</strong>
+  </p>
+  <div class="src" data-lang="rust" data-file="clap v4（いまの書き方）">
+#[derive(Parser)]
+#[command(name = "todo", version, about = "小さな ToDo 管理ツール")]
+struct Cli {
+    #[arg(short, long)]
+    name: String,
+}
+  </div>
+  <p>
+    <code>clap(...)</code> と書かれていたらその記事は v3 以前のものです。
+  </p>
+</div>
+
+<h2>設計</h2>
+
+<p>
+サブコマンドを 4 つ持つ形にします。
+<code>git</code> や <code>dotnet</code> と同じ構造です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コマンド</th><th>やること</th></tr></thead>
+  <tbody>
+    <tr><td><code>todo add "牛乳を買う" --priority high</code></td><td>追加する</td></tr>
+    <tr><td><code>todo list [--all]</code></td><td>一覧を出す</td></tr>
+    <tr><td><code>todo done 2</code></td><td>終わった印を付ける</td></tr>
+    <tr><td><code>todo stats</code></td><td>集計を出す</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>コード全体</h2>
+
+<!--code: 21-cli-app/Cargo.toml-->
+
+<!--code: 21-cli-app/src/main.rs-->
+
+<h2>読みどころ</h2>
+
+<h3>enum でサブコマンドを表す</h3>
+
+<div class="src" data-lang="rust">
+#[derive(Subcommand)]
+enum Command {
+    Add { title: String, priority: Priority },
+    List { all: bool },
+    Done { id: u32 },
+    Stats,
+}
+</div>
+
+<p>
+第 10 章の列挙型がそのまま効いています。
+<strong>サブコマンドを足したら、<code>match</code> がコンパイルエラーになって気づけます。</strong>
+</p>
+
+<h3>derive で全部生成される</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>属性</th><th>生成されるもの</th></tr></thead>
+  <tbody>
+    <tr><td><code>#[derive(Parser)]</code></td><td>引数の解析、<code>--help</code>、<code>--version</code></td></tr>
+    <tr><td><code>#[derive(Subcommand)]</code></td><td>サブコマンドの振り分け</td></tr>
+    <tr><td><code>#[derive(ValueEnum)]</code></td><td><code>--priority high</code> のような列挙型の値</td></tr>
+    <tr><td><code>#[derive(Serialize, Deserialize)]</code></td><td>JSON との相互変換</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">System.Text.Json との比較</span>
+  <div class="compare">
+    <div class="src" data-lang="csharp" data-file="C#">
+var json = JsonSerializer.Serialize(store);
+var back = JsonSerializer.Deserialize&lt;Store&gt;(json);
+    </div>
+    <div class="src" data-lang="rust" data-file="Rust">
+let json = serde_json::to_string_pretty(&amp;store)?;
+let back: Store = serde_json::from_str(&amp;json)?;
+    </div>
+  </div>
+  <p>
+    C# はリフレクションで実行時に型を調べます。
+    <code>serde</code> は<strong>コンパイル時にコードを生成します</strong>。
+    そのぶん速く、そして<strong>変換できない型はコンパイルエラーになります</strong>。
+  </p>
+  <p>
+    <code>#[serde(rename_all = "lowercase")]</code> のような属性で細かく制御できる点も、
+    C# の <code>[JsonPropertyName]</code> とよく似ています。
+  </p>
+</div>
+
+<h3>? でエラーが素直に流れる</h3>
+
+<div class="src" data-lang="rust">
+fn main() -&gt; Result&lt;()&gt; {          // anyhow::Result
+    let cli = Cli::parse();
+    let mut store = Store::load(&amp;cli.file)?;
+    // ...
+    Ok(())
+}
+</div>
+
+<p>
+<code>main</code> が <code>Result</code> を返すので、
+<code>?</code> で投げたエラーはそのまま利用者に表示されて、終了コードが 1 になります。
+</p>
+
+<div class="note">
+  <span class="note-title">with_context で文脈を足す</span>
+  <div class="src" data-lang="rust">
+let text = fs::read_to_string(path)
+    .with_context(|| format!("{} を読めませんでした", path.display()))?;
+  </div>
+  <p>
+    これがあると、エラーが
+    「ファイルが見つかりません」だけでなく
+    「<strong>todo.json を読めませんでした</strong>: ファイルが見つかりません」
+    という形で出ます。利用者にとっての差は大きいです。
+  </p>
+</div>
+
+<h2>動かす</h2>
+
+<!--term: cli-app-demo | 作ったツールを実際に動かした結果。add で 3 件追加し、done で 1 件終わりにして、list と stats を出している。★ が優先度の高いもの。 -->
+
+<div class="note">
+  <span class="note-title">開発中は cargo run -- を使う</span>
+  <p>
+    <code>--</code> の後がプログラムへの引数になります。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+cargo run -- add "牛乳を買う" --priority high
+cargo run -- list
+cargo run -- --help
+  </div>
+  <p>
+    <code>--help</code> は書いていないのに動きます。
+    <code>clap</code> が <code>///</code> のコメントから自動生成しています。
+  </p>
+</div>
+
+<h2>リリースビルドと配布</h2>
+
+<!--term: cargo-release | cargo build --release の出力。プロファイルが dev から release に変わり、[optimized] と表示されている。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th><code>dev</code>（既定）</th><th><code>release</code></th></tr></thead>
+  <tbody>
+    <tr><td>最適化</td><td>しない</td><td>する</td></tr>
+    <tr><td>デバッグ情報</td><td>付く</td><td>付かない</td></tr>
+    <tr><td>ビルド時間</td><td>短い</td><td>長い</td></tr>
+    <tr><td>実行速度</td><td>遅い（10 倍以上違うことも）</td><td>速い</td></tr>
+    <tr><td>整数のあふれ</td><td><strong>panic する</strong></td><td>回り込む</td></tr>
+    <tr><td>出力先</td><td><code>target\debug\</code></td><td><code>target\release\</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">性能を測るときは必ず --release</span>
+  <p>
+    「Rust なのに遅い」という話の大半は、デバッグビルドで測っています。
+    最適化なしのビルドは<strong>本当に遅い</strong>ので、
+    比較するときは必ず <code>--release</code> を付けてください。
+  </p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">配布が圧倒的に楽</span>
+  <p>
+    できあがった <code>target\release\todo.exe</code> は<strong>それ 1 つで動きます</strong>。
+    .NET ランタイムのインストールも、自己完結型発行の設定も要りません。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td>実行に必要なもの</td><td>.NET ランタイム（または自己完結型で同梱）</td><td><strong>その exe だけ</strong></td></tr>
+      <tr><td>小さな CLI のサイズ</td><td>自己完結型で 60 MB 前後</td><td>数 MB</td></tr>
+      <tr><td>起動時間</td><td>JIT のウォームアップがある</td><td>即座</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="note">
+  <span class="note-title">サイズをさらに削る</span>
+  <p>
+    <code>Cargo.toml</code> に設定を足すと小さくなります。
+  </p>
+  <div class="src" data-lang="toml" data-file="Cargo.toml">
+[profile.release]
+opt-level = "z"       # サイズ優先で最適化
+lto = true            # リンク時最適化
+codegen-units = 1     # 並列度を落として最適化を効かせる
+strip = true          # 記号情報を削る
+panic = "abort"       # panic 時の巻き戻し処理を省く
+  </div>
+  <p>
+    <code>panic = "abort"</code> は panic をキャッチできなくなるので、
+    それで困らないツールだけに使ってください。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">他の OS 向けに作る</span>
+  <p>
+    Rust はクロスコンパイルができます。ターゲットを足すだけです。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+rustup target add x86_64-unknown-linux-gnu
+cargo build --release --target x86_64-unknown-linux-gnu
+  </div>
+  <p>
+    ただし<strong>リンカが必要なので、そのままでは通らないことが多い</strong>です。
+    実務では GitHub Actions で各 OS 上でビルドするか、
+    <code>cross</code> というツール（Docker を使う）を使います。
+  </p>
+  <p>
+    自分の PC 向けだけなら、この心配は要りません。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">配る方法</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>方法</th><th>コマンド</th></tr></thead>
+    <tbody>
+      <tr><td>exe を直接渡す</td><td><code>target\release\todo.exe</code> をコピー</td></tr>
+      <tr><td>crates.io に公開する</td><td><code>cargo publish</code></td></tr>
+      <tr><td>他の人が入れる</td><td><code>cargo install todo</code></td></tr>
+      <tr><td>GitHub から直接</td><td><code>cargo install --git &lt;URL&gt;</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/21-cli-app</code> で <code>cargo run -- --help</code> を実行して、自動生成されたヘルプを見てください。</li>
+    <li><code>cargo run -- add "テスト" --priority low</code> を実行し、<code>todo.json</code> が作られることを確認してください。</li>
+    <li><code>cargo run -- done 99</code> を実行して、エラーメッセージと終了コードを確認してください（PowerShell では <code>$LASTEXITCODE</code>）。</li>
+    <li><code>Command</code> に <code>Remove { id: u32 }</code> を足して、<strong><code>match</code> がエラーになる</strong>ことを確認してから実装してください。</li>
+    <li><code>cargo build --release</code> して、<code>target\debug\</code> と <code>target\release\</code> のファイルサイズを比べてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>CLI の定番は <code>clap</code>（引数）＋ <code>serde</code>（JSON）＋ <code>anyhow</code>（エラー）。</li>
+    <li>サブコマンドは <code>enum</code> で表す。足すと <code>match</code> がエラーになって気づける。</li>
+    <li><code>clap</code> は v4 で <code>#[command]</code> / <code>#[arg]</code> に変わった。<code>#[clap(...)]</code> は古い記事。</li>
+    <li><code>serde</code> はコンパイル時にコードを生成する。リフレクションではない。</li>
+    <li>性能を測るときは必ず <code>--release</code>。</li>
+    <li>できた exe は<strong>単体で動く</strong>。ランタイムの同梱が要らない。</li>
+  </ul>
+</div>

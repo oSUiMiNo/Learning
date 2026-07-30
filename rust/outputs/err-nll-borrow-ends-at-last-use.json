@@ -1,0 +1,15 @@
+{
+  "name": "err-nll-borrow-ends-at-last-use",
+  "title": "Windows PowerShell",
+  "note": "nll-borrow-ends-at-last-use.rs のコンパイルエラー",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc nll-borrow-ends-at-last-use.rs",
+      "output": ""
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第7章 借用と参照 — 貸し借りの規則 | Rust 入門</title>
+<meta name="description" content="所有権を渡さずに値を使わせるのが借用です。「書き込みできる参照は同時に 1 つだけ」という一行が、データ競合を根こそぎ防ぎます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li class="is-current"><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 7 章<span class="dot">·</span>読了目安 18 分</p>
+        <h1>第7章 借用と参照 — 貸し借りの規則</h1>
+        <p class="lede">所有権を渡さずに値を使わせるのが借用です。「書き込みできる参照は同時に 1 つだけ」という一行が、データ競合を根こそぎ防ぎます。</p>
+      </header>
+      <div class="prose">
+<p>
+前の章で「関数に渡すと所有権も渡ってしまう」問題が出ました。
+その解決策が<strong>借用</strong>です。所有権を渡さずに、値を使わせます。
+</p>
+
+<p>
+規則はたった 2 行です。この 2 行が、データ競合と
+「反復中にコレクションを変更した」系の不具合を根こそぎ防ぎます。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 320" role="img" aria-label="借用の規則。読む参照は同時に何本でも作れるが、書く参照は 1 本だけで、読む参照と同席できない。">
+  <rect x="1" y="1" width="718" height="318" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="32" class="d-head-accent">どちらか一方しか成立しない。両方同時は不可</text>
+
+  <!-- 左: 読む参照は何本でも -->
+  <rect x="28" y="48" width="322" height="180" rx="10" class="d-tip"/>
+  <text x="189" y="74" text-anchor="middle" class="d-title">読むだけなら何本でも</text>
+  <text x="189" y="94" text-anchor="middle" class="d-code">&amp;T</text>
+
+  <rect x="146" y="176" width="86" height="34" rx="8" class="d-box"/>
+  <text x="189" y="198" text-anchor="middle" class="d-code">data</text>
+
+  <rect x="48" y="110" width="74" height="30" rx="15" class="d-box"/>
+  <text x="85" y="130" text-anchor="middle" class="d-code">&amp;data</text>
+  <rect x="140" y="110" width="74" height="30" rx="15" class="d-box"/>
+  <text x="177" y="130" text-anchor="middle" class="d-code">&amp;data</text>
+  <rect x="232" y="110" width="74" height="30" rx="15" class="d-box"/>
+  <text x="269" y="130" text-anchor="middle" class="d-code">&amp;data</text>
+
+  <path d="M85 140 L170 176" class="d-line"/>
+  <path d="M177 140 L184 176" class="d-line"/>
+  <path d="M269 140 L208 176" class="d-line"/>
+  <text x="189" y="162" text-anchor="middle" class="d-head-tip">同時に成立する</text>
+
+  <!-- 右: 書く参照は 1 本だけ -->
+  <rect x="370" y="48" width="322" height="180" rx="10" class="d-accent"/>
+  <text x="531" y="74" text-anchor="middle" class="d-title">書くなら 1 本だけ</text>
+  <text x="531" y="94" text-anchor="middle" class="d-code">&amp;mut T</text>
+
+  <rect x="488" y="176" width="86" height="34" rx="8" class="d-box"/>
+  <text x="531" y="198" text-anchor="middle" class="d-code">data</text>
+
+  <rect x="404" y="110" width="88" height="30" rx="15" class="d-fill-accent"/>
+  <text x="448" y="130" text-anchor="middle" class="d-code" fill="#fff">&amp;mut data</text>
+
+  <rect x="512" y="110" width="88" height="30" rx="15" class="d-dead"/>
+  <text x="556" y="130" text-anchor="middle" class="d-dead-text">&amp;mut data</text>
+  <path d="M518 114 L594 136" class="d-strike"/>
+  <path d="M594 114 L518 136" class="d-strike"/>
+
+  <rect x="612" y="110" width="62" height="30" rx="15" class="d-dead"/>
+  <text x="643" y="130" text-anchor="middle" class="d-dead-text">&amp;data</text>
+  <path d="M618 114 L668 136" class="d-strike"/>
+  <path d="M668 114 L618 136" class="d-strike"/>
+
+  <path d="M448 140 L512 176" class="d-flow"/>
+  <text x="531" y="162" text-anchor="middle" class="d-head-warn">2 本目も、読む参照との同席も不可</text>
+
+  <!-- 下部 -->
+  <rect x="28" y="244" width="664" height="60" rx="10" class="d-dash"/>
+  <text x="48" y="268" class="d-head-accent">この 1 行だけ覚えれば足りる</text>
+  <text x="48" y="290" class="d-mute">「書き手がいるときは、書き手ひとりきり」。単一スレッドでも同じ規則が働く。</text>
+</svg>
+<figcaption>借用の規則。読む参照 &T は同時に何本でも作れるが、書く参照 &mut T は同時に 1 本だけで、しかも読む参照と同席できない。「書き手がいるときは、書き手ひとりきり」と覚えればよい。</figcaption></figure>
+
+<h2 id="読む借用">読む借用</h2>
+
+<p>
+<code>&amp;</code> を付けると「借りる」になります。所有権は動きません。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">total</span><span class="p">(</span><span class="n">numbers</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">i32</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">numbers</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">sum</span><span class="p">()</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">numbers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">total</span><span class="p">(</span><span class="o">&amp;</span><span class="n">numbers</span><span class="p">));</span><span class="w">   </span><span class="c1">// 貸すだけ</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{numbers:?}&quot;</span><span class="p">);</span><span class="w">           </span><span class="c1">// だから後でも使える</span></span></code></pre></figure>
+
+<div class="note">
+  <span class="note-title">引数は &amp;[T] や &amp;str で受けるのが基本</span>
+  <p>
+    読むだけの引数は、<code>&amp;Vec&lt;i32&gt;</code> より <code>&amp;[i32]</code>、
+    <code>&amp;String</code> より <code>&amp;str</code> で受けるのが定石です。
+    そのほうが渡せるものが増えるからです。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>受け方</th><th>渡せるもの</th></tr></thead>
+    <tbody>
+      <tr><td><code>&amp;Vec&lt;i32&gt;</code></td><td><code>Vec</code> だけ</td></tr>
+      <tr><td><strong><code>&amp;[i32]</code></strong></td><td><code>Vec</code>、配列、スライス</td></tr>
+      <tr><td><code>&amp;String</code></td><td><code>String</code> だけ</td></tr>
+      <tr><td><strong><code>&amp;str</code></strong></td><td><code>String</code>、文字列リテラル</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>&amp;Vec</code> で受けていると clippy が
+    「<code>&amp;[T]</code> にしなさい」と教えてくれます。
+  </p>
+</div>
+
+<h2 id="書く借用">書く借用</h2>
+
+<p>
+書き換えたいときは <code>&amp;mut</code> です。
+<strong>貸す側にも <code>mut</code> が必要</strong>な点に注意してください。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">double_all</span><span class="p">(</span><span class="n">numbers</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="p">[</span><span class="kt">i32</span><span class="p">])</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">numbers</span><span class="p">.</span><span class="n">iter_mut</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="o">*</span><span class="n">n</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w">              </span><span class="c1">// * で中身に触る</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">scores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">];</span><span class="w">   </span><span class="c1">// mut が必要</span></span><span class="cl"><span class="n">double_all</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">scores</span><span class="p">);</span></span></code></pre></figure>
+
+<p>
+<code>mut</code> を付け忘れると、こうなります。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0596-borrow-immutable-as-mutable.rs</span>
+<span class="a-b a-91">error[E0596]</span><span class="a-b">: cannot borrow `numbers` as mutable, as it is not declared as mutable</span>
+  <span class="a-b a-94">--&gt; </span>e0596-borrow-immutable-as-mutable.rs:11:5
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">11</span> <span class="a-b a-94">|</span>     numbers.push(4); // push は &amp;mut self を要求する
+   <span class="a-b a-94">|</span>     <span class="a-b a-91">^^^^^^^</span> <span class="a-b a-91">cannot borrow as mutable</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-96">help</span>: consider changing this to be mutable
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 9</span> <span class="a-b a-94">| </span>    let <span class="a-92">mut </span>numbers = vec![1, 2, 3]; // mut が付いていない
+   <span class="a-b a-94">|</span>         <span class="a-92">+++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0596`.</span></code></pre></div><figcaption>mut でない変数に対して push を呼んだ場合。「push は &mut self を要求する」ことと、「変数を mut にせよ」という提案が出ている。</figcaption></figure>
+
+<div class="note pitfall">
+  <span class="note-title">「メソッドを呼んだだけなのに mut がないと言われる」</span>
+  <p>
+    <code>push</code>、<code>sort</code>、<code>insert</code> のように
+    中身を変えるメソッドは <code>&amp;mut self</code> を要求します。
+    つまり<strong>メソッドを呼ぶだけでも書く借用が発生します</strong>。
+  </p>
+  <p>
+    エラーに <code>cannot borrow ... as mutable</code> と出たら、
+    変数の宣言に <code>mut</code> を足すだけで直ります。
+  </p>
+</div>
+
+<h2 id="2-つの規則を破ってみる">2 つの規則を破ってみる</h2>
+
+<p>
+規則の 1 つ目、「<code>&amp;mut</code> は 1 本だけ」を破るとこうなります。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0499-two-mutable-borrows.rs</span>
+<span class="a-b a-91">error[E0499]</span><span class="a-b">: cannot borrow `count` as mutable more than once at a time</span>
+  <span class="a-b a-94">--&gt; </span>e0499-two-mutable-borrows.rs:13:13
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">12</span> <span class="a-b a-94">|</span>     let a = &amp;mut count;
+   <span class="a-b a-94">|</span>             <span class="a-b a-94">----------</span> <span class="a-b a-94">first mutable borrow occurs here</span>
+<span class="a-b a-94">13</span> <span class="a-b a-94">|</span>     let b = &amp;mut count; // 2 本目は作れない
+   <span class="a-b a-94">|</span>             <span class="a-b a-91">^^^^^^^^^^</span> <span class="a-b a-91">second mutable borrow occurs here</span>
+<span class="a-b a-94">14</span> <span class="a-b a-94">|</span>
+<span class="a-b a-94">15</span> <span class="a-b a-94">|</span>     *a += 1;
+   <span class="a-b a-94">|</span>     <span class="a-b a-94">-------</span> <span class="a-b a-94">first borrow later used here</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0499`.</span></code></pre></div><figcaption>&mut を 2 本作った場合。「1 度に 2 回以上、可変として借用できない」とはっきり言われる。</figcaption></figure>
+
+<p>
+2 つ目、「読む借用と書く借用は同席できない」を破るとこうです。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0502-mutable-and-immutable.rs</span>
+<span class="a-b a-91">error[E0502]</span><span class="a-b">: cannot borrow `numbers` as mutable because it is also borrowed as immutable</span>
+  <span class="a-b a-94">--&gt; </span>e0502-mutable-and-immutable.rs:12:5
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">11</span> <span class="a-b a-94">|</span>     let first = &amp;numbers[0]; // 読む借用が始まる
+   <span class="a-b a-94">|</span>                  <span class="a-b a-94">-------</span> <span class="a-b a-94">immutable borrow occurs here</span>
+<span class="a-b a-94">12</span> <span class="a-b a-94">|</span>     numbers.push(4); // 中で &amp;mut が必要になる → ぶつかる
+   <span class="a-b a-94">|</span>     <span class="a-b a-91">^^^^^^^^^^^^^^^</span> <span class="a-b a-91">mutable borrow occurs here</span>
+<span class="a-b a-94">13</span> <span class="a-b a-94">|</span>
+<span class="a-b a-94">14</span> <span class="a-b a-94">|</span>     println!(&quot;最初の要素は {first}&quot;);
+   <span class="a-b a-94">|</span>                             <span class="a-b a-94">-----</span> <span class="a-b a-94">immutable borrow later used here</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0502`.</span></code></pre></div><figcaption>読む借用が生きている間に push を呼んだ場合。push が内部で &mut を必要とするため、先に作った &numbers[0] とぶつかる。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">これは C# の「反復中の変更」と同じ問題</span>
+  <p>
+    C# で次のように書くと、実行時に
+    <code>InvalidOperationException</code> が飛びます。
+  </p>
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">foreach</span><span class="w"> </span><span class="p">(</span><span class="kt">var</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">list</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">list</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">item</span><span class="p">);</span><span class="w">    </span><span class="c1">// 実行時に例外</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <p>
+    Rust の E0502 は<strong>まったく同じ問題を、コンパイル時に止めたもの</strong>です。
+    C# は「列挙中に変更されたかどうか」を実行時のバージョン番号で見張っていますが、
+    Rust は借用の規則で構造的に防いでいます。
+  </p>
+  <p>
+    つまりこのエラーは、Rust がうるさいのではなく
+    <strong>C# なら本番で落ちていた不具合を、手元で見つけてくれた</strong>ということです。
+  </p>
+</div>
+
+<h2 id="借用はいつ終わるのか">借用はいつ終わるのか</h2>
+
+<p>
+ここが分かると、借用検査が急に扱いやすくなります。
+<strong>借用はスコープの終わりではなく、「最後に使った場所」で終わります。</strong>
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 260" role="img" aria-label="借用の寿命が「最後に使った行」で終わることを示す図。古い Rust ではスコープの終わりまで続いたため、同じコードがエラーになっていた。">
+  <rect x="1" y="1" width="718" height="258" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">同じコードが、昔はエラーで、いまは通る</text>
+
+  <!-- コード -->
+  <g class="d-code">
+    <text x="40" y="62">1  let mut v = vec![1, 2, 3];</text>
+    <text x="40" y="86">2  let first = &amp;v[0];</text>
+    <text x="40" y="110">3  println!("{first}");</text>
+    <text x="40" y="134">4  v.push(4);</text>
+    <text x="40" y="158">5  println!("{v:?}");</text>
+  </g>
+
+  <!-- 昔の借用範囲 -->
+  <rect x="330" y="72" width="160" height="98" rx="7" class="d-warn"/>
+  <text x="410" y="94" text-anchor="middle" class="d-head-warn">2015 年ごろ</text>
+  <text x="410" y="114" text-anchor="middle" class="d-mute">借用は 2 行目から</text>
+  <text x="410" y="132" text-anchor="middle" class="d-mute">スコープの終わりまで</text>
+  <text x="410" y="156" text-anchor="middle" class="d-head-warn">4 行目で E0502</text>
+
+  <!-- いまの借用範囲 -->
+  <rect x="518" y="72" width="174" height="98" rx="7" class="d-tip"/>
+  <text x="605" y="94" text-anchor="middle" class="d-head-tip">いま（NLL）</text>
+  <text x="605" y="114" text-anchor="middle" class="d-mute">借用は 2 行目から</text>
+  <text x="605" y="132" text-anchor="middle" class="d-mute">3 行目（最後の使用）まで</text>
+  <text x="605" y="156" text-anchor="middle" class="d-head-tip">4 行目は通る</text>
+
+  <!-- 帯 -->
+  <rect x="300" y="76" width="6" height="90" rx="3" class="d-warn"/>
+  <rect x="500" y="76" width="6" height="42" rx="3" class="d-tip"/>
+
+  <rect x="28" y="188" width="664" height="58" rx="10" class="d-dash"/>
+  <text x="48" y="210" class="d-head-warn">古い記事を読むときの注意</text>
+  <text x="48" y="230" class="d-mute">「Rust の借用検査は厳しすぎる」という記述は、この改良より前のものかもしれません。まず実際に試してみてください。</text>
+</svg>
+<figcaption>同じコードが、2015 年ごろの Rust ではエラーになり、いまは通る。借用の寿命が「宣言からスコープの終わりまで」から「宣言から最後の使用まで」に改良されたため（非語彙的ライフタイム / NLL）。</figcaption></figure>
+
+<p>
+これは実際に通ります。<strong>通ることを確かめた例</strong>として置いてあります。
+</p>
+
+<figure class="code-block" data-lang="rust" data-src="errors/nll-borrow-ends-at-last-use.rs"><div class="code-head"><span class="code-file">nll-borrow-ends-at-last-use.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! expect: ok</span></span><span class="cl"><span class="sd">//! title: 借用はスコープの終わりではなく「最後に使った所」で終わる</span></span><span class="cl"><span class="sd">//! chapter: 07-borrowing</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! これは通る例。あえて置いてある。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! 2018 年より前の Rust では、借用は変数のスコープが終わるまで続くと</span></span><span class="cl"><span class="sd">//! みなされていたため、これはエラーだった。いまは「最後に使った行」で</span></span><span class="cl"><span class="sd">//! 借用が終わる（非語彙的ライフタイム / NLL）ので通る。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! 古い記事だけを読んでいると「Rust の借用検査は厳しすぎる」という</span></span><span class="cl"><span class="sd">//! 印象が残るが、実物はここまで賢くなっている。</span></span><span class="cl"><span class="sd">//! この教材はその差を、実際にコンパイルして確かめている。</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">numbers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;最初の要素は {first}&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// ここで first の用は済んでいる</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="n">numbers</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span><span class="w"> </span><span class="c1">// だから &amp;mut を作れる</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{numbers:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+この教材では、こうした「通る例」もコンパイルして確認しています。
+上のファイルの先頭に <code>expect: ok</code> と書いてあるのがその印です。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">古い記事の「Rust は厳しすぎる」を信じないこと</span>
+  <p>
+    2018 年より前に書かれた記事は、この改良より前のものです。
+    「借用検査が厳しくて書けない」「一度変数に入れないと通らない」といった記述は、
+    <strong>いまは当てはまらないことがあります</strong>。
+  </p>
+  <p>
+    対処法は単純です。<strong>まず素直に書いて、コンパイルしてみる。</strong>
+    通ればそれでよいのです。
+  </p>
+</div>
+
+<h2 id="スライス--借用の応用">スライス — 借用の応用</h2>
+
+<p>
+スライスは「一部分を借りる」書き方です。コピーは起きません。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 230" role="img" aria-label="スライスは元のデータを指す窓であり、コピーを作らないことを示す図。">
+  <rect x="1" y="1" width="718" height="228" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">スライスは複製ではなく「窓」</text>
+  <text x="28" y="50" class="d-code">let all = vec![10, 20, 30, 40, 50];   let window = &amp;all[1..4];</text>
+
+  <!-- 元のデータ -->
+  <text x="28" y="82" class="d-mute">元のデータ（ヒープ上に 1 つだけある）</text>
+  <g>
+    <rect x="28" y="92" width="120" height="44" rx="6" class="d-box"/><text x="88" y="120" text-anchor="middle" class="d-code">10</text>
+    <rect x="152" y="92" width="120" height="44" rx="6" class="d-tip"/><text x="212" y="120" text-anchor="middle" class="d-code">20</text>
+    <rect x="276" y="92" width="120" height="44" rx="6" class="d-tip"/><text x="336" y="120" text-anchor="middle" class="d-code">30</text>
+    <rect x="400" y="92" width="120" height="44" rx="6" class="d-tip"/><text x="460" y="120" text-anchor="middle" class="d-code">40</text>
+    <rect x="524" y="92" width="120" height="44" rx="6" class="d-box"/><text x="584" y="120" text-anchor="middle" class="d-code">50</text>
+  </g>
+  <text x="88" y="152" text-anchor="middle" class="d-mute">[0]</text>
+  <text x="212" y="152" text-anchor="middle" class="d-mute">[1]</text>
+  <text x="336" y="152" text-anchor="middle" class="d-mute">[2]</text>
+  <text x="460" y="152" text-anchor="middle" class="d-mute">[3]</text>
+  <text x="584" y="152" text-anchor="middle" class="d-mute">[4]</text>
+
+  <!-- 窓 -->
+  <rect x="146" y="84" width="380" height="60" rx="8" class="d-flow-dash" fill="none"/>
+  <text x="336" y="176" text-anchor="middle" class="d-mark">window = &amp;all[1..4]  →  ptr は [1] を指し、len = 3</text>
+
+  <rect x="28" y="190" width="664" height="30" rx="8" class="d-dash"/>
+  <text x="48" y="210" class="d-mute">要素は 1 つもコピーされていない。だから元の Vec が生きている間しか窓は使えない（借用の規則がそのまま効く）。</text>
+</svg>
+<figcaption>スライスは元のデータを指す「窓」。ptr と len だけを持ち、要素は 1 つもコピーしない。だから元のデータが生きている間しか使えない。</figcaption></figure>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">all</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="mi">50</span><span class="p">];</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">window</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">all</span><span class="p">[</span><span class="mi">1</span><span class="o">..</span><span class="mi">4</span><span class="p">];</span><span class="w">       </span><span class="c1">// [20, 30, 40] を指す窓</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{window:?}&quot;</span><span class="p">);</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">Span&lt;T&gt; / ReadOnlySpan&lt;T&gt; に相当</span>
+  <p>
+    C# の <code>Span&lt;T&gt;</code> とほぼ同じ考え方です。
+    どちらも「コピーせずに一部を見る」ためのもので、
+    元のデータより長生きできないという制約も同じです。
+  </p>
+  <p>
+    違うのは、C# では <code>Span</code> を使うのが最適化のための選択なのに対し、
+    <strong>Rust ではスライスが標準的な受け渡し方法</strong>だという点です。
+  </p>
+</div>
+
+<h2 id="あと-2-つのよく出るエラー">あと 2 つのよく出るエラー</h2>
+
+<p>
+借用まわりで残り 2 つ、よく踏むものがあります。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0505-move-while-borrowed.rs</span>
+<span class="a-b a-91">error[E0505]</span><span class="a-b">: cannot move out of `text` because it is borrowed</span>
+  <span class="a-b a-94">--&gt; </span>e0505-move-while-borrowed.rs:12:17
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 9</span> <span class="a-b a-94">|</span>     let text = String::from(&quot;貸出中&quot;);
+   <span class="a-b a-94">|</span>         <span class="a-b a-94">----</span> <span class="a-b a-94">binding `text` declared here</span>
+<span class="a-b a-94">10</span> <span class="a-b a-94">|</span>
+<span class="a-b a-94">11</span> <span class="a-b a-94">|</span>     let borrowed = &amp;text; // text を借りている
+   <span class="a-b a-94">|</span>                    <span class="a-b a-94">-----</span> <span class="a-b a-94">borrow of `text` occurs here</span>
+<span class="a-b a-94">12</span> <span class="a-b a-94">|</span>     let moved = text; // 借用が生きているのに引っ越そうとしている
+   <span class="a-b a-94">|</span>                 <span class="a-b a-91">^^^^</span> <span class="a-b a-91">move out of `text` occurs here</span>
+<span class="a-b a-94">13</span> <span class="a-b a-94">|</span>
+<span class="a-b a-94">14</span> <span class="a-b a-94">|</span>     println!(&quot;{borrowed} / {moved}&quot;);
+   <span class="a-b a-94">|</span>                <span class="a-b a-94">--------</span> <span class="a-b a-94">borrow later used here</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-96">help</span>: consider cloning the value if the performance cost is acceptable
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">11</span> <span class="a-b a-94">| </span>    let borrowed = &amp;text<span class="a-92">.clone()</span>; // text を借りている
+   <span class="a-b a-94">|</span>                         <span class="a-92">++++++++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0505`.</span></code></pre></div><figcaption>借用が生きている間に、元の値を move しようとした場合。move してしまうと借用の指す先が無くなるため止められる。</figcaption></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0507-cannot-move-out-of-borrow.rs</span>
+<span class="a-b a-91">error[E0507]</span><span class="a-b">: cannot move out of `config.name` which is behind a shared reference</span>
+  <span class="a-b a-94">--&gt; </span>e0507-cannot-move-out-of-borrow.rs:13:5
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">13</span> <span class="a-b a-94">|</span>     config.name // 借用越しに String を持ち出そうとしている
+   <span class="a-b a-94">|</span>     <span class="a-b a-91">^^^^^^^^^^^</span> <span class="a-b a-91">move occurs because `config.name` has type `String`, which does not implement the `Copy` trait</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-96">help</span>: consider cloning the value if the performance cost is acceptable
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">13</span> <span class="a-b a-94">| </span>    config.name<span class="a-92">.clone()</span> // 借用越しに String を持ち出そうとしている
+   <span class="a-b a-94">|</span>                <span class="a-92">++++++++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0507`.</span></code></pre></div><figcaption>借りているものの中身を持ち出そうとした場合。「借用の後ろにある値を move できない」と言われ、clone するか to_owned するかの提案が出る。</figcaption></figure>
+
+<div class="note">
+  <span class="note-title">E0507 の直し方</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やり方</th><th>書き方</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td>複製する</td><td><code>config.name.clone()</code></td><td>新しく確保する</td></tr>
+      <tr><td>参照を返す</td><td><code>fn take_name(c: &amp;Config) -&gt; &amp;str { &amp;c.name }</code></td><td>借用のまま返す。ふつうはこれ</td></tr>
+      <tr><td>所有権をもらう</td><td><code>fn take_name(c: Config) -&gt; String { c.name }</code></td><td>呼び出し側が手放してよいなら</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2 id="まとめて動かしてみる">まとめて動かしてみる</h2>
+
+<figure class="code-block" data-lang="rust" data-src="07-borrowing/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! 借用（参照）のふるまいを確かめるサンプル。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! 規則はふたつだけ。</span></span><span class="cl"><span class="sd">//!   ・読む参照 &amp;T は、同時に何本でも作れる</span></span><span class="cl"><span class="sd">//!   ・書く参照 &amp;mut T は、同時に 1 本だけ。しかも &amp;T と同席できない</span></span><span class="cl"><span class="sd">//! この 2 行が、データ競合と「イテレート中の変更」を根こそぎ防いでいる。</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 読むだけなので &amp;Vec ではなく &amp;[i32] で受け取る。</span></span><span class="cl"><span class="sd">/// スライスで受け取ると、Vec でも配列でも渡せて使い回しが利く。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">total</span><span class="p">(</span><span class="n">numbers</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[</span><span class="kt">i32</span><span class="p">])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">numbers</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">sum</span><span class="p">()</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 中身を書き換えるので &amp;mut が必要。</span></span><span class="cl"><span class="sd">/// ただし要素を差し替えるだけなら &amp;mut [i32] で足りる。</span></span><span class="cl"><span class="sd">/// 個数を変えないのに &amp;mut Vec&lt;i32&gt; を要求すると、</span></span><span class="cl"><span class="sd">/// 配列を渡せなくなるだけ損なので、clippy にも注意される。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">double_all</span><span class="p">(</span><span class="n">numbers</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="p">[</span><span class="kt">i32</span><span class="p">])</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">numbers</span><span class="p">.</span><span class="n">iter_mut</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="o">*</span><span class="n">n</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 個数そのものを変えるなら、スライスでは足りず &amp;mut Vec&lt;i32&gt; が要る。</span></span><span class="cl"><span class="sd">/// push は Vec のメソッドで、長さを変えられるのは Vec だけだから。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">append_total</span><span class="p">(</span><span class="n">numbers</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">total</span><span class="p">(</span><span class="n">numbers</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">numbers</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">sum</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 読む借用は何本でも ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">numbers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">numbers</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">numbers</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  a の合計 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">total</span><span class="p">(</span><span class="n">a</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  b の要素数 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">len</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  元の numbers も使える = {numbers:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 書く借用は 1 本だけ ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">scores</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="n">double_all</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">scores</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  倍にした = {scores:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">append_total</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">scores</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  合計を末尾に足した = {scores:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ← 個数を変える操作は &amp;mut [i32] ではできず、&amp;mut Vec&lt;i32&gt; が必要&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// &amp;mut を 2 本作ろうとすると E0499。</span></span><span class="cl"><span class="w">    </span><span class="c1">// examples/errors/e0499-two-mutable-borrows.rs で確かめている。</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. 借用は「最後に使った所」で終わる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">queue</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  先頭は {first}&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// first の用はここで済む</span></span><span class="cl"><span class="w">    </span><span class="n">queue</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span><span class="w"> </span><span class="c1">// だからここで &amp;mut を作れる</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  追加後 = {queue:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. スライスは「窓」であって複製ではない ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Rust はたのしい&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">head</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="mi">4</span><span class="p">];</span><span class="w"> </span><span class="c1">// バイト単位で 0〜3。&quot;Rust&quot; の 4 バイト</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  元の文字列 = {text}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  切り出した窓 = {head}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  窓は元データを指しているだけなので、コピーは起きていない&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. &amp;mut 越しに書き換える ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">counter</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="o">*</span><span class="n">handle</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="c1">// * で中身に触る</span></span><span class="cl"><span class="w">        </span><span class="o">*</span><span class="n">handle</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="c1">// ここで handle の借用が終わる</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  counter = {counter}&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\07-borrowing&gt;</span> cargo run --quiet</span>
+── 1. 読む借用は何本でも ──
+  a の合計 = 15
+  b の要素数 = 5
+  元の numbers も使える = [1, 2, 3, 4, 5]
+
+── 2. 書く借用は 1 本だけ ──
+  倍にした = [20, 40, 60]
+  合計を末尾に足した = [20, 40, 60, 120]
+  ← 個数を変える操作は &amp;mut [i32] ではできず、&amp;mut Vec&lt;i32&gt; が必要
+
+── 3. 借用は「最後に使った所」で終わる ──
+  先頭は 1
+  追加後 = [1, 2, 3, 4]
+
+── 4. スライスは「窓」であって複製ではない ──
+  元の文字列 = Rust はたのしい
+  切り出した窓 = Rust
+  窓は元データを指しているだけなので、コピーは起きていない
+
+── 5. &amp;mut 越しに書き換える ──
+  counter = 2</code></pre></div><figcaption>実行結果。3 番目の項目で「借用が最後の使用で終わる」ことを、実際に push が通る形で確かめている。</figcaption></figure>
+
+<div class="note deep">
+  <span class="note-title">借用検査で行き詰まったときの手順</span>
+  <p>
+    慣れるまでは必ず詰まります。次の順に試してください。
+  </p>
+  <ol>
+    <li><strong>借用の範囲を狭める。</strong>借りた値を早く使い切る、あるいは <code>{}</code> で囲む。</li>
+    <li><strong>値を取り出してしまう。</strong><code>let last = *v.last().unwrap();</code> のように <code>*</code> で中身をコピーすれば借用は終わる。</li>
+    <li><strong><code>clone()</code> する。</strong>遅くなるが動く。まず動かすことが大事。</li>
+    <li><strong>設計を変える。</strong>関数を分ける、所有権を渡す形にする、第 18 章の <code>Rc</code>/<code>RefCell</code> を使う。</li>
+  </ol>
+  <p>
+    <strong>1 から順に試して、通ったところで止めてよい</strong>のです。
+    最初から最適な形を狙わなくて構いません。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/07-borrowing</code> を動かしてください。</li>
+    <li><code>let first = &amp;numbers[0];</code> を書いた直後に <code>numbers.push(4);</code> を置き、<strong>その後で</strong> <code>first</code> を使うとエラーになることを確認してください。使う順番を入れ替えると通ります。</li>
+    <li><code>double_all</code> の引数を <code>&amp;mut [i32]</code> から <code>&amp;[i32]</code> に変えて、どんなエラーになるか見てください。</li>
+    <li><code>&amp;all[1..4]</code> の範囲を <code>&amp;all[1..9]</code> にして実行してください。<strong>これはコンパイルは通り、実行時に panic します。</strong>範囲の検査は実行時であることが分かります。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>&amp;T</code> は読む借用、何本でも作れる。<code>&amp;mut T</code> は書く借用、<strong>同時に 1 本だけ</strong>。</li>
+    <li>読む借用と書く借用は<strong>同席できない</strong>。C# の「反復中の変更」をコンパイル時に止めたもの。</li>
+    <li>借用はスコープの終わりではなく<strong>最後に使った場所</strong>で終わる（NLL）。</li>
+    <li>引数は <code>&amp;[T]</code> / <code>&amp;str</code> で受けるのが定石。</li>
+    <li>行き詰まったら「範囲を狭める → 値を取り出す → clone する → 設計を変える」の順に試す。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../06-ownership/"><span class="pager-dir">← 前の章</span><span class="pager-title">★ 所有権</span></a>
+<a class="pager-link pager-next" href="../08-strings/"><span class="pager-dir">次の章 →</span><span class="pager-title">文字列</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<svg viewBox="0 0 720 340" role="img" aria-label="同じ文字列が UTF-8 と UTF-16 で何単位になるかの比較。C# の Length と Rust の len や chars().count() が食い違う理由を示す。">
+  <rect x="1" y="1" width="718" height="338" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="32" class="d-head-warn">同じ文字列なのに「長さ」が 3 通りある</text>
+
+  <!-- ヘッダ行 -->
+  <text x="40" y="66" class="d-mute">文字</text>
+  <text x="150" y="66" class="d-mute">見た目</text>
+  <text x="272" y="66" class="d-head-cs">C# の Length</text>
+  <text x="272" y="82" class="d-mute">UTF-16 の単位数</text>
+  <text x="452" y="66" class="d-head-accent">Rust の len()</text>
+  <text x="452" y="82" class="d-mute">UTF-8 のバイト数</text>
+  <text x="600" y="66" class="d-head-tip">chars().count()</text>
+  <text x="600" y="82" class="d-mute">文字数</text>
+  <path d="M28 92 L692 92" class="d-line"/>
+
+  <!-- A -->
+  <text x="40" y="122" class="d-code">'A'</text>
+  <text x="150" y="122" class="d-code">A</text>
+  <rect x="272" y="106" width="34" height="22" rx="5" class="d-cs"/><text x="289" y="122" text-anchor="middle" class="d-code">1</text>
+  <rect x="452" y="106" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="122" text-anchor="middle" class="d-code">1</text>
+  <rect x="600" y="106" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="122" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="122" class="d-mute">一致</text>
+
+  <!-- あ -->
+  <text x="40" y="160" class="d-code">'あ'</text>
+  <text x="150" y="160" class="d-code">あ</text>
+  <rect x="272" y="144" width="34" height="22" rx="5" class="d-cs"/><text x="289" y="160" text-anchor="middle" class="d-code">1</text>
+  <rect x="452" y="144" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="160" text-anchor="middle" class="d-code">3</text>
+  <rect x="600" y="144" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="160" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="160" class="d-head-warn">ずれる</text>
+
+  <!-- 漢 -->
+  <text x="40" y="198" class="d-code">'漢'</text>
+  <text x="150" y="198" class="d-code">漢</text>
+  <rect x="272" y="182" width="34" height="22" rx="5" class="d-cs"/><text x="289" y="198" text-anchor="middle" class="d-code">1</text>
+  <rect x="452" y="182" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="198" text-anchor="middle" class="d-code">3</text>
+  <rect x="600" y="182" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="198" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="198" class="d-head-warn">ずれる</text>
+
+  <!-- 蟹 -->
+  <text x="40" y="236" class="d-code">'🦀'</text>
+  <text x="150" y="236" class="d-code">🦀</text>
+  <rect x="272" y="220" width="34" height="22" rx="5" class="d-warn"/><text x="289" y="236" text-anchor="middle" class="d-code">2</text>
+  <rect x="452" y="220" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="236" text-anchor="middle" class="d-code">4</text>
+  <rect x="600" y="220" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="236" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="236" class="d-head-warn">全部違う</text>
+
+  <path d="M28 252 L692 252" class="d-line"/>
+
+  <!-- 注意 -->
+  <rect x="28" y="266" width="664" height="58" rx="10" class="d-warn"/>
+  <text x="48" y="288" class="d-head-warn">⚠ C# の Length は「文字数」ではない</text>
+  <text x="48" y="310" class="d-mute">絵文字や一部の漢字はサロゲートペアで 2 に数えられる。「文字数」が欲しいなら Rust では chars().count()。</text>
+</svg>

@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第12章 コレクション — Vec と HashMap | Rust 入門</title>
+<meta name="description" content="`List&lt;T&gt;` は `Vec&lt;T&gt;`、`Dictionary&lt;K,V&gt;` は `HashMap&lt;K,V&gt;`。対応は素直ですが、借用の規則がここで初めて実戦になります。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li class="is-current"><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 12 章<span class="dot">·</span>読了目安 13 分</p>
+        <h1>第12章 コレクション — Vec と HashMap</h1>
+        <p class="lede">`List&lt;T&gt;` は `Vec&lt;T&gt;`、`Dictionary&lt;K,V&gt;` は `HashMap&lt;K,V&gt;`。対応は素直ですが、借用の規則がここで初めて実戦になります。</p>
+      </header>
+      <div class="prose">
+<p>
+この章は対応表でほとんど済みます。
+<code>List&lt;T&gt;</code> は <code>Vec&lt;T&gt;</code>、<code>Dictionary&lt;K, V&gt;</code> は <code>HashMap&lt;K, V&gt;</code>。
+名前が違うだけです。
+</p>
+
+<p>
+ただし 1 つだけ新しいことがあります。
+<strong>ここで初めて、借用の規則が実戦になります。</strong>
+コレクションは「読みながら書き換えたくなる」ものなので、第 7 章の話が本当に効いてきます。
+</p>
+
+<h2 id="対応表">対応表</h2>
+
+<div class="note csharp">
+  <span class="note-title">コレクションの対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td><code>List&lt;T&gt;</code></td><td><code>Vec&lt;T&gt;</code></td><td>連続した領域。いちばん使う</td></tr>
+      <tr><td><code>T[]</code></td><td><code>[T; N]</code></td><td>長さが型に含まれる</td></tr>
+      <tr><td><code>Dictionary&lt;K, V&gt;</code></td><td><code>HashMap&lt;K, V&gt;</code></td><td>順序は保証されない</td></tr>
+      <tr><td><code>SortedDictionary&lt;K, V&gt;</code></td><td><code>BTreeMap&lt;K, V&gt;</code></td><td>キー順に並ぶ</td></tr>
+      <tr><td><code>HashSet&lt;T&gt;</code></td><td><code>HashSet&lt;T&gt;</code></td><td>同名</td></tr>
+      <tr><td><code>SortedSet&lt;T&gt;</code></td><td><code>BTreeSet&lt;T&gt;</code></td><td></td></tr>
+      <tr><td><code>Queue&lt;T&gt;</code> / <code>Stack&lt;T&gt;</code></td><td><code>VecDeque&lt;T&gt;</code></td><td>両端から出し入れできる</td></tr>
+      <tr><td><code>PriorityQueue</code></td><td><code>BinaryHeap&lt;T&gt;</code></td><td></td></tr>
+      <tr><td><code>StringBuilder</code></td><td><code>String</code></td><td>第 8 章</td></tr>
+      <tr><td><code>ImmutableList&lt;T&gt;</code></td><td>—</td><td><code>im</code> クレートなど</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">HashMap は use が必要</span>
+  <p>
+    <code>Vec</code> と <code>String</code> は最初から使えますが、
+    <code>HashMap</code> などは <code>use</code> を書く必要があります。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::{</span><span class="n">HashMap</span><span class="p">,</span><span class="w"> </span><span class="n">HashSet</span><span class="p">,</span><span class="w"> </span><span class="n">VecDeque</span><span class="p">};</span></span></code></pre></figure>
+  <p>
+    忘れると <code>cannot find type `HashMap` in this scope</code> と言われます。
+    rust-analyzer が入っていれば、クイックフィックスで自動的に足してくれます。
+  </p>
+</div>
+
+<h2 id="Vec-の基本">Vec の基本</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">fruits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="s">&quot;りんご&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;みかん&quot;</span><span class="p">];</span><span class="w">   </span><span class="c1">// vec! マクロで作る</span></span><span class="cl"><span class="n">fruits</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&quot;ぶどう&quot;</span><span class="p">);</span><span class="w">                       </span><span class="c1">// C# の Add</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">empty</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span><span class="w">      </span><span class="c1">// 空から作る</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">メソッド名の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>list.Add(x)</code></td><td><code>v.push(x)</code></td></tr>
+      <tr><td><code>list.Insert(i, x)</code></td><td><code>v.insert(i, x)</code></td></tr>
+      <tr><td><code>list.RemoveAt(i)</code></td><td><code>v.remove(i)</code></td></tr>
+      <tr><td><code>list.Count</code></td><td><code>v.len()</code></td></tr>
+      <tr><td><code>list.Count == 0</code></td><td><code>v.is_empty()</code></td></tr>
+      <tr><td><code>list.Clear()</code></td><td><code>v.clear()</code></td></tr>
+      <tr><td><code>list.Contains(x)</code></td><td><code>v.contains(&amp;x)</code></td></tr>
+      <tr><td><code>list.Sort()</code></td><td><code>v.sort()</code></td></tr>
+      <tr><td><code>list[0]</code></td><td><code>v[0]</code>（範囲外で panic）</td></tr>
+      <tr><td>—</td><td><strong><code>v.get(0)</code></strong>（<code>Option</code> を返す）</td></tr>
+      <tr><td><code>list.ToArray()</code></td><td><code>v.as_slice()</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>contains</code> に <code>&amp;</code> が付くことに注意してください。
+    値を借りて比べるだけなので、所有権は要らないからです。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">添字と get の使い分け</span>
+  <div class="compare">
+    <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">添字</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span></span></code></pre><figcaption class="code-cap">範囲外なら panic。あると確信できるとき</figcaption></figure>
+    <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">get</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">first</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numbers</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span></span></code></pre><figcaption class="code-cap">範囲外でも落ちない。Option が返る</figcaption></figure>
+  </div>
+  <p>
+    C# の <code>list[i]</code> は範囲外で
+    <code>ArgumentOutOfRangeException</code> を投げます。
+    Rust の <code>v[i]</code> は panic します。挙動は同じです。
+    <strong>落ちてほしくない場面では <code>get()</code> を使ってください。</strong>
+  </p>
+</div>
+
+<h2 id="HashMap-の基本">HashMap の基本</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span></span><span class="cl"><span class="n">ages</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;すずき&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">28</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="c1">// 取り出しは Option。キーが無ければ None</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;すずき&quot;</span><span class="p">));</span><span class="w">   </span><span class="c1">// Some(28)</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;さとう&quot;</span><span class="p">));</span><span class="w">   </span><span class="c1">// None</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">Dictionary との違い</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th><th>違い</th></tr></thead>
+    <tbody>
+      <tr><td><code>dict[key]</code></td><td><code>map[&amp;key]</code></td><td>どちらも無いと落ちる</td></tr>
+      <tr><td><code>dict.TryGetValue(k, out v)</code></td><td><strong><code>map.get(&amp;k)</code></strong></td><td><code>out</code> 引数が要らない</td></tr>
+      <tr><td><code>dict.ContainsKey(k)</code></td><td><code>map.contains_key(&amp;k)</code></td><td></td></tr>
+      <tr><td><code>dict[k] = v</code></td><td><code>map.insert(k, v)</code></td><td><strong>Rust は古い値を <code>Option</code> で返す</strong></td></tr>
+      <tr><td><code>dict.Remove(k)</code></td><td><code>map.remove(&amp;k)</code></td><td>同じく古い値を返す</td></tr>
+      <tr><td><code>GetOrAdd</code>（ConcurrentDictionary）</td><td><strong><code>map.entry(k).or_insert(v)</code></strong></td><td>下で説明</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>TryGetValue</code> の <code>out</code> 引数が <code>Option</code> の戻り値になるのが、
+    いちばん気持ちのよい対応です。
+  </p>
+</div>
+
+<h2 id="entry-API--無ければ入れる">entry API — 「無ければ入れる」</h2>
+
+<p>
+C# で「あれば足す、無ければ作る」を書くと、こうなりがちです。
+</p>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">counts</span><span class="p">.</span><span class="n">ContainsKey</span><span class="p">(</span><span class="n">word</span><span class="p">))</span></span><span class="cl"><span class="w">    </span><span class="n">counts</span><span class="p">[</span><span class="n">word</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></span><span class="cl"><span class="n">counts</span><span class="p">[</span><span class="n">word</span><span class="p">]</span><span class="o">++</span><span class="p">;</span></span></code></pre><figcaption class="code-cap">キーを 2 回引いている</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="o">*</span><span class="n">counts</span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="n">word</span><span class="p">).</span><span class="n">or_insert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span></code></pre><figcaption class="code-cap">1 回で済む</figcaption></figure>
+</div>
+
+<div class="note">
+  <span class="note-title">entry のよく使う形</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>.entry(k).or_insert(v)</code></td><td>無ければ <code>v</code> を入れる</td></tr>
+      <tr><td><code>.entry(k).or_default()</code></td><td>無ければ型の既定値を入れる</td></tr>
+      <tr><td><code>.entry(k).or_insert_with(|| 重い計算())</code></td><td>無いときだけ計算する</td></tr>
+      <tr><td><code>.entry(k).and_modify(|v| *v += 1).or_insert(1)</code></td><td>あれば更新、無ければ挿入</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>or_insert</code> は「入った値への <code>&amp;mut</code>」を返すので、
+    <code>*</code> で中身を書き換えられます。
+    グループ化や集計を書くときの定番です。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">HashMap の順序は決まっていない</span>
+  <p>
+    <code>HashMap</code> をなめると、出てくる順番は<strong>毎回変わりえます</strong>。
+    Rust はハッシュの初期値を実行ごとにランダム化しているためです
+    （ハッシュ衝突攻撃を防ぐ目的）。
+  </p>
+  <p>
+    順番を決めたいなら、明示的に並べるか <code>BTreeMap</code> を使ってください。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">names</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">keys</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="n">names</span><span class="p">.</span><span class="n">sort</span><span class="p">();</span></span></code></pre></figure>
+  <p>
+    C# の <code>Dictionary</code> も順序は保証されませんが、
+    実装の都合で「だいたい挿入順」になることがあります。
+    <strong>そこに頼ったコードは Rust では通用しません。</strong>
+  </p>
+</div>
+
+<h2 id="ここで借用が効いてくる">ここで借用が効いてくる</h2>
+
+<p>
+コレクションを扱うと、必ずこれに当たります。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"><span class="n">stack</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="o">*</span><span class="n">stack</span><span class="p">.</span><span class="n">last</span><span class="p">().</span><span class="n">unwrap</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span></span></code></pre><figcaption class="code-cap">✗ E0502。last() の借用が生きているのに push しようとしている</figcaption></figure>
+
+<p>
+直し方は、借用を先に終わらせることです。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">last</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">stack</span><span class="p">.</span><span class="n">last</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span><span class="w">   </span><span class="c1">// * でコピーして借用を終わらせる</span></span><span class="cl"><span class="n">stack</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">last</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span></span></code></pre><figcaption class="code-cap">○ 値を取り出してから push する</figcaption></figure>
+
+<div class="note deep">
+  <span class="note-title">「なめながら消す」を書きたいとき</span>
+  <p>
+    C# で <code>foreach</code> 中に <code>Remove</code> すると例外になるので、
+    ふつうは条件に合うものを別のリストに集めてから消します。
+    Rust には専用のメソッドがあります。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やりたいこと</th><th>書き方</th></tr></thead>
+    <tbody>
+      <tr><td>条件に合うものだけ残す</td><td><code>v.retain(|x| *x &gt; 0)</code></td></tr>
+      <tr><td>条件に合うものを抜き出す</td><td><code>v.extract_if(..)</code></td></tr>
+      <tr><td>全部取り出して空にする</td><td><code>v.drain(..)</code></td></tr>
+      <tr><td>中身を全部置き換える</td><td><code>*v = 新しい Vec</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>retain</code> は C# の <code>RemoveAll</code> に当たります。
+    「消す」のではなく「残す」条件を書く点に注意してください。
+  </p>
+</div>
+
+<h2 id="所有権をもらう繰り返しと借りる繰り返し">所有権をもらう繰り返しと、借りる繰り返し</h2>
+
+<p>
+<code>for</code> の書き方が 3 通りあります。ここは C# に無い区別です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>もらうもの</th><th>後で Vec を使えるか</th></tr></thead>
+  <tbody>
+    <tr><td><code>for x in &amp;v</code></td><td><code>&amp;T</code>（借用）</td><td><strong>使える</strong></td></tr>
+    <tr><td><code>for x in &amp;mut v</code></td><td><code>&amp;mut T</code>（書ける借用）</td><td>使える</td></tr>
+    <tr><td><code>for x in v</code></td><td><code>T</code>（所有権）</td><td><strong>使えない</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">for x in v と書くと Vec が消える</span>
+  <p>
+    C# の <code>foreach (var x in list)</code> の後も <code>list</code> は使えます。
+    Rust で <code>for x in v</code> と書くと、<strong><code>v</code> の所有権が for に移ります。</strong>
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">for</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{words:?}&quot;</span><span class="p">);</span><span class="w">   </span><span class="c1">// ✗ E0382。words は消費された</span></span></code></pre></figure>
+  <p>
+    <code>&amp;</code> を 1 文字足せば直ります。
+    <strong>ふだんは <code>for x in &amp;v</code> と書く癖にしておくのが無難です。</strong>
+  </p>
+  <p>
+    逆に「中身を取り出して別の場所へ移したい」ときは、
+    所有権をもらう形が正解になります。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="12-collections/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! コレクション。C# の List / Dictionary / HashSet と対応させながら見ます。</span></span><span class="cl"></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::{</span><span class="n">HashMap</span><span class="p">,</span><span class="w"> </span><span class="n">HashSet</span><span class="p">,</span><span class="w"> </span><span class="n">VecDeque</span><span class="p">};</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. Vec は List&lt;T&gt; ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// vec! マクロで最初から中身を入れて作れる</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">fruits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="s">&quot;りんご&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;みかん&quot;</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="c1">// 後から足すのが push。C# の List.Add に相当する。</span></span><span class="cl"><span class="w">    </span><span class="n">fruits</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&quot;ぶどう&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {fruits:?}（{} 個）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">fruits</span><span class="p">.</span><span class="n">len</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 空から作ることもできる。型は入れたものから決まる。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">empty</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  空の Vec = {empty:?}（is_empty = {}）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">empty</span><span class="p">.</span><span class="n">is_empty</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="n">empty</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="s">&quot;これで 1 個&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  1 つ足した = {empty:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">numbers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  numbers = {numbers:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 添字アクセスは範囲外で panic する。get なら Option で受けられる。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  numbers[0] = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  get(99)    = {:?}（範囲外でも落ちない）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">numbers</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="mi">99</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 並べ替えと検索 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">sorted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numbers</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">sorted</span><span class="p">.</span><span class="n">sort</span><span class="p">();</span><span class="w"> </span><span class="c1">// 破壊的に並べ替える</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  昇順       = {sorted:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">sorted</span><span class="p">.</span><span class="n">sort_by</span><span class="p">(</span><span class="o">|</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="o">|</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">cmp</span><span class="p">(</span><span class="n">a</span><span class="p">));</span><span class="w"> </span><span class="c1">// 比較関数を渡す</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  降順       = {sorted:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  contains   = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sorted</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="o">&amp;</span><span class="mi">8</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. HashMap は Dictionary&lt;K, V&gt; ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span><span class="p">::</span><span class="n">new</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">ages</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;すずき&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">28</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">ages</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;たなか&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">34</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 取り出しは Option。キーが無いときに例外ではなく None が返る。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  すずき = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;すずき&quot;</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  さとう = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;さとう&quot;</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 「無ければ入れる」を 1 行で書ける。C# の GetOrAdd に相当。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">entry</span><span class="p">(</span><span class="s">&quot;さとう&quot;</span><span class="p">).</span><span class="n">or_insert</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="o">*</span><span class="n">entry</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">41</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  さとう = {:?}（entry で追加した）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;さとう&quot;</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 出てくる順番は決まっていない。並べたいなら自分で並べる。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">names</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ages</span><span class="p">.</span><span class="n">keys</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">names</span><span class="p">.</span><span class="n">sort</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  キーを並べた = {names:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. HashSet は HashSet&lt;T&gt; ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="nc">HashSet</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">].</span><span class="n">into_iter</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="nc">HashSet</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">].</span><span class="n">into_iter</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">common</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">_</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">&amp;</span><span class="n">b</span><span class="p">).</span><span class="n">copied</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">common</span><span class="p">.</span><span class="n">sort</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  共通部分 = {common:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. VecDeque は両端から出し入れできる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VecDeque</span><span class="p">::</span><span class="n">new</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="s">&quot;あとから&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">queue</span><span class="p">.</span><span class="n">push_front</span><span class="p">(</span><span class="s">&quot;さきに&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {queue:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  先頭を取り出す = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">queue</span><span class="p">.</span><span class="n">pop_front</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. 借用の規則がここで効いてくる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="c1">// 読む借用が生きている間は push できない（E0502）。</span></span><span class="cl"><span class="w">    </span><span class="c1">// 借用を先に終わらせれば通る。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">last</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">stack</span><span class="p">.</span><span class="n">last</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span><span class="w"> </span><span class="c1">// * で値を取り出して借用を終わらせる</span></span><span class="cl"><span class="w">    </span><span class="n">stack</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">last</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {stack:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. 所有権を渡す繰り返しと、借りる繰り返し ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;あ&quot;</span><span class="p">),</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;い&quot;</span><span class="p">)];</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="n">words</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="c1">// 借りるだけなので後でも使える</span></span><span class="cl"><span class="w">        </span><span class="fm">print!</span><span class="p">(</span><span class="s">&quot;  借用: {w}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">  元の Vec も健在: {words:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="c1">// 所有権をもらうので、この後 words は使えない</span></span><span class="cl"><span class="w">        </span><span class="fm">print!</span><span class="p">(</span><span class="s">&quot;  消費: {w}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">();</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/12-collections</code> を動かしてください。</li>
+    <li>HashMap の出力を何度か実行して、キーの順番が変わることを確認してください（環境によっては変わらないこともあります）。</li>
+    <li><code>for w in words</code> の <code>&amp;</code> を消して、E0382 を出してください。</li>
+    <li>単語の出現回数を数えるコードを <code>entry().or_insert(0)</code> で書いてみてください。<code>"a b a c b a".split(' ')</code> を使うと楽です。</li>
+    <li><code>numbers[99]</code> を実行して、panic のメッセージを見てください。<code>numbers.get(99)</code> との違いが分かります。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>Vec</code>＝<code>List</code>、<code>HashMap</code>＝<code>Dictionary</code>。名前が違うだけ。</li>
+    <li>取り出しは <code>Option</code> を返す（<code>get</code>）。添字は範囲外で panic。</li>
+    <li><code>entry().or_insert()</code> で「無ければ入れる」が 1 行で書ける。</li>
+    <li><code>HashMap</code> の順序は決まっていない。並べたいなら <code>BTreeMap</code>。</li>
+    <li><code>for x in &amp;v</code> は借りる、<code>for x in v</code> は<strong>所有権をもらう</strong>。<code>&amp;</code> を付ける癖を。</li>
+    <li>「なめながら消す」は <code>retain</code> / <code>drain</code>。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../11-errors/"><span class="pager-dir">← 前の章</span><span class="pager-title">エラー処理</span></a>
+<a class="pager-link pager-next" href="../13-iterators/"><span class="pager-dir">次の章 →</span><span class="pager-title">イテレータ</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

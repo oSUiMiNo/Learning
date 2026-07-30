@@ -1,0 +1,32 @@
+<svg viewBox="0 0 720 250" role="img" aria-label="孤児則。型かトレイトの少なくとも一方が自分のクレートのものであれば実装できるが、両方が他人のものだと実装できない。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">「型」と「トレイト」の少なくとも一方が自分のものなら実装できる</text>
+
+  <!-- 3 patterns OK -->
+  <rect x="24" y="46" width="216" height="92" rx="9" class="d-tip"/>
+  <text x="132" y="68" text-anchor="middle" class="d-head-tip">できる</text>
+  <text x="132" y="90" text-anchor="middle" class="d-code">自分の型</text>
+  <text x="132" y="108" text-anchor="middle" class="d-code">× 標準のトレイト</text>
+  <text x="132" y="128" text-anchor="middle" class="d-mute">impl Display for MyType</text>
+
+  <rect x="252" y="46" width="216" height="92" rx="9" class="d-tip"/>
+  <text x="360" y="68" text-anchor="middle" class="d-head-tip">できる</text>
+  <text x="360" y="90" text-anchor="middle" class="d-code">標準の型</text>
+  <text x="360" y="108" text-anchor="middle" class="d-code">× 自分のトレイト</text>
+  <text x="360" y="128" text-anchor="middle" class="d-mute">impl MyTrait for i32</text>
+
+  <rect x="480" y="46" width="216" height="92" rx="9" class="d-warn"/>
+  <text x="588" y="68" text-anchor="middle" class="d-head-warn">できない</text>
+  <text x="588" y="90" text-anchor="middle" class="d-code">標準の型</text>
+  <text x="588" y="108" text-anchor="middle" class="d-code">× 標準のトレイト</text>
+  <text x="588" y="128" text-anchor="middle" class="d-mute">impl Display for Vec&lt;T&gt;</text>
+
+  <!-- 説明 -->
+  <rect x="24" y="152" width="672" height="40" rx="9" class="d-dash"/>
+  <text x="44" y="170" class="d-head-accent">なぜ禁じられているのか</text>
+  <text x="44" y="186" class="d-mute">2 つのクレートが同じ組み合わせに別々の実装を書けてしまうと、どちらを使うか決められなくなるため。</text>
+
+  <rect x="24" y="202" width="672" height="34" rx="9" class="d-box"/>
+  <text x="44" y="224" class="d-mute">回避策: 自分の型で包む（newtype）。<tspan class="d-code">struct MyVec(Vec&lt;i32&gt;);</tspan> にすれば自分の型なので実装できる。</text>
+</svg>

@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第1章 環境構築 — Windows 11 に Rust を入れる | Rust 入門</title>
+<meta name="description" content="rustup ひとつで、コンパイラもパッケージ管理も整形もぜんぶ入ります。Windows だけに必要な「もう 1 つの準備」も、つまずく前に片付けます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li class="is-current"><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 1 章<span class="dot">·</span>読了目安 13 分</p>
+        <h1>第1章 環境構築 — Windows 11 に Rust を入れる</h1>
+        <p class="lede">rustup ひとつで、コンパイラもパッケージ管理も整形もぜんぶ入ります。Windows だけに必要な「もう 1 つの準備」も、つまずく前に片付けます。</p>
+      </header>
+      <div class="prose">
+<p>
+Rust の準備は <strong>rustup を入れる</strong>、これだけです。
+コンパイラ・パッケージ管理・整形・静的解析が全部まとめて付いてきます。
+</p>
+
+<p>
+ただし <strong>Windows にはもう 1 つ必要なものがあります</strong>。
+ここを知らずに進めると、最初の <code>cargo run</code> で
+「リンカが見つからない」と言われて止まります。先に片付けておきましょう。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 250" role="img" aria-label="rustup が toolchain を管理し、その中に rustc, cargo, clippy, rustfmt が入っているという構成図。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">rustup を 1 つ入れれば、下の全部が付いてくる</text>
+
+  <!-- rustup -->
+  <rect x="24" y="44" width="150" height="70" rx="9" class="d-accent"/>
+  <text x="99" y="70" text-anchor="middle" class="d-mono-title">rustup</text>
+  <text x="99" y="90" text-anchor="middle" class="d-mute">版の管理役</text>
+  <text x="99" y="106" text-anchor="middle" class="d-mute">.NET SDK の入れ替え係</text>
+
+  <path d="M174 79 L216 79" class="d-flow"/>
+  <path d="M216 79 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <!-- toolchain -->
+  <rect x="216" y="44" width="480" height="130" rx="9" class="d-box"/>
+  <text x="236" y="66" class="d-title">toolchain（stable / beta / nightly）</text>
+  <text x="236" y="84" class="d-mute">この教材が使うのは stable</text>
+
+  <rect x="236" y="96" width="102" height="62" rx="7" class="d-tip"/>
+  <text x="287" y="118" text-anchor="middle" class="d-code">rustc</text>
+  <text x="287" y="136" text-anchor="middle" class="d-mute">コンパイラ</text>
+  <text x="287" y="151" text-anchor="middle" class="d-mute">csc に相当</text>
+
+  <rect x="350" y="96" width="102" height="62" rx="7" class="d-tip"/>
+  <text x="401" y="118" text-anchor="middle" class="d-code">cargo</text>
+  <text x="401" y="136" text-anchor="middle" class="d-mute">ビルドと依存</text>
+  <text x="401" y="151" text-anchor="middle" class="d-mute">dotnet + NuGet</text>
+
+  <rect x="464" y="96" width="102" height="62" rx="7" class="d-box"/>
+  <text x="515" y="118" text-anchor="middle" class="d-code">clippy</text>
+  <text x="515" y="136" text-anchor="middle" class="d-mute">書き方の助言</text>
+  <text x="515" y="151" text-anchor="middle" class="d-mute">アナライザ</text>
+
+  <rect x="578" y="96" width="98" height="62" rx="7" class="d-box"/>
+  <text x="627" y="118" text-anchor="middle" class="d-code">rustfmt</text>
+  <text x="627" y="136" text-anchor="middle" class="d-mute">整形</text>
+  <text x="627" y="151" text-anchor="middle" class="d-mute">dotnet format</text>
+
+  <!-- windows extra -->
+  <rect x="24" y="192" width="672" height="44" rx="9" class="d-warn"/>
+  <text x="44" y="212" class="d-head-warn">Windows だけ、もう 1 つ要る</text>
+  <text x="44" y="228" class="d-mute">最後にリンクする作業は OS 付属の道具が担う。Microsoft C++ ビルドツール（Visual Studio の一部）が必要。</text>
+</svg>
+<figcaption>rustup を 1 つ入れると、その下に stable などの toolchain が入り、さらにその中に rustc・cargo・clippy・rustfmt が入る。Windows だけは、最後にリンクする工程で OS 側の道具（Microsoft C++ ビルドツール）が別途必要になる。</figcaption></figure>
+
+<h2 id="必要なもの">必要なもの</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>要るもの</th><th>条件</th></tr></thead>
+  <tbody>
+    <tr><td>OS</td><td>Windows 11（10 でも同じ手順で動きます）</td></tr>
+    <tr><td>rustup</td><td>これを入れると Rust 本体が付いてくる</td></tr>
+    <tr><td><strong>Microsoft C++ ビルドツール</strong></td><td><strong>Windows では必須。</strong>インストーラが案内してくれる</td></tr>
+    <tr><td>エディタ</td><td>VS Code を推奨（第 2 章で設定します）</td></tr>
+    <tr><td>ディスク</td><td>3 GB 程度。ビルドツールが大きい</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">なぜ C++ の道具が要るのか</span>
+  <p>
+    .NET は自前のランタイムとリンカを持っているので、SDK 1 つで完結します。
+    Rust は<strong>ネイティブの実行ファイルを直接吐く</strong>ため、
+    最後に「オブジェクトファイルをつないで .exe にする」工程が必要です。
+    Windows では、この工程を担う <code>link.exe</code> と
+    Windows API のライブラリが Visual Studio 側に入っています。
+  </p>
+  <p>
+    Rust がそれを同梱しないのは、Microsoft のライセンス上、再配布できないからです。
+    そのため「Microsoft の道具を自分で入れてもらう」形になっています。
+  </p>
+</div>
+
+<h2 id="rustup-を入れる">rustup を入れる</h2>
+
+<p>
+<a href="https://rustup.rs/">rustup.rs</a> を開くと、
+Windows なら <code>rustup-init.exe</code> のダウンロードリンクが出ます。
+これを実行します。
+</p>
+
+<div class="note">
+  <span class="note-title">winget でも入れられます</span>
+  <p>
+    コマンドで済ませたい場合は、PowerShell で次のように打っても入ります。
+    入るものは同じで、この後の画面もほぼ同じように出ます。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">winget<span class="w"> </span>install<span class="w"> </span>Rustlang.Rustup</span></code></pre></figure>
+</div>
+
+<p>
+<code>rustup-init.exe</code> を実行すると、黒い画面が開いてこう出ます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">rustup-init.exe</span><span class="term-badge term-badge--repro" title="この環境では撮影できないため、公式の情報どおりに再現したものです">再現</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="a-b">Welcome to Rust!</span>
+
+This will download and install the official compiler for the Rust
+programming language, and its package manager, Cargo.
+
+Rustup metadata and toolchains will be installed into the Rustup
+home directory, located at:
+
+    C:\Users\you\.rustup
+
+This can be modified with the RUSTUP_HOME environment variable.
+
+The Cargo home directory is located at:
+
+    C:\Users\you\.cargo
+
+This can be modified with the CARGO_HOME environment variable.
+
+The `cargo`, `rustc`, `rustup` and other commands will be added to
+Cargo&#x27;s bin directory, located at:
+
+    C:\Users\you\.cargo\bin
+
+This path will then be added to your `PATH` environment variable by
+modifying the `PATH` registry key at `HKEY_CURRENT_USER\Environment`.
+
+You can uninstall at any time with `rustup self uninstall` and
+these changes will be reverted.
+
+<span class="a-b">Current installation options:</span>
+
+
+   default host triple: x86_64-pc-windows-msvc
+     default toolchain: stable (default)
+               profile: default
+  modify PATH variable: yes
+
+1) Proceed with standard installation (default - just press enter)
+2) Customize installation
+3) Cancel installation
+&gt;</code></pre></div><figcaption>インストーラの最初の画面。既定の設定が一覧で示され、そのまま Enter を押せばよい形になっている。default host triple が x86_64-pc-windows-msvc になっていることを確認しておく。 <span class="repro-src">この画面は実機でしか出せないため再現です。出典: rustup 1.29.0 のソース src/cli/self_update.rs にあるインストーラの表示文字列（Windows 版）</span></figcaption></figure>
+
+<p>
+見るべきところは <code>Current installation options:</code> の 4 行です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>既定値</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>default host triple</code></td><td><code>x86_64-pc-windows-msvc</code></td><td>作る実行ファイルの種類。これでよい</td></tr>
+    <tr><td><code>default toolchain</code></td><td><code>stable</code></td><td>安定版。学習でも実務でもこれ</td></tr>
+    <tr><td><code>profile</code></td><td><code>default</code></td><td>コンパイラ＋ドキュメント＋clippy＋rustfmt</td></tr>
+    <tr><td><code>modify PATH variable</code></td><td><code>yes</code></td><td>コマンドがどこからでも打てるようになる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+全部そのままでよいので、<strong><code>1</code> を選ぶか、そのまま Enter</strong> を押します。
+</p>
+
+<div class="note deep">
+  <span class="note-title">ARM 版の Windows を使っている場合</span>
+  <p>
+    Snapdragon などの ARM 機では <code>aarch64-pc-windows-msvc</code> と出ます。
+    それが正しいので、そのまま進めてください。
+    この教材の内容はどちらでも変わりません。
+  </p>
+</div>
+
+<h2 id="C-ビルドツールが無いときの画面">C++ ビルドツールが無いときの画面</h2>
+
+<p>
+Visual Studio を入れたことがない環境では、
+先へ進む前にこの画面が出ます。<strong>ここが Windows 固有の関門です。</strong>
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">rustup-init.exe — C++ ビルドツールの確認</span><span class="term-badge term-badge--repro" title="この環境では撮影できないため、公式の情報どおりに再現したものです">再現</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="a-b">Rust Visual C++ prerequisites</span>
+
+Rust requires a linker and Windows API libraries but they don&#x27;t seem to be available.
+
+These components can be acquired through a Visual Studio installer.
+
+
+1) Quick install via the Visual Studio Community installer
+   (free for individuals, academic uses, and open source).
+
+2) Manually install the prerequisites
+   (for enterprise and advanced users).
+
+3) Don&#x27;t install the prerequisites
+   (if you&#x27;re targeting the GNU ABI).
+
+&gt;</code></pre></div><figcaption>C++ ビルドツールが見つからないときに出る確認画面。1 を選べば、rustup が Visual Studio Community のインストーラを呼んで自動で入れてくれる。 <span class="repro-src">この画面は実機でしか出せないため再現です。出典: rustup 1.29.0 のソース src/cli/self_update/windows.rs にあるMSVC_AUTO_INSTALL_MESSAGE と choose_vs_install の表示文字列</span></figcaption></figure>
+
+<p>
+<strong><code>1</code> を選んでください。</strong>
+rustup が Visual Studio Community のインストーラを起動して、必要な部品だけ入れてくれます。
+数 GB のダウンロードがあるので、ここは時間がかかります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">古い記事では「手動で入れろ」と書かれています</span>
+  <p>
+    以前の rustup にはこの自動インストールがなく、
+    「先に Visual Studio を入れてから rustup を実行せよ」という手順が一般的でした。
+    そのため、そう書いてある記事が今もたくさんあります。
+  </p>
+  <p>
+    いまは <strong>rustup が面倒を見てくれる</strong>ので、先に何も入れなくて大丈夫です。
+    もし手動で入れたい場合は <code>2</code> を選び、
+    Visual Studio Installer で
+    <strong>「C++ によるデスクトップ開発」</strong>にチェックを入れます。
+  </p>
+  <p>
+    <code>3</code>（入れない）は、GNU ABI を狙うと分かっている人向けです。
+    <strong>初心者は選ばないでください。</strong>後で必ず詰まります。
+  </p>
+</div>
+
+<p>
+すべて終わると、こう出ます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">rustup-init.exe — 完了</span><span class="term-badge term-badge--repro" title="この環境では撮影できないため、公式の情報どおりに再現したものです">再現</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="a-b a-92">  stable-x86_64-pc-windows-msvc installed</span> - rustc 1.97.1 (8bab26f4f 2026-07-14)
+
+<span class="a-b">Rust is installed now. Great!</span>
+
+
+To get started you may need to restart your current shell.
+This would reload its `PATH` environment variable to include
+Cargo&#x27;s bin directory (C:\Users\you\.cargo\bin).
+
+Press the Enter key to continue.</code></pre></div><figcaption>インストール完了の画面。PATH を反映させるためにターミナルを開き直す必要がある、と書かれている。 <span class="repro-src">この画面は実機でしか出せないため再現です。出典: rustup 1.29.0 のソース src/cli/self_update.rs のpost_install_msg_win</span></figcaption></figure>
+
+<div class="note pitfall">
+  <span class="note-title">ターミナルを開き直すこと</span>
+  <p>
+    完了画面にも書いてありますが、<strong>いま開いているターミナルでは
+    <code>cargo</code> がまだ使えません</strong>。
+    PATH の変更は、新しく開いたターミナルにしか反映されないためです。
+  </p>
+  <p>
+    「入れたのに <code>cargo は認識されていません</code> と言われる」の原因は、
+    ほぼこれです。PowerShell を閉じて開き直してください。
+  </p>
+</div>
+
+<h2 id="ちゃんと入ったか確かめる">ちゃんと入ったか確かめる</h2>
+
+<p>
+新しく PowerShell を開いて、3 つ打ちます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc --version</span>
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+<span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> cargo --version</span>
+cargo 1.97.1 (c980f4866 2026-06-30)
+<span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustup --version</span>
+rustup 1.29.0 (28d1352db 2026-03-05)
+<span class="a-b">info:</span> This is the version for the rustup toolchain manager, not the rustc compiler.
+<span class="a-b">info:</span> the currently active `rustc` version is `rustc 1.97.1 (8bab26f4f 2026-07-14)`</code></pre></div><figcaption>3 つのコマンドが版を答えれば成功。ここに出る番号が、このページ上部のバッジと一致していれば、この教材とまったく同じ環境で学べる。</figcaption></figure>
+
+<p>
+版の番号は読んでいる時期によって違って当然です。
+大事なのは<strong>3 つとも答えが返ってくること</strong>です。
+</p>
+
+<p>
+いま入っているものの全体像は <code>rustup show</code> で見られます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--repro" title="この環境では撮影できないため、公式の情報どおりに再現したものです">再現</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="a-b a-96">PS C:\rust&gt;</span> rustup show
+<span class="a-b a-92">Default host: </span>x86_64-pc-windows-msvc
+<span class="a-b a-92">rustup home:  </span>C:\Users\you\.rustup
+
+<span class="a-b a-92">installed toolchains</span>
+<span class="a-b a-92">--------------------</span>
+stable-x86_64-pc-windows-msvc<span class="a-b a-94"> (active, default)</span>
+
+<span class="a-b a-92">active toolchain</span>
+<span class="a-b a-92">----------------</span>
+name: stable-x86_64-pc-windows-msvc
+active because: it&#x27;s the default toolchain
+installed targets:
+  x86_64-pc-windows-msvc</code></pre></div><figcaption>インストールされた toolchain と、既定のターゲットの確認。Windows では host が x86_64-pc-windows-msvc になる。 <span class="repro-src">この画面は実機でしか出せないため再現です。出典: rustup show の実際の出力（この教材のビルド環境で取得したもの）を、Windows の既定ターゲット x86_64-pc-windows-msvc に読み替えたもの</span></figcaption></figure>
+
+<div class="note">
+  <span class="note-title">更新とアンインストール</span>
+  <p>
+    Rust は 6 週間ごとに新しい版が出ます。上げるのは 1 行です。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">rustup<span class="w"> </span>update</span></code></pre></figure>
+  <p>
+    やめたくなったときも 1 行で、入れたものが全部消えます。
+    レジストリの PATH も元に戻ります。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">rustup<span class="w"> </span>self<span class="w"> </span>uninstall</span></code></pre></figure>
+</div>
+
+<h2 id="Windows-でつまずきやすいところ">Windows でつまずきやすいところ</h2>
+
+<div class="note pitfall">
+  <span class="note-title">「link.exe が見つかりません」と言われたら</span>
+  <p>
+    次のようなエラーで <code>cargo build</code> が止まる場合、
+    C++ ビルドツールが入っていません。
+  </p>
+  <figure class="code-block" data-lang="text"><div class="code-head"><span class="code-file">エラー</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">error: linker `link.exe` not found</span><span class="cl">  |</span><span class="cl">  = note: program not found</span><span class="cl"></span><span class="cl">note: the msvc targets depend on the msvc linker but `link.exe` was not found</span><span class="cl"></span><span class="cl">note: please ensure that Visual Studio 2017 or later, or Build Tools for Visual Studio</span><span class="cl">      were installed with the Visual C++ option.</span></code></pre></figure>
+  <p>
+    メッセージの言うとおり、Visual Studio Installer で
+    <strong>「C++ によるデスクトップ開発」</strong>を追加すれば直ります。
+    <code>rustup-init.exe</code> をもう一度実行して <code>1</code> を選ぶのでも構いません。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">ビルドが妙に遅いとき</span>
+  <p>
+    Rust のビルドは大量の小さいファイルを <code>target</code> フォルダに書きます。
+    Windows Defender のリアルタイム保護がそれを 1 つずつ検査するので、
+    体感で 2〜3 倍遅くなることがあります。
+  </p>
+  <p>
+    気になる場合は、Windows セキュリティの
+    「ウイルスと脅威の防止」→「除外の追加」で、
+    作業フォルダと <code>%USERPROFILE%\.cargo</code> を除外に入れると改善します。
+    （業務の端末では、社内の方針を確認してから行ってください。）
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">target フォルダが大きくなる</span>
+  <p>
+    <code>target</code> には中間生成物が全部入るので、
+    小さなプロジェクトでも数百 MB、依存が多いと数 GB になります。
+    消しても困りません。次のビルドで作り直されるだけです。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">cargo<span class="w"> </span>clean</span></code></pre></figure>
+  <p>
+    <code>target</code> は Git に入れないのが決まりです。
+    <code>cargo new</code> は <code>.gitignore</code> を自動で用意してくれます。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">日本語のパスとパスの長さ</span>
+  <p>
+    作業フォルダのパスに日本語や空白が入っていても、いまの Rust は動きます。
+    ただし依存が深いプロジェクトでは、Windows のパス長制限（260 文字）に当たることがあります。
+    <code>C:\rust\</code> のような短い場所に置いておくと安心です。
+    この教材のターミナル画面も <code>C:\rust\</code> を前提にしています。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>rustc --version</code> の出力を、このページ上部のバッジと見比べてください。一致していれば理想的です。</li>
+    <li><code>rustup show</code> を打って、<code>host</code> が <code>x86_64-pc-windows-msvc</code>（ARM 機なら <code>aarch64-...</code>）になっていることを確認してください。</li>
+    <li><code>rustup doc</code> と打ってみてください。<strong>ネットに繋がっていなくても読める</strong>公式ドキュメントがブラウザで開きます。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>準備は rustup を入れるだけ。コンパイラ・cargo・clippy・rustfmt がまとめて入る。</li>
+    <li><strong>Windows は C++ ビルドツールが別途必要。</strong>いまは rustup が自動で入れてくれる（選択肢の <code>1</code>）。</li>
+    <li>インストール後は<strong>ターミナルを開き直す</strong>。「cargo が無い」の原因はほぼこれ。</li>
+    <li><code>link.exe not found</code> は C++ ビルドツール不足の合図。</li>
+    <li>更新は <code>rustup update</code>、削除は <code>rustup self uninstall</code>。</li>
+    <li><code>target</code> は消してよい生成物。Git には入れない。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../00-intro/"><span class="pager-dir">← 前の章</span><span class="pager-title">はじめに</span></a>
+<a class="pager-link pager-next" href="../02-editor/"><span class="pager-dir">次の章 →</span><span class="pager-title">エディタの準備</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

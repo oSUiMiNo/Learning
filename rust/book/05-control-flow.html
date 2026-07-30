@@ -1,0 +1,238 @@
+<p>
+この章も C# の知識でほぼ読めます。覚えるのは 1 つの考え方だけです。
+</p>
+
+<p>
+<strong>Rust ではほとんどのものが「式」です。</strong>
+つまり値を返します。<code>if</code> も <code>match</code> も <code>loop</code> も、
+ブロックそれ自体も値になります。
+C# の式形式メンバー（<code>=&gt;</code>）やスイッチ式が好きな人には、たぶん気持ちのいい話です。
+</p>
+
+<!--code: 05-control-flow/src/main.rs-->
+
+<h2>if が値を返す</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C#" data-cap="三項演算子か、スイッチ式を使う">
+var greeting = hour &lt; 12 ? "おはよう" : "こんにちは";
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust" data-cap="if がそのまま値になる。三項演算子は無い">
+let greeting = if hour &lt; 12 { "おはよう" } else { "こんにちは" };
+  </div>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">三項演算子は無い</span>
+  <p>
+    Rust に <code>? :</code> はありません。<code>if</code> が式なので要らないからです。
+    <code>?</code> という記号は別の意味（エラーの伝播、第 11 章）に使われています。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">両方の枝が同じ型でなければならない</span>
+  <p>
+    <code>if</code> が値を返すということは、<strong>どの枝も同じ型を返す必要がある</strong>ということです。
+  </p>
+  <div class="src" data-lang="rust" data-cap="✗ 一方が数値、もう一方が文字列なので E0308">
+let value = if flag { 5 } else { "five" };
+  </div>
+  <p>
+    また <code>else</code> を省くと、その枝は <code>()</code> を返すことになります。
+    値として使いたい <code>if</code> には <code>else</code> が必須です。
+  </p>
+</div>
+
+<h2>条件には bool しか書けない</h2>
+
+<div class="note csharp">
+  <span class="note-title">0 や null は偽にならない</span>
+  <p>
+    C# でも <code>if (0)</code> は書けませんが、
+    JavaScript や C から来た感覚だと <code>if (count)</code> と書きたくなることがあります。
+    Rust はこれを許しません。
+  </p>
+  <div class="src" data-lang="rust">
+if count != 0 { }        // ○
+if !list.is_empty() { }  // ○
+  </div>
+  <p>
+    <code>if x = 5</code> のような代入の書き間違いも、
+    <code>bool</code> でないので必ずコンパイルエラーになります。
+  </p>
+</div>
+
+<h2>ループの 3 種類</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Rust</th><th>意味</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>loop { }</code></td><td>無限ループ。<code>break</code> で抜ける</td><td><code>while (true)</code></td></tr>
+    <tr><td><code>while cond { }</code></td><td>条件付きループ</td><td><code>while</code></td></tr>
+    <tr><td><code>for x in iter { }</code></td><td>反復子をなめる</td><td><code>foreach</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">C 風の for は無い</span>
+  <p>
+    <code>for (int i = 0; i &lt; n; i++)</code> に当たる構文はありません。
+    <strong><code>for</code> は必ず「何かをなめる」形</strong>です。
+  </p>
+  <div class="src" data-lang="rust">
+for i in 0..n { }        // 0 から n-1 まで（C# の for と同じ範囲）
+for i in 0..=n { }       // 0 から n まで（= が付くと終端を含む）
+for i in (0..n).rev() { }  // 逆順
+for i in (0..n).step_by(2) { }  // 2 つ飛ばし
+  </div>
+  <p>
+    <code>..</code> が終端を含まず、<code>..=</code> が含みます。
+    <strong>この 1 文字を落とすのは、Rust で最もよくある間取り違え</strong>です。
+  </p>
+</div>
+
+<h2>loop は値を返せる</h2>
+
+<p>
+これは C# に対応するものがない、便利な書き方です。
+<code>break</code> に値を付けると、それが <code>loop</code> 式の値になります。
+</p>
+
+<div class="src" data-lang="rust">
+let mut n = 1;
+let first_over_100 = loop {
+    n *= 3;
+    if n > 100 {
+        break n;      // これが loop の値になる
+    }
+};
+</div>
+
+<div class="note csharp">
+  <span class="note-title">C# なら変数を外に用意する</span>
+  <div class="src" data-lang="csharp" data-file="C#">
+int n = 1;
+int firstOver100 = 0;
+while (true) {
+    n *= 3;
+    if (n > 100) { firstOver100 = n; break; }
+}
+  </div>
+  <p>
+    <code>firstOver100</code> を先に宣言して仮の値を入れておく必要があり、
+    「初期値の 0 は意味がない値だ」という気持ち悪さが残ります。
+    Rust の <code>loop</code> 式はそれを解消します。
+  </p>
+</div>
+
+<h2>ラベル付き break</h2>
+
+<p>
+入れ子のループから一気に抜けられます。C# の <code>goto</code> の代わりです。
+</p>
+
+<div class="src" data-lang="rust">
+'outer: for a in 1..=3 {
+    for b in 1..=3 {
+        if a * b >= 6 {
+            break 'outer;
+        }
+    }
+}
+</div>
+
+<p>
+ラベルは <code>'</code> で始まります。
+ライフタイム（第 15 章）と同じ記号ですが、別のものです。
+</p>
+
+<h2>match — スイッチ式の強化版</h2>
+
+<div class="note csharp">
+  <span class="note-title">C# のスイッチ式との対応</span>
+  <div class="compare">
+    <div class="src" data-lang="csharp" data-file="C# 8 以降">
+var label = n switch {
+    0 =&gt; "ゼロ",
+    1 =&gt; "ひとつ",
+    &gt;= 2 and &lt;= 9 =&gt; "一桁",
+    _ =&gt; "二桁以上"
+};
+    </div>
+    <div class="src" data-lang="rust" data-file="Rust">
+let label = match n {
+    0 =&gt; "ゼロ",
+    1 =&gt; "ひとつ",
+    2..=9 =&gt; "一桁",
+    _ =&gt; "二桁以上",
+};
+    </div>
+  </div>
+  <p>
+    ほとんど同じです。違いは <strong>Rust の <code>match</code> は網羅性を強制する</strong>ことです。
+    C# のスイッチ式も網羅していないと警告が出ますが、
+    Rust は<strong>エラーとしてビルドを止めます</strong>。
+    列挙型と組み合わせたときの効き方は第 10 章で扱います。
+  </p>
+</div>
+
+<h2>ブロックも式</h2>
+
+<p>
+波括弧のかたまりも値になります。
+「計算に使う一時変数をスコープに閉じ込めたい」ときに便利です。
+</p>
+
+<div class="src" data-lang="rust">
+let computed = {
+    let base = 10;
+    base * base       // これがブロックの値
+};
+// base はここでは見えない
+</div>
+
+<div class="note deep">
+  <span class="note-title">式と文の区別</span>
+  <p>
+    セミコロンには「式を文にする」働きがあります。
+    文は値を返さない（正確には <code>()</code> を返す）ので、次の 2 つは違うものです。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>書き方</th><th>ブロックの値</th></tr></thead>
+    <tbody>
+      <tr><td><code>{ 5 }</code></td><td><code>5</code></td></tr>
+      <tr><td><code>{ 5; }</code></td><td><code>()</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    「型が合わない」と言われたら、まず末尾のセミコロンを疑ってください。
+    これは Rust を書きはじめた人が最もよく踏む間違いです。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/05-control-flow</code> を動かして、出力を追ってください。</li>
+    <li><code>for i in 1..3</code> と <code>for i in 1..=3</code> の違いを、実際に出力して確かめてください。</li>
+    <li><code>loop</code> を使って「2 で割り続けて 1 になるまでの回数」を数える式を書いてみてください。</li>
+    <li><code>let x = if true { 1 };</code> と書いて、どんなエラーになるか見てください（<code>else</code> が無い場合の型の話が実感できます）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>if</code>・<code>match</code>・<code>loop</code>・ブロックはすべて<strong>式</strong>。値を返す。</li>
+    <li>三項演算子は無い。<code>if</code> が式なので要らない。</li>
+    <li>条件には <code>bool</code> しか書けない。</li>
+    <li>C 風の <code>for</code> は無い。<code>..</code> は終端を含まず、<code>..=</code> は含む。</li>
+    <li><code>break 値</code> で <code>loop</code> から値を返せる。C# に対応するものはない。</li>
+    <li>末尾のセミコロンの有無で戻り値が変わる。型エラーの原因はまずここ。</li>
+  </ul>
+</div>

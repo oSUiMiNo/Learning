@@ -1,0 +1,252 @@
+<p>
+前の章で「関数に渡すと所有権も渡ってしまう」問題が出ました。
+その解決策が<strong>借用</strong>です。所有権を渡さずに、値を使わせます。
+</p>
+
+<p>
+規則はたった 2 行です。この 2 行が、データ競合と
+「反復中にコレクションを変更した」系の不具合を根こそぎ防ぎます。
+</p>
+
+<!--figure: borrow-rules | 借用の規則。読む参照 &T は同時に何本でも作れるが、書く参照 &mut T は同時に 1 本だけで、しかも読む参照と同席できない。「書き手がいるときは、書き手ひとりきり」と覚えればよい。 -->
+
+<h2>読む借用</h2>
+
+<p>
+<code>&amp;</code> を付けると「借りる」になります。所有権は動きません。
+</p>
+
+<div class="src" data-lang="rust">
+fn total(numbers: &amp;[i32]) -> i32 {
+    numbers.iter().sum()
+}
+
+let numbers = vec![1, 2, 3];
+println!("{}", total(&amp;numbers));   // 貸すだけ
+println!("{numbers:?}");           // だから後でも使える
+</div>
+
+<div class="note">
+  <span class="note-title">引数は &amp;[T] や &amp;str で受けるのが基本</span>
+  <p>
+    読むだけの引数は、<code>&amp;Vec&lt;i32&gt;</code> より <code>&amp;[i32]</code>、
+    <code>&amp;String</code> より <code>&amp;str</code> で受けるのが定石です。
+    そのほうが渡せるものが増えるからです。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>受け方</th><th>渡せるもの</th></tr></thead>
+    <tbody>
+      <tr><td><code>&amp;Vec&lt;i32&gt;</code></td><td><code>Vec</code> だけ</td></tr>
+      <tr><td><strong><code>&amp;[i32]</code></strong></td><td><code>Vec</code>、配列、スライス</td></tr>
+      <tr><td><code>&amp;String</code></td><td><code>String</code> だけ</td></tr>
+      <tr><td><strong><code>&amp;str</code></strong></td><td><code>String</code>、文字列リテラル</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>&amp;Vec</code> で受けていると clippy が
+    「<code>&amp;[T]</code> にしなさい」と教えてくれます。
+  </p>
+</div>
+
+<h2>書く借用</h2>
+
+<p>
+書き換えたいときは <code>&amp;mut</code> です。
+<strong>貸す側にも <code>mut</code> が必要</strong>な点に注意してください。
+</p>
+
+<div class="src" data-lang="rust">
+fn double_all(numbers: &amp;mut [i32]) {
+    for n in numbers.iter_mut() {
+        *n *= 2;              // * で中身に触る
+    }
+}
+
+let mut scores = vec![10, 20, 30];   // mut が必要
+double_all(&amp;mut scores);
+</div>
+
+<p>
+<code>mut</code> を付け忘れると、こうなります。
+</p>
+
+<!--term: err-e0596-borrow-immutable-as-mutable | mut でない変数に対して push を呼んだ場合。「push は &mut self を要求する」ことと、「変数を mut にせよ」という提案が出ている。 -->
+
+<div class="note pitfall">
+  <span class="note-title">「メソッドを呼んだだけなのに mut がないと言われる」</span>
+  <p>
+    <code>push</code>、<code>sort</code>、<code>insert</code> のように
+    中身を変えるメソッドは <code>&amp;mut self</code> を要求します。
+    つまり<strong>メソッドを呼ぶだけでも書く借用が発生します</strong>。
+  </p>
+  <p>
+    エラーに <code>cannot borrow ... as mutable</code> と出たら、
+    変数の宣言に <code>mut</code> を足すだけで直ります。
+  </p>
+</div>
+
+<h2>2 つの規則を破ってみる</h2>
+
+<p>
+規則の 1 つ目、「<code>&amp;mut</code> は 1 本だけ」を破るとこうなります。
+</p>
+
+<!--term: err-e0499-two-mutable-borrows | &mut を 2 本作った場合。「1 度に 2 回以上、可変として借用できない」とはっきり言われる。 -->
+
+<p>
+2 つ目、「読む借用と書く借用は同席できない」を破るとこうです。
+</p>
+
+<!--term: err-e0502-mutable-and-immutable | 読む借用が生きている間に push を呼んだ場合。push が内部で &mut を必要とするため、先に作った &numbers[0] とぶつかる。 -->
+
+<div class="note csharp">
+  <span class="note-title">これは C# の「反復中の変更」と同じ問題</span>
+  <p>
+    C# で次のように書くと、実行時に
+    <code>InvalidOperationException</code> が飛びます。
+  </p>
+  <div class="src" data-lang="csharp" data-file="C#">
+foreach (var item in list) {
+    list.Add(item);    // 実行時に例外
+}
+  </div>
+  <p>
+    Rust の E0502 は<strong>まったく同じ問題を、コンパイル時に止めたもの</strong>です。
+    C# は「列挙中に変更されたかどうか」を実行時のバージョン番号で見張っていますが、
+    Rust は借用の規則で構造的に防いでいます。
+  </p>
+  <p>
+    つまりこのエラーは、Rust がうるさいのではなく
+    <strong>C# なら本番で落ちていた不具合を、手元で見つけてくれた</strong>ということです。
+  </p>
+</div>
+
+<h2>借用はいつ終わるのか</h2>
+
+<p>
+ここが分かると、借用検査が急に扱いやすくなります。
+<strong>借用はスコープの終わりではなく、「最後に使った場所」で終わります。</strong>
+</p>
+
+<!--figure: nll | 同じコードが、2015 年ごろの Rust ではエラーになり、いまは通る。借用の寿命が「宣言からスコープの終わりまで」から「宣言から最後の使用まで」に改良されたため（非語彙的ライフタイム / NLL）。 -->
+
+<p>
+これは実際に通ります。<strong>通ることを確かめた例</strong>として置いてあります。
+</p>
+
+<!--code: errors/nll-borrow-ends-at-last-use.rs-->
+
+<p>
+この教材では、こうした「通る例」もコンパイルして確認しています。
+上のファイルの先頭に <code>expect: ok</code> と書いてあるのがその印です。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">古い記事の「Rust は厳しすぎる」を信じないこと</span>
+  <p>
+    2018 年より前に書かれた記事は、この改良より前のものです。
+    「借用検査が厳しくて書けない」「一度変数に入れないと通らない」といった記述は、
+    <strong>いまは当てはまらないことがあります</strong>。
+  </p>
+  <p>
+    対処法は単純です。<strong>まず素直に書いて、コンパイルしてみる。</strong>
+    通ればそれでよいのです。
+  </p>
+</div>
+
+<h2>スライス — 借用の応用</h2>
+
+<p>
+スライスは「一部分を借りる」書き方です。コピーは起きません。
+</p>
+
+<!--figure: slice | スライスは元のデータを指す「窓」。ptr と len だけを持ち、要素は 1 つもコピーしない。だから元のデータが生きている間しか使えない。 -->
+
+<div class="src" data-lang="rust">
+let all = vec![10, 20, 30, 40, 50];
+let window = &amp;all[1..4];       // [20, 30, 40] を指す窓
+println!("{window:?}");
+</div>
+
+<div class="note csharp">
+  <span class="note-title">Span&lt;T&gt; / ReadOnlySpan&lt;T&gt; に相当</span>
+  <p>
+    C# の <code>Span&lt;T&gt;</code> とほぼ同じ考え方です。
+    どちらも「コピーせずに一部を見る」ためのもので、
+    元のデータより長生きできないという制約も同じです。
+  </p>
+  <p>
+    違うのは、C# では <code>Span</code> を使うのが最適化のための選択なのに対し、
+    <strong>Rust ではスライスが標準的な受け渡し方法</strong>だという点です。
+  </p>
+</div>
+
+<h2>あと 2 つのよく出るエラー</h2>
+
+<p>
+借用まわりで残り 2 つ、よく踏むものがあります。
+</p>
+
+<!--term: err-e0505-move-while-borrowed | 借用が生きている間に、元の値を move しようとした場合。move してしまうと借用の指す先が無くなるため止められる。 -->
+
+<!--term: err-e0507-cannot-move-out-of-borrow | 借りているものの中身を持ち出そうとした場合。「借用の後ろにある値を move できない」と言われ、clone するか to_owned するかの提案が出る。 -->
+
+<div class="note">
+  <span class="note-title">E0507 の直し方</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やり方</th><th>書き方</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td>複製する</td><td><code>config.name.clone()</code></td><td>新しく確保する</td></tr>
+      <tr><td>参照を返す</td><td><code>fn take_name(c: &amp;Config) -&gt; &amp;str { &amp;c.name }</code></td><td>借用のまま返す。ふつうはこれ</td></tr>
+      <tr><td>所有権をもらう</td><td><code>fn take_name(c: Config) -&gt; String { c.name }</code></td><td>呼び出し側が手放してよいなら</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2>まとめて動かしてみる</h2>
+
+<!--code: 07-borrowing/src/main.rs-->
+
+<!--term: run-borrowing | 実行結果。3 番目の項目で「借用が最後の使用で終わる」ことを、実際に push が通る形で確かめている。 -->
+
+<div class="note deep">
+  <span class="note-title">借用検査で行き詰まったときの手順</span>
+  <p>
+    慣れるまでは必ず詰まります。次の順に試してください。
+  </p>
+  <ol>
+    <li><strong>借用の範囲を狭める。</strong>借りた値を早く使い切る、あるいは <code>{}</code> で囲む。</li>
+    <li><strong>値を取り出してしまう。</strong><code>let last = *v.last().unwrap();</code> のように <code>*</code> で中身をコピーすれば借用は終わる。</li>
+    <li><strong><code>clone()</code> する。</strong>遅くなるが動く。まず動かすことが大事。</li>
+    <li><strong>設計を変える。</strong>関数を分ける、所有権を渡す形にする、第 18 章の <code>Rc</code>/<code>RefCell</code> を使う。</li>
+  </ol>
+  <p>
+    <strong>1 から順に試して、通ったところで止めてよい</strong>のです。
+    最初から最適な形を狙わなくて構いません。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/07-borrowing</code> を動かしてください。</li>
+    <li><code>let first = &amp;numbers[0];</code> を書いた直後に <code>numbers.push(4);</code> を置き、<strong>その後で</strong> <code>first</code> を使うとエラーになることを確認してください。使う順番を入れ替えると通ります。</li>
+    <li><code>double_all</code> の引数を <code>&amp;mut [i32]</code> から <code>&amp;[i32]</code> に変えて、どんなエラーになるか見てください。</li>
+    <li><code>&amp;all[1..4]</code> の範囲を <code>&amp;all[1..9]</code> にして実行してください。<strong>これはコンパイルは通り、実行時に panic します。</strong>範囲の検査は実行時であることが分かります。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>&amp;T</code> は読む借用、何本でも作れる。<code>&amp;mut T</code> は書く借用、<strong>同時に 1 本だけ</strong>。</li>
+    <li>読む借用と書く借用は<strong>同席できない</strong>。C# の「反復中の変更」をコンパイル時に止めたもの。</li>
+    <li>借用はスコープの終わりではなく<strong>最後に使った場所</strong>で終わる（NLL）。</li>
+    <li>引数は <code>&amp;[T]</code> / <code>&amp;str</code> で受けるのが定石。</li>
+    <li>行き詰まったら「範囲を狭める → 値を取り出す → clone する → 設計を変える」の順に試す。</li>
+  </ul>
+</div>

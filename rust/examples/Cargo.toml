@@ -1,0 +1,34 @@
+# 章ごとのサンプルをまとめたワークスペース。
+#
+# 各章のフォルダは、そのままコピーして持ち出しても単体で動く普通の
+# Cargo プロジェクトです。ここでワークスペースにまとめているのは、
+# ビルド結果（target/）を 1 か所に集めてディスクとビルド時間を節約するためだけで、
+# 学習上の意味はありません。
+#
+# errors/ は「わざとコンパイルが通らないコード」を置く場所なので、
+# パッケージではなくただの .rs ファイル群です。ワークスペースには含めません。
+
+[workspace]
+resolver = "3"
+members = [
+    "03-cargo",
+    "04-variables",
+    "05-control-flow",
+    "06-ownership",
+    "07-borrowing",
+    "08-strings",
+    "09-structs",
+    "10-enums",
+    "11-errors",
+    "12-collections",
+    "13-iterators",
+    "14-traits",
+    "15-lifetimes",
+    "16-modules",
+    "17-testing",
+    "18-smart-pointers",
+    "19-concurrency",
+    "20-async",
+    "21-cli-app",
+    "99-guessing",
+]

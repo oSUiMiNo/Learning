@@ -1,0 +1,15 @@
+{
+  "name": "err-e0277-missing-debug",
+  "title": "Windows PowerShell",
+  "note": "e0277-missing-debug.rs のコンパイルエラー",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc e0277-missing-debug.rs",
+      "output": "\u001b[1m\u001b[91merror[E0277]\u001b[0m\u001b[1m: `Point` doesn't implement `Debug`\u001b[0m\r\n  \u001b[1m\u001b[94m--> \u001b[0me0277-missing-debug.rs:16:15\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m16\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     println!(\"{p:?}\"); // Debug を実装していない\r\n   \u001b[1m\u001b[94m|\u001b[0m               \u001b[1m\u001b[91m^^^^^\u001b[0m \u001b[1m\u001b[91m`Point` cannot be formatted using `{:?}` because it doesn't implement `Debug`\u001b[0m\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n   \u001b[1m\u001b[94m= \u001b[0m\u001b[1mhelp\u001b[0m: the trait `Debug` is not implemented for `Point`\r\n   \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: add `#[derive(Debug)]` to `Point` or manually `impl Debug for Point`\r\n\u001b[1m\u001b[96mhelp\u001b[0m: consider annotating `Point` with `#[derive(Debug)]`\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m 9\u001b[0m \u001b[92m+ #[derive(Debug)]\u001b[0m\r\n\u001b[1m\u001b[94m10\u001b[0m \u001b[1m\u001b[94m|\u001b[0m struct Point {\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\r\n\u001b[1m\u001b[91merror\u001b[0m\u001b[1m: aborting due to 1 previous error\u001b[0m\r\n\r\n\u001b[1mFor more information about this error, try `rustc --explain E0277`.\u001b[0m\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

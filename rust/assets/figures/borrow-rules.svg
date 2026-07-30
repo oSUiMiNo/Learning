@@ -1,0 +1,54 @@
+<svg viewBox="0 0 720 320" role="img" aria-label="借用の規則。読む参照は同時に何本でも作れるが、書く参照は 1 本だけで、読む参照と同席できない。">
+  <rect x="1" y="1" width="718" height="318" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="32" class="d-head-accent">どちらか一方しか成立しない。両方同時は不可</text>
+
+  <!-- 左: 読む参照は何本でも -->
+  <rect x="28" y="48" width="322" height="180" rx="10" class="d-tip"/>
+  <text x="189" y="74" text-anchor="middle" class="d-title">読むだけなら何本でも</text>
+  <text x="189" y="94" text-anchor="middle" class="d-code">&amp;T</text>
+
+  <rect x="146" y="176" width="86" height="34" rx="8" class="d-box"/>
+  <text x="189" y="198" text-anchor="middle" class="d-code">data</text>
+
+  <rect x="48" y="110" width="74" height="30" rx="15" class="d-box"/>
+  <text x="85" y="130" text-anchor="middle" class="d-code">&amp;data</text>
+  <rect x="140" y="110" width="74" height="30" rx="15" class="d-box"/>
+  <text x="177" y="130" text-anchor="middle" class="d-code">&amp;data</text>
+  <rect x="232" y="110" width="74" height="30" rx="15" class="d-box"/>
+  <text x="269" y="130" text-anchor="middle" class="d-code">&amp;data</text>
+
+  <path d="M85 140 L170 176" class="d-line"/>
+  <path d="M177 140 L184 176" class="d-line"/>
+  <path d="M269 140 L208 176" class="d-line"/>
+  <text x="189" y="162" text-anchor="middle" class="d-head-tip">同時に成立する</text>
+
+  <!-- 右: 書く参照は 1 本だけ -->
+  <rect x="370" y="48" width="322" height="180" rx="10" class="d-accent"/>
+  <text x="531" y="74" text-anchor="middle" class="d-title">書くなら 1 本だけ</text>
+  <text x="531" y="94" text-anchor="middle" class="d-code">&amp;mut T</text>
+
+  <rect x="488" y="176" width="86" height="34" rx="8" class="d-box"/>
+  <text x="531" y="198" text-anchor="middle" class="d-code">data</text>
+
+  <rect x="404" y="110" width="88" height="30" rx="15" class="d-fill-accent"/>
+  <text x="448" y="130" text-anchor="middle" class="d-code" fill="#fff">&amp;mut data</text>
+
+  <rect x="512" y="110" width="88" height="30" rx="15" class="d-dead"/>
+  <text x="556" y="130" text-anchor="middle" class="d-dead-text">&amp;mut data</text>
+  <path d="M518 114 L594 136" class="d-strike"/>
+  <path d="M594 114 L518 136" class="d-strike"/>
+
+  <rect x="612" y="110" width="62" height="30" rx="15" class="d-dead"/>
+  <text x="643" y="130" text-anchor="middle" class="d-dead-text">&amp;data</text>
+  <path d="M618 114 L668 136" class="d-strike"/>
+  <path d="M668 114 L618 136" class="d-strike"/>
+
+  <path d="M448 140 L512 176" class="d-flow"/>
+  <text x="531" y="162" text-anchor="middle" class="d-head-warn">2 本目も、読む参照との同席も不可</text>
+
+  <!-- 下部 -->
+  <rect x="28" y="244" width="664" height="60" rx="10" class="d-dash"/>
+  <text x="48" y="268" class="d-head-accent">この 1 行だけ覚えれば足りる</text>
+  <text x="48" y="290" class="d-mute">「書き手がいるときは、書き手ひとりきり」。単一スレッドでも同じ規則が働く。</text>
+</svg>

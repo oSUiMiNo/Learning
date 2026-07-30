@@ -1,0 +1,272 @@
+<p>
+Rust の準備は <strong>rustup を入れる</strong>、これだけです。
+コンパイラ・パッケージ管理・整形・静的解析が全部まとめて付いてきます。
+</p>
+
+<p>
+ただし <strong>Windows にはもう 1 つ必要なものがあります</strong>。
+ここを知らずに進めると、最初の <code>cargo run</code> で
+「リンカが見つからない」と言われて止まります。先に片付けておきましょう。
+</p>
+
+<!--figure: toolchain | rustup を 1 つ入れると、その下に stable などの toolchain が入り、さらにその中に rustc・cargo・clippy・rustfmt が入る。Windows だけは、最後にリンクする工程で OS 側の道具（Microsoft C++ ビルドツール）が別途必要になる。 -->
+
+<h2>必要なもの</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>要るもの</th><th>条件</th></tr></thead>
+  <tbody>
+    <tr><td>OS</td><td>Windows 11（10 でも同じ手順で動きます）</td></tr>
+    <tr><td>rustup</td><td>これを入れると Rust 本体が付いてくる</td></tr>
+    <tr><td><strong>Microsoft C++ ビルドツール</strong></td><td><strong>Windows では必須。</strong>インストーラが案内してくれる</td></tr>
+    <tr><td>エディタ</td><td>VS Code を推奨（第 2 章で設定します）</td></tr>
+    <tr><td>ディスク</td><td>3 GB 程度。ビルドツールが大きい</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">なぜ C++ の道具が要るのか</span>
+  <p>
+    .NET は自前のランタイムとリンカを持っているので、SDK 1 つで完結します。
+    Rust は<strong>ネイティブの実行ファイルを直接吐く</strong>ため、
+    最後に「オブジェクトファイルをつないで .exe にする」工程が必要です。
+    Windows では、この工程を担う <code>link.exe</code> と
+    Windows API のライブラリが Visual Studio 側に入っています。
+  </p>
+  <p>
+    Rust がそれを同梱しないのは、Microsoft のライセンス上、再配布できないからです。
+    そのため「Microsoft の道具を自分で入れてもらう」形になっています。
+  </p>
+</div>
+
+<h2>rustup を入れる</h2>
+
+<p>
+<a href="https://rustup.rs/">rustup.rs</a> を開くと、
+Windows なら <code>rustup-init.exe</code> のダウンロードリンクが出ます。
+これを実行します。
+</p>
+
+<div class="note">
+  <span class="note-title">winget でも入れられます</span>
+  <p>
+    コマンドで済ませたい場合は、PowerShell で次のように打っても入ります。
+    入るものは同じで、この後の画面もほぼ同じように出ます。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+winget install Rustlang.Rustup
+  </div>
+</div>
+
+<p>
+<code>rustup-init.exe</code> を実行すると、黒い画面が開いてこう出ます。
+</p>
+
+<!--termx: rustup-init | インストーラの最初の画面。既定の設定が一覧で示され、そのまま Enter を押せばよい形になっている。default host triple が x86_64-pc-windows-msvc になっていることを確認しておく。 -->
+
+<p>
+見るべきところは <code>Current installation options:</code> の 4 行です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>既定値</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>default host triple</code></td><td><code>x86_64-pc-windows-msvc</code></td><td>作る実行ファイルの種類。これでよい</td></tr>
+    <tr><td><code>default toolchain</code></td><td><code>stable</code></td><td>安定版。学習でも実務でもこれ</td></tr>
+    <tr><td><code>profile</code></td><td><code>default</code></td><td>コンパイラ＋ドキュメント＋clippy＋rustfmt</td></tr>
+    <tr><td><code>modify PATH variable</code></td><td><code>yes</code></td><td>コマンドがどこからでも打てるようになる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+全部そのままでよいので、<strong><code>1</code> を選ぶか、そのまま Enter</strong> を押します。
+</p>
+
+<div class="note deep">
+  <span class="note-title">ARM 版の Windows を使っている場合</span>
+  <p>
+    Snapdragon などの ARM 機では <code>aarch64-pc-windows-msvc</code> と出ます。
+    それが正しいので、そのまま進めてください。
+    この教材の内容はどちらでも変わりません。
+  </p>
+</div>
+
+<h2>C++ ビルドツールが無いときの画面</h2>
+
+<p>
+Visual Studio を入れたことがない環境では、
+先へ進む前にこの画面が出ます。<strong>ここが Windows 固有の関門です。</strong>
+</p>
+
+<!--termx: rustup-init-msvc | C++ ビルドツールが見つからないときに出る確認画面。1 を選べば、rustup が Visual Studio Community のインストーラを呼んで自動で入れてくれる。 -->
+
+<p>
+<strong><code>1</code> を選んでください。</strong>
+rustup が Visual Studio Community のインストーラを起動して、必要な部品だけ入れてくれます。
+数 GB のダウンロードがあるので、ここは時間がかかります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">古い記事では「手動で入れろ」と書かれています</span>
+  <p>
+    以前の rustup にはこの自動インストールがなく、
+    「先に Visual Studio を入れてから rustup を実行せよ」という手順が一般的でした。
+    そのため、そう書いてある記事が今もたくさんあります。
+  </p>
+  <p>
+    いまは <strong>rustup が面倒を見てくれる</strong>ので、先に何も入れなくて大丈夫です。
+    もし手動で入れたい場合は <code>2</code> を選び、
+    Visual Studio Installer で
+    <strong>「C++ によるデスクトップ開発」</strong>にチェックを入れます。
+  </p>
+  <p>
+    <code>3</code>（入れない）は、GNU ABI を狙うと分かっている人向けです。
+    <strong>初心者は選ばないでください。</strong>後で必ず詰まります。
+  </p>
+</div>
+
+<p>
+すべて終わると、こう出ます。
+</p>
+
+<!--termx: rustup-init-done | インストール完了の画面。PATH を反映させるためにターミナルを開き直す必要がある、と書かれている。 -->
+
+<div class="note pitfall">
+  <span class="note-title">ターミナルを開き直すこと</span>
+  <p>
+    完了画面にも書いてありますが、<strong>いま開いているターミナルでは
+    <code>cargo</code> がまだ使えません</strong>。
+    PATH の変更は、新しく開いたターミナルにしか反映されないためです。
+  </p>
+  <p>
+    「入れたのに <code>cargo は認識されていません</code> と言われる」の原因は、
+    ほぼこれです。PowerShell を閉じて開き直してください。
+  </p>
+</div>
+
+<h2>ちゃんと入ったか確かめる</h2>
+
+<p>
+新しく PowerShell を開いて、3 つ打ちます。
+</p>
+
+<!--term: verify-install | 3 つのコマンドが版を答えれば成功。ここに出る番号が、このページ上部のバッジと一致していれば、この教材とまったく同じ環境で学べる。 -->
+
+<p>
+版の番号は読んでいる時期によって違って当然です。
+大事なのは<strong>3 つとも答えが返ってくること</strong>です。
+</p>
+
+<p>
+いま入っているものの全体像は <code>rustup show</code> で見られます。
+</p>
+
+<!--termx: rustup-show | インストールされた toolchain と、既定のターゲットの確認。Windows では host が x86_64-pc-windows-msvc になる。 -->
+
+<div class="note">
+  <span class="note-title">更新とアンインストール</span>
+  <p>
+    Rust は 6 週間ごとに新しい版が出ます。上げるのは 1 行です。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+rustup update
+  </div>
+  <p>
+    やめたくなったときも 1 行で、入れたものが全部消えます。
+    レジストリの PATH も元に戻ります。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+rustup self uninstall
+  </div>
+</div>
+
+<h2>Windows でつまずきやすいところ</h2>
+
+<div class="note pitfall">
+  <span class="note-title">「link.exe が見つかりません」と言われたら</span>
+  <p>
+    次のようなエラーで <code>cargo build</code> が止まる場合、
+    C++ ビルドツールが入っていません。
+  </p>
+  <div class="src" data-lang="text" data-file="エラー">
+error: linker `link.exe` not found
+  |
+  = note: program not found
+
+note: the msvc targets depend on the msvc linker but `link.exe` was not found
+
+note: please ensure that Visual Studio 2017 or later, or Build Tools for Visual Studio
+      were installed with the Visual C++ option.
+  </div>
+  <p>
+    メッセージの言うとおり、Visual Studio Installer で
+    <strong>「C++ によるデスクトップ開発」</strong>を追加すれば直ります。
+    <code>rustup-init.exe</code> をもう一度実行して <code>1</code> を選ぶのでも構いません。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">ビルドが妙に遅いとき</span>
+  <p>
+    Rust のビルドは大量の小さいファイルを <code>target</code> フォルダに書きます。
+    Windows Defender のリアルタイム保護がそれを 1 つずつ検査するので、
+    体感で 2〜3 倍遅くなることがあります。
+  </p>
+  <p>
+    気になる場合は、Windows セキュリティの
+    「ウイルスと脅威の防止」→「除外の追加」で、
+    作業フォルダと <code>%USERPROFILE%\.cargo</code> を除外に入れると改善します。
+    （業務の端末では、社内の方針を確認してから行ってください。）
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">target フォルダが大きくなる</span>
+  <p>
+    <code>target</code> には中間生成物が全部入るので、
+    小さなプロジェクトでも数百 MB、依存が多いと数 GB になります。
+    消しても困りません。次のビルドで作り直されるだけです。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+cargo clean
+  </div>
+  <p>
+    <code>target</code> は Git に入れないのが決まりです。
+    <code>cargo new</code> は <code>.gitignore</code> を自動で用意してくれます。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">日本語のパスとパスの長さ</span>
+  <p>
+    作業フォルダのパスに日本語や空白が入っていても、いまの Rust は動きます。
+    ただし依存が深いプロジェクトでは、Windows のパス長制限（260 文字）に当たることがあります。
+    <code>C:\rust\</code> のような短い場所に置いておくと安心です。
+    この教材のターミナル画面も <code>C:\rust\</code> を前提にしています。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>rustc --version</code> の出力を、このページ上部のバッジと見比べてください。一致していれば理想的です。</li>
+    <li><code>rustup show</code> を打って、<code>host</code> が <code>x86_64-pc-windows-msvc</code>（ARM 機なら <code>aarch64-...</code>）になっていることを確認してください。</li>
+    <li><code>rustup doc</code> と打ってみてください。<strong>ネットに繋がっていなくても読める</strong>公式ドキュメントがブラウザで開きます。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>準備は rustup を入れるだけ。コンパイラ・cargo・clippy・rustfmt がまとめて入る。</li>
+    <li><strong>Windows は C++ ビルドツールが別途必要。</strong>いまは rustup が自動で入れてくれる（選択肢の <code>1</code>）。</li>
+    <li>インストール後は<strong>ターミナルを開き直す</strong>。「cargo が無い」の原因はほぼこれ。</li>
+    <li><code>link.exe not found</code> は C++ ビルドツール不足の合図。</li>
+    <li>更新は <code>rustup update</code>、削除は <code>rustup self uninstall</code>。</li>
+    <li><code>target</code> は消してよい生成物。Git には入れない。</li>
+  </ul>
+</div>

@@ -1,0 +1,15 @@
+{
+  "name": "run-errors",
+  "title": "Windows PowerShell",
+  "note": "examples/11-errors の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\11-errors>",
+      "command": "cargo run --quiet",
+      "output": "── 1. 成功と失敗を並べて見る ──\r\n  1: OK   http:80 / https:443\r\n  2: NG   設定 https_port がありません\r\n  3: NG   設定 http_port が数値として読めません（invalid digit found in string）\r\n  4: NG   設定 http_port の値 99999 は範囲外です\r\n\r\n── 2. 原因の連鎖を辿る ──\r\n  一番外のエラー: 設定 http_port が数値として読めません（invalid digit found in string）\r\n  その原因      : invalid digit found in string\r\n\r\n── 3. panic! は「もう続けられない」とき ──\r\n  unwrap = 42\r\n  expect = 7\r\n  Result を無視すると警告が出る。C# の「例外を握り潰す」が起きにくい\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

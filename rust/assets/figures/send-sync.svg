@@ -1,0 +1,39 @@
+<svg viewBox="0 0 720 260" role="img" aria-label="Send と Sync が、データ競合をコンパイル時に止める仕組みを示す図。">
+  <rect x="1" y="1" width="718" height="258" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">スレッド安全性が「型」として表されている</text>
+
+  <!-- Send -->
+  <rect x="24" y="44" width="330" height="94" rx="9" class="d-tip"/>
+  <text x="189" y="66" text-anchor="middle" class="d-title">Send</text>
+  <text x="189" y="86" text-anchor="middle" class="d-mute">別のスレッドへ「移して」よい型</text>
+  <rect x="52" y="98" width="120" height="28" rx="14" class="d-box"/>
+  <text x="112" y="117" text-anchor="middle" class="d-code">スレッド A</text>
+  <path d="M172 112 L206 112" class="d-flow"/>
+  <path d="M206 112 l-9 -5 v10 z" class="d-arrowhead"/>
+  <rect x="206" y="98" width="120" height="28" rx="14" class="d-box"/>
+  <text x="266" y="117" text-anchor="middle" class="d-code">スレッド B</text>
+
+  <!-- Sync -->
+  <rect x="366" y="44" width="330" height="94" rx="9" class="d-deep"/>
+  <text x="531" y="66" text-anchor="middle" class="d-title">Sync</text>
+  <text x="531" y="86" text-anchor="middle" class="d-mute">複数のスレッドから同時に「参照して」よい型</text>
+  <rect x="394" y="98" width="94" height="28" rx="14" class="d-box"/>
+  <text x="441" y="117" text-anchor="middle" class="d-code">A</text>
+  <rect x="500" y="98" width="60" height="28" rx="14" class="d-box"/>
+  <text x="530" y="117" text-anchor="middle" class="d-code">値</text>
+  <rect x="572" y="98" width="94" height="28" rx="14" class="d-box"/>
+  <text x="619" y="117" text-anchor="middle" class="d-code">B</text>
+  <path d="M488 112 L500 112" class="d-flow-deep"/>
+  <path d="M572 112 L560 112" class="d-flow-deep"/>
+
+  <!-- 表 -->
+  <rect x="24" y="152" width="672" height="94" rx="9" class="d-box"/>
+  <text x="44" y="174" class="d-head-accent">だからこうなる</text>
+  <g class="d-code">
+    <text x="44" y="198">Arc&lt;T&gt;   … Send + Sync   → スレッドに渡せる</text>
+    <text x="44" y="220">Rc&lt;T&gt;    … どちらでもない  → 渡そうとするとコンパイルエラー</text>
+    <text x="44" y="240">Mutex&lt;T&gt; … 中身を守る      → Arc&lt;Mutex&lt;T&gt;&gt; が定番の形</text>
+  </g>
+  <text x="430" y="220" class="d-head-warn">実行時のバグではなく、型の不一致として現れる</text>
+</svg>

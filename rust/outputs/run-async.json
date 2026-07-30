@@ -1,0 +1,15 @@
+{
+  "name": "run-async",
+  "title": "Windows PowerShell",
+  "note": "examples/20-async の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\20-async>",
+      "command": "cargo run --quiet",
+      "output": "── 1. Future は呼んだだけでは走らない ──\r\n  呼んだ直後の経過時間 = 59ns\r\n  ← 200ms 待つ関数を呼んだのに、ほぼ 0 秒\r\n  await した後 = 200.725352ms\r\n  結果 = 走らせていない仕事（200ms）\r\n\r\n── 2. 直列に await すると足し算になる ──\r\n  A（100ms） と B（100ms）\r\n  かかった時間 = 203.602495ms（100 + 100）\r\n\r\n── 3. join! なら同時に走る ──\r\n  A（100ms） と B（100ms）\r\n  かかった時間 = 101.779222ms（並行に進んだ）\r\n\r\n── 4. spawn すると即座に走り始める ──\r\n  60ms 経過。spawn した仕事は裏で進んでいる\r\n  spawn した仕事（120ms） / 合計 121.30517ms\r\n\r\n── 5. 先に終わったほうを採る ──\r\n  勝ち: 速いほう（30ms）\r\n\r\n── 6. タイムアウト ──\r\n  50ms で打ち切った\r\n\r\n── 7. Result と組み合わせる ──\r\n  42 → 42\r\n  よんじゅうに → 失敗（invalid digit found in string）\r\n\r\n── 8. まとめ ──\r\n  ・async fn を呼ぶ = Future を作るだけ。まだ走らない\r\n  ・await するか spawn するまで進まない\r\n  ・ランタイム（tokio など）は自分で入れる\r\n  ・「await を忘れた」は警告として出る。C# の投げっぱなしより気づきやすい\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

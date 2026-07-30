@@ -1,0 +1,40 @@
+{
+  "name": "cli-app-demo",
+  "title": "Windows PowerShell",
+  "note": "作った ToDo ツールを動かす",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\todo>",
+      "command": "todo add 牛乳を買う --priority high",
+      "output": "追加しました: [1] 牛乳を買う\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\todo>",
+      "command": "todo add 本を返す",
+      "output": "追加しました: [2] 本を返す\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\todo>",
+      "command": "todo add 請求書を出す --priority high",
+      "output": "追加しました: [3] 請求書を出す\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\todo>",
+      "command": "todo done 2",
+      "output": "終わりにしました: [2] 本を返す\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\todo>",
+      "command": "todo list",
+      "output": "未 ★ [1] 牛乳を買う\r\n未 ★ [3] 請求書を出す\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\todo>",
+      "command": "todo stats",
+      "output": "全部で 3 件、終わったのが 1 件\r\n進捗 33%\r\n急ぎのものが 2 件残っています\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

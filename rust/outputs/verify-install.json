@@ -1,0 +1,25 @@
+{
+  "name": "verify-install",
+  "title": "Windows PowerShell",
+  "note": "インストール直後の確認",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc --version",
+      "output": "rustc 1.97.1 (8bab26f4f 2026-07-14)\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "cargo --version",
+      "output": "cargo 1.97.1 (c980f4866 2026-06-30)\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustup --version",
+      "output": "rustup 1.29.0 (28d1352db 2026-03-05)\r\n\u001b[1minfo:\u001b[0m This is the version for the rustup toolchain manager, not the rustc compiler.\r\n\u001b[1minfo:\u001b[0m the currently active `rustc` version is `rustc 1.97.1 (8bab26f4f 2026-07-14)`\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

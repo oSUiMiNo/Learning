@@ -35,7 +35,8 @@ BOOK = ROOT / "book"
 EXAMPLES = ROOT / "examples"
 ASSETS = ROOT / "assets"
 FIGURES = ASSETS / "figures"
-DOCS = REPO / "docs"
+SITE = REPO / "docs"          # GitHub Pages の公開ルート（教材一覧のハブ）
+DOCS = SITE / "qt6-widgets"   # この教材の出力先。ハブの下に 1 冊ぶんとして入る
 
 sys.path.insert(0, str(BOOK))
 import toc  # noqa: E402
@@ -530,7 +531,8 @@ def main() -> int:
     out_assets.mkdir(parents=True, exist_ok=True)
     for name in ("style.css", "book.js"):
         shutil.copy2(ASSETS / name, out_assets / name)
-    (DOCS / ".nojekyll").write_text("", encoding="utf-8")
+    # .nojekyll はサイト全体に効かせたいので、教材ごとではなく公開ルートに置く。
+    (SITE / ".nojekyll").write_text("", encoding="utf-8")
     (DOCS / "assets" / "versions.json").write_text(
         json.dumps(versions, ensure_ascii=False, indent=2), encoding="utf-8")
 

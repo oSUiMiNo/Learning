@@ -1,0 +1,30 @@
+<svg viewBox="0 0 720 250" role="img" aria-label="C# の using と Rust の Drop の対応。using はスコープを書く必要があるが、Rust は所有者が消えた時点で自動的に drop が呼ばれる。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <!-- C# -->
+  <rect x="20" y="20" width="330" height="150" rx="10" class="d-cs"/>
+  <text x="185" y="44" text-anchor="middle" class="d-head-cs">C# — using を書いた範囲だけ</text>
+  <g class="d-code">
+    <text x="44" y="70">using (var f = File.Open(..))</text>
+    <text x="44" y="90">{</text>
+    <text x="60" y="110">f.Write(..);</text>
+    <text x="44" y="130">}  ← ここで Dispose()</text>
+  </g>
+  <text x="185" y="156" text-anchor="middle" class="d-head-warn">using を書き忘れると解放されない</text>
+
+  <!-- Rust -->
+  <rect x="370" y="20" width="330" height="150" rx="10" class="d-accent"/>
+  <text x="535" y="44" text-anchor="middle" class="d-head-accent">Rust — 持ち主がいなくなった時点で</text>
+  <g class="d-code">
+    <text x="394" y="70">{</text>
+    <text x="410" y="90">let f = File::open(..)?;</text>
+    <text x="410" y="110">// 使う</text>
+    <text x="394" y="130">}  ← ここで drop() が自動で</text>
+  </g>
+  <text x="535" y="156" text-anchor="middle" class="d-head-accent">書き忘れようがない</text>
+
+  <!-- 下 -->
+  <rect x="20" y="186" width="680" height="46" rx="10" class="d-dash"/>
+  <text x="40" y="206" class="d-head-accent">drop は自分では呼べない</text>
+  <text x="40" y="224" class="d-mute">早めに手放したいときは std::mem::drop(値) に所有権を渡す。二重解放が起こりえない作りになっている。</text>
+</svg>

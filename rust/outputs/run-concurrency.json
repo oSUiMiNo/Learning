@@ -1,0 +1,15 @@
+{
+  "name": "run-concurrency",
+  "title": "Windows PowerShell",
+  "note": "examples/19-concurrency の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\19-concurrency>",
+      "command": "cargo run --quiet",
+      "output": "── 1. スレッドを起こして待つ ──\r\n  スレッド 1 完了\r\n  スレッド 2 完了\r\n  スレッド 3 完了\r\n\r\n── 2. チャネルで値を渡す ──\r\n  受け取った = [\"仕事 1 の結果\", \"仕事 2 の結果\", \"仕事 3 の結果\"]\r\n\r\n── 3. Mutex で共有して書き換える ──\r\n  8 スレッド × 1000 回 = 8000\r\n\r\n── 4. 数を数えるだけなら Atomic ──\r\n  4 スレッド × 1000 回 = 4000\r\n\r\n── 5. スコープ付きスレッドなら借用できる ──\r\n  分けて合計 = 21（元の Vec を借用したまま渡せた）\r\n\r\n── 6. 何が守られているのか ──\r\n  Send  … 別のスレッドへ移してよい型\r\n  Sync  … 複数のスレッドから同時に参照してよい型\r\n  Rc は Send ではないので、スレッドに渡そうとするとコンパイルエラー\r\n  → データ競合が実行時のバグではなく、型の不一致として現れる\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "err-e0308-mismatched-types",
+  "title": "Windows PowerShell",
+  "note": "e0308-mismatched-types.rs のコンパイルエラー",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc e0308-mismatched-types.rs",
+      "output": "\u001b[1m\u001b[91merror[E0308]\u001b[0m\u001b[1m: mismatched types\u001b[0m\r\n  \u001b[1m\u001b[94m--> \u001b[0me0308-mismatched-types.rs:10:20\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m10\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let big: i64 = small; // i32 は i64 に自動では入らない\r\n   \u001b[1m\u001b[94m|\u001b[0m              \u001b[1m\u001b[94m---\u001b[0m   \u001b[1m\u001b[91m^^^^^\u001b[0m \u001b[1m\u001b[91mexpected `i64`, found `i32`\u001b[0m\r\n   \u001b[1m\u001b[94m|\u001b[0m              \u001b[1m\u001b[94m|\u001b[0m\r\n   \u001b[1m\u001b[94m|\u001b[0m              \u001b[1m\u001b[94mexpected due to this\u001b[0m\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[96mhelp\u001b[0m: you can convert an `i32` to an `i64`\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m10\u001b[0m \u001b[1m\u001b[94m| \u001b[0m    let big: i64 = small\u001b[92m.into()\u001b[0m; // i32 は i64 に自動では入らない\r\n   \u001b[1m\u001b[94m|\u001b[0m                         \u001b[92m+++++++\u001b[0m\r\n\r\n\u001b[1m\u001b[91merror\u001b[0m\u001b[1m: aborting due to 1 previous error\u001b[0m\r\n\r\n\u001b[1mFor more information about this error, try `rustc --explain E0308`.\u001b[0m\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

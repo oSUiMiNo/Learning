@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第9章 構造体と impl — クラスがない代わりに | Rust 入門</title>
+<meta name="description" content="Rust に class はありません。データは struct、ふるまいは impl に分けて書きます。そして継承がありません。その埋め合わせ方まで見ます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li class="is-current"><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 9 章<span class="dot">·</span>読了目安 14 分</p>
+        <h1>第9章 構造体と impl — クラスがない代わりに</h1>
+        <p class="lede">Rust に class はありません。データは struct、ふるまいは impl に分けて書きます。そして継承がありません。その埋め合わせ方まで見ます。</p>
+      </header>
+      <div class="prose">
+<p>
+Rust に <code>class</code> はありません。
+データは <code>struct</code>、ふるまいは <code>impl</code> に分けて書きます。
+そして<strong>継承がありません</strong>。
+</p>
+
+<p>
+慌てなくて大丈夫です。C# でも「継承より合成」と言われますし、
+Rust はその方針を言語レベルで徹底しただけです。
+埋め合わせの方法もちゃんとあります。
+</p>
+
+<h2 id="データとふるまいを分けて書く">データとふるまいを分けて書く</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">Title</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">uint</span><span class="w"> </span><span class="n">Pages</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nf">Book</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="kt">uint</span><span class="w"> </span><span class="n">pages</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">Title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">title</span><span class="p">;</span><span class="w"> </span><span class="n">Pages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pages</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsLong</span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Pages</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">300</span><span class="p">;</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">1 つのクラスに全部入れる</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">pages</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">pages</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="bp">Self</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nc">title</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w"> </span><span class="n">pages</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">is_long</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">pages</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">300</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">データと impl を分ける</figcaption></figure>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">impl ブロックは何個でも書ける</span>
+  <p>
+    <code>impl</code> は同じ型に対して複数書けます。
+    ファイルを分けることもできます。
+    C# の <code>partial class</code> に近い自由度がありますが、
+    <strong>あちらと違って宣言に <code>partial</code> は要りません</strong>。
+  </p>
+  <p>
+    「データの定義」と「機能ごとのふるまい」を分けて置けるので、
+    大きな型でも見通しが保てます。
+  </p>
+</div>
+
+<h2 id="self-の-3-つの形--ここが-C-に無い">self の 3 つの形 — ここが C# に無い</h2>
+
+<p>
+メソッドの第 1 引数には <code>self</code> を書きます。
+そして<strong>3 つの形があり、意味がまったく違います</strong>。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th><th>C# なら</th><th>呼んだ後</th></tr></thead>
+  <tbody>
+    <tr><td><code>&amp;self</code></td><td>借りて読む</td><td>ふつうのメソッド</td><td>そのまま使える</td></tr>
+    <tr><td><code>&amp;mut self</code></td><td>借りて書き換える</td><td>ふつうのメソッド（変更あり）</td><td>そのまま使える（呼び出し側に <code>mut</code> が必要）</td></tr>
+    <tr><td><strong><code>self</code></strong></td><td><strong>所有権をもらって消費する</strong></td><td><strong>対応するものが無い</strong></td><td><strong>もう使えない</strong></td></tr>
+    <tr><td>（なし）</td><td>関連関数</td><td><code>static</code> メソッド</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">pages</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* 関連関数 */</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">is_long</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* 読むだけ */</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">finish</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* 自分を書き換える */</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">into_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* 自分を消費する */</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note pitfall">
+  <span class="note-title">self を取るメソッドを呼ぶと、変数が使えなくなる</span>
+  <p>
+    <code>into_summary(self)</code> は所有権をもらいます。
+    つまり呼んだ後、その変数は使えません。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">summary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">book</span><span class="p">.</span><span class="n">into_summary</span><span class="p">();</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">book</span><span class="p">.</span><span class="n">title</span><span class="p">);</span><span class="w">   </span><span class="c1">// ✗ E0382。book は消費された</span></span></code></pre></figure>
+  <p>
+    面倒に見えますが、これは<strong>「この値はもう使うな」と設計者が表明できる</strong>仕組みです。
+    ファイルを閉じる、接続を切る、変換して別の型にする、といった
+    「一度きりの操作」を型で守れます。
+  </p>
+  <p>
+    名前の慣習も決まっています。<code>into_</code> で始まるメソッドは
+    <strong>所有権をもらう</strong>という合図です。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">名前の慣習</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>接頭辞</th><th>self の形</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>as_</code></td><td><code>&amp;self</code></td><td>安く別の見え方にする（<code>as_str</code>）</td></tr>
+      <tr><td><code>to_</code></td><td><code>&amp;self</code></td><td>複製して作る（<code>to_string</code>）</td></tr>
+      <tr><td><code>into_</code></td><td><code>self</code></td><td><strong>消費して変換する</strong>（<code>into_iter</code>）</td></tr>
+      <tr><td><code>new</code></td><td>なし</td><td>作る。C# のコンストラクタ相当</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    この慣習は標準ライブラリ全体で守られているので、
+    メソッド名を見ただけで所有権の扱いが読めます。
+  </p>
+</div>
+
+<h2 id="derive-でよくある能力を手に入れる">derive で「よくある能力」を手に入れる</h2>
+
+<p>
+C# なら <code>ToString()</code> や <code>Equals()</code> は
+<code>object</code> から継承されて最初からあります。
+Rust には <code>object</code> がないので、必要な能力を明示します。
+</p>
+
+<p>
+何も付けないと、デバッグ表示すらできません。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0277-missing-debug.rs</span>
+<span class="a-b a-91">error[E0277]</span><span class="a-b">: `Point` doesn&#x27;t implement `Debug`</span>
+  <span class="a-b a-94">--&gt; </span>e0277-missing-debug.rs:16:15
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">16</span> <span class="a-b a-94">|</span>     println!(&quot;{p:?}&quot;); // Debug を実装していない
+   <span class="a-b a-94">|</span>               <span class="a-b a-91">^^^^^</span> <span class="a-b a-91">`Point` cannot be formatted using `{:?}` because it doesn&#x27;t implement `Debug`</span>
+   <span class="a-b a-94">|</span>
+   <span class="a-b a-94">= </span><span class="a-b">help</span>: the trait `Debug` is not implemented for `Point`
+   <span class="a-b a-94">= </span><span class="a-b">note</span>: add `#[derive(Debug)]` to `Point` or manually `impl Debug for Point`
+<span class="a-b a-96">help</span>: consider annotating `Point` with `#[derive(Debug)]`
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 9</span> <span class="a-92">+ #[derive(Debug)]</span>
+<span class="a-b a-94">10</span> <span class="a-b a-94">|</span> struct Point {
+   <span class="a-b a-94">|</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0277`.</span></code></pre></div><figcaption>Debug を実装していない構造体を {:?} で表示しようとした場合。「#[derive(Debug)] を足せ」という提案がそのまま出ている。</figcaption></figure>
+
+<p>
+言われたとおり 1 行足せば直ります。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="cp">#[derive(Debug, Clone, PartialEq)]</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Book</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">pages</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="n">read</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">}</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">derive できる主なもの</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>derive</th><th>できること</th><th>C# なら</th></tr></thead>
+    <tbody>
+      <tr><td><code>Debug</code></td><td><code>{:?}</code> で表示</td><td><code>ToString()</code>（デバッグ用）</td></tr>
+      <tr><td><code>Clone</code></td><td><code>.clone()</code></td><td><code>ICloneable</code></td></tr>
+      <tr><td><code>Copy</code></td><td>代入でコピー</td><td>値型（<code>struct</code>）</td></tr>
+      <tr><td><code>PartialEq</code></td><td><code>==</code> で比較</td><td><code>Equals</code> / <code>IEquatable</code></td></tr>
+      <tr><td><code>PartialOrd</code></td><td><code>&lt;</code> <code>&gt;</code> で比較</td><td><code>IComparable</code></td></tr>
+      <tr><td><code>Hash</code></td><td><code>HashMap</code> のキーにできる</td><td><code>GetHashCode</code></td></tr>
+      <tr><td><code>Default</code></td><td><code>Default::default()</code></td><td>既定値のコンストラクタ</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <strong><code>record</code> 型を書いたときに C# が自動生成するものと、ほぼ同じ一覧</strong>です。
+    Rust では 1 つずつ選べる、という違いだけです。
+  </p>
+  <p>
+    人間に見せる表示（<code>ToString()</code> に当たるもの）は
+    <code>Display</code> トレイトを自分で実装します。これは derive できません。
+    「どう見せるか」は自動では決められないからです（第 11 章で書きます）。
+  </p>
+</div>
+
+<h2 id="一部だけ変えて作る">一部だけ変えて作る</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C# 9 以降</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">sequel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">book</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Rust 実践&quot;</span><span class="w"> </span><span class="p">};</span></span></code></pre></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">sequel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Rust 実践&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="o">..</span><span class="n">book</span></span><span class="cl"><span class="p">};</span></span></code></pre></figure>
+</div>
+
+<p>
+<code>..book</code> が「残りは <code>book</code> と同じ」という意味です。
+C# の <code>with</code> 式とほぼ同じ働きです。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">.. は move する</span>
+  <p>
+    <code>..book</code> は残りのフィールドを<strong>move します</strong>。
+    <code>String</code> のような <code>Copy</code> でないフィールドが残っていると、
+    <code>book</code> はその後使えなくなります。
+    使い続けたいなら <code>..book.clone()</code> にしてください。
+  </p>
+</div>
+
+<h2 id="タプル構造体で単位を分ける">タプル構造体で単位を分ける</h2>
+
+<p>
+名前を付けるだけの構造体も作れます。これが意外に強力です。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Yen</span><span class="p">(</span><span class="kt">u32</span><span class="p">);</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Dollar</span><span class="p">(</span><span class="kt">u32</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">price</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Yen</span><span class="p">(</span><span class="mi">1200</span><span class="p">);</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">fee</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dollar</span><span class="p">(</span><span class="mi">8</span><span class="p">);</span></span><span class="cl"><span class="c1">// price.0 + fee.0 は書けるが、Yen と Dollar を直接足すことはできない</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">これが「newtype パターン」</span>
+  <p>
+    C# でも <code>record struct Yen(uint Value);</code> のように書けますが、
+    Rust では<strong>この書き方が日常的に使われます</strong>。
+  </p>
+  <p>
+    <code>UserId(u32)</code> と <code>OrderId(u32)</code> を分ければ、
+    引数の順番を間違えたときにコンパイルエラーになります。
+    実行時のコストはゼロです（コンパイル後は生の <code>u32</code> と同じ）。
+  </p>
+  <p>
+    第 14 章に出てくる孤児則を回避するときにも、この書き方を使います。
+  </p>
+</div>
+
+<h2 id="継承が無いことへの対処">継承が無いことへの対処</h2>
+
+<div class="note csharp">
+  <span class="note-title">継承の 3 つの用途を、それぞれ別の道具で置き換える</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>継承で何をしたかったか</th><th>Rust での書き方</th></tr></thead>
+    <tbody>
+      <tr><td>共通の<strong>ふるまい</strong>を共有する</td><td>トレイトの既定実装（第 14 章）</td></tr>
+      <tr><td>共通の<strong>データ</strong>を共有する</td><td>フィールドとして<strong>持たせる</strong>（合成）</td></tr>
+      <tr><td>いろいろな型を<strong>同じものとして扱う</strong></td><td><code>dyn Trait</code> か <code>enum</code>（第 10・14 章）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    「基底クラスのフィールドを使いたい」という場面は、
+    <strong>その基底クラスをフィールドとして持つ</strong>形に書き換えます。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Base</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Derived</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">base</span><span class="p">:</span><span class="w"> </span><span class="nc">Base</span><span class="p">,</span><span class="w"> </span><span class="n">extra</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c1">// 継承ではなく所有</span></span></code></pre></figure>
+  <p>
+    最初は冗長に感じますが、
+    「どのフィールドがどこから来たか」が常に見えるという利点があります。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="09-structs/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! 構造体と impl。C# の class に当たるものを、データとふるまいに分けて書きます。</span></span><span class="cl"></span><span class="cl"><span class="sd">/// データの定義。derive で「よくある能力」を自動実装させる。</span></span><span class="cl"><span class="sd">///   Debug   → {:?} で表示できる</span></span><span class="cl"><span class="sd">///   Clone   → .clone() で複製できる</span></span><span class="cl"><span class="sd">///   PartialEq → == で比べられる</span></span><span class="cl"><span class="cp">#[derive(Debug, Clone, PartialEq)]</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">pages</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">read</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// ふるまいの定義。C# ならクラス本体に混ぜて書くところを、別のブロックにする。</span></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="sd">/// 関連関数。self を取らないので、C# の static メソッドに相当する。</span></span><span class="cl"><span class="w">    </span><span class="sd">/// 慣習として new という名前を使うが、言語の予約語ではない。</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">pages</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="bp">Self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nc">title</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span></span><span class="cl"><span class="w">            </span><span class="n">pages</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">read</span><span class="p">:</span><span class="w"> </span><span class="nc">false</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="sd">/// &amp;self を取るメソッド。読むだけ。</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">is_long</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">pages</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">300</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="sd">/// &amp;mut self を取るメソッド。自分を書き換える。</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">finish</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="sd">/// self を取るメソッド。自分を消費して別の値になる。</span></span><span class="cl"><span class="w">    </span><span class="sd">/// C# には対応するものがないので戸惑いやすいが、</span></span><span class="cl"><span class="w">    </span><span class="sd">/// 「この値はもう使わせない」と表明できるのが利点。</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">into_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;『{}』{} ページ&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">pages</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// タプル構造体。名前を付けたいだけのとき使う。</span></span><span class="cl"><span class="sd">/// 単位を型で区別すると、取り違えがコンパイルエラーになる。</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Yen</span><span class="p">(</span><span class="kt">u32</span><span class="p">);</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Dollar</span><span class="p">(</span><span class="kt">u32</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="sd">/// フィールドを持たない構造体。ふるまいだけをまとめたいとき。</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Formatter</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Formatter</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">line</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;─&quot;</span><span class="p">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 作って使う ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">book</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Book</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="s">&quot;Rust 入門&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">420</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {book:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  長い本か = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">book</span><span class="p">.</span><span class="n">is_long</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 書き換える ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">book</span><span class="p">.</span><span class="n">finish</span><span class="p">();</span><span class="w"> </span><span class="c1">// &amp;mut self を渡すため、book は mut でなければならない</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  読み終わった = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">book</span><span class="p">.</span><span class="n">read</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. 複製と比較 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">copy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">book</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  複製と等しいか = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">book</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">copy</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. 一部だけ変えて作る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// .. で「残りは元のものと同じ」と書ける。C# の with 式に近い。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sequel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Book</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Rust 実践&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="o">..</span><span class="n">copy</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {sequel:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. 型で単位を分ける ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">price</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Yen</span><span class="p">(</span><span class="mi">1200</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">fee</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Dollar</span><span class="p">(</span><span class="mi">8</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 足そうとすると型が違うのでコンパイルエラーになる。取り違えが起きない。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {} 円 / {} ドル&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">price</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">fee</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. self を消費するメソッド ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Formatter</span><span class="p">::</span><span class="n">line</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">book</span><span class="p">.</span><span class="n">into_summary</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="c1">// ここで book はもう使えない。into_summary が所有権を持っていったため。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Formatter</span><span class="p">::</span><span class="n">line</span><span class="p">());</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\09-structs&gt;</span> cargo run --quiet</span>
+── 1. 作って使う ──
+  Book { title: &quot;Rust 入門&quot;, pages: 420, read: false }
+  長い本か = true
+
+── 2. 書き換える ──
+  読み終わった = true
+
+── 3. 複製と比較 ──
+  複製と等しいか = true
+
+── 4. 一部だけ変えて作る ──
+  Book { title: &quot;Rust 実践&quot;, pages: 420, read: true }
+
+── 5. 型で単位を分ける ──
+  1200 円 / 8 ドル
+
+── 6. self を消費するメソッド ──
+  ────────────────────
+  『Rust 入門』420 ページ
+  ────────────────────</code></pre></div><figcaption>実行結果。最後の into_summary が book を消費するため、その後 book は使えなくなっている。</figcaption></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/09-structs</code> を動かしてください。</li>
+    <li><code>#[derive(Debug, ...)]</code> の <code>Debug</code> を消して、E0277 を出してください。</li>
+    <li><code>book.into_summary()</code> の後に <code>println!("{book:?}");</code> を足して、E0382 を確認してください。</li>
+    <li><code>finish()</code> を呼ぶ行の前で、<code>let mut book</code> の <code>mut</code> を消してみてください。<code>&amp;mut self</code> のメソッドが呼べなくなることが分かります。</li>
+    <li><code>Yen</code> と <code>Dollar</code> を足そうとして、コンパイルエラーになることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>データは <code>struct</code>、ふるまいは <code>impl</code>。<code>impl</code> は何個でも書ける。</li>
+    <li><code>&amp;self</code>（読む）/ <code>&amp;mut self</code>（書く）/ <strong><code>self</code>（消費する）</strong>の 3 つ。3 番目は C# に無い。</li>
+    <li><code>into_</code> で始まるメソッドは所有権をもらう合図。</li>
+    <li>能力は <code>derive</code> で足す。C# の <code>record</code> が自動生成するものとほぼ同じ一覧。</li>
+    <li>継承は無い。ふるまいはトレイト、データは合成、多態は <code>dyn</code> か <code>enum</code> で置き換える。</li>
+    <li>タプル構造体（newtype）で単位を型として分けると、取り違えがコンパイルエラーになる。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../08-strings/"><span class="pager-dir">← 前の章</span><span class="pager-title">文字列</span></a>
+<a class="pager-link pager-next" href="../10-enums/"><span class="pager-dir">次の章 →</span><span class="pager-title">列挙型と match</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

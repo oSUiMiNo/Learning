@@ -1,0 +1,1148 @@
+/* =========================================================================
+   Rust 入門 — スタイルシート
+   日本語の長文を、疲れずに読み切れることを最優先に設計している。
+
+   Qt6 Widgets 入門のスタイルシートから派生させたもの。
+   変えたのは次の 4 点。
+
+     1. 基調色を Rust ブランドの錆色（#ce422b 系）に置き換えた
+     2. C# 話者向けの囲み .note.csharp を足した（.NET の紫）
+     3. スクリーンショット枠のかわりに、ターミナル枠 .term を足した
+        （ANSI エスケープを色付き HTML にしたものを収める）
+     4. 実測と再現を見た目で区別するバッジ .term-badge を足した
+   ========================================================================= */
+
+/* --- デザイントークン ---------------------------------------------------- */
+:root {
+  --bg: #fbfaf7;
+  --bg-sunken: #f3f1ec;
+  --surface: #ffffff;
+  --surface-2: #f7f5f1;
+  --text: #1e2227;
+  --text-soft: #4a525c;
+  --text-mute: #6f7883;
+  --border: #e4e0d8;
+  --border-strong: #d2ccc0;
+
+  --accent: #a8400f;
+  --accent-hover: #85310a;
+  --accent-bg: #fdeee6;
+  --brand: #ce422b;
+
+  --tip: #0f766e;
+  --tip-bg: #e6f5f3;
+  --warn: #9a5b06;
+  --warn-bg: #fdf2df;
+  --deep: #4258c9;
+  --deep-bg: #ecefff;
+  --try: #17803d;
+  --try-bg: #e8f6ec;
+  --cs: #6d28d9;
+  --cs-bg: #f3edfe;
+
+  --code-bg: #f7f6f2;
+  --code-head: #eeece6;
+  --code-text: #24292f;
+  --shadow-sm: 0 1px 2px rgb(28 25 20 / 6%), 0 2px 6px rgb(28 25 20 / 5%);
+  --shadow-md: 0 4px 12px rgb(28 25 20 / 8%), 0 12px 28px rgb(28 25 20 / 7%);
+
+  --sidebar-w: 16.5rem;
+  --measure: 44rem;
+  --radius: 12px;
+
+  --font-jp: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium",
+             "Yu Gothic", "Noto Sans JP", "Noto Sans CJK JP", Meiryo, system-ui, sans-serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, var(--font-jp);
+  --font-mono: "SFMono-Regular", "SF Mono", Menlo, Consolas, "Roboto Mono",
+               "Noto Sans Mono CJK JP", "Courier New", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171b;
+    --bg-sunken: #101317;
+    --surface: #1a1e23;
+    --surface-2: #20252b;
+    --text: #e7eaee;
+    --text-soft: #b9c1cb;
+    --text-mute: #8d97a3;
+    --border: #2b3138;
+    --border-strong: #3a424b;
+
+    --accent: #ffa274;
+    --accent-hover: #ffbc9b;
+    --accent-bg: #3a1f11;
+    --brand: #ff7a52;
+
+    --tip: #4fd1c5;
+    --tip-bg: #0f2b2a;
+    --warn: #f0b429;
+    --warn-bg: #33280d;
+    --deep: #9aa8fb;
+    --deep-bg: #1a1f3d;
+    --try: #5fd873;
+    --try-bg: #16301d;
+    --cs: #c0a5ff;
+    --cs-bg: #251a42;
+
+    --code-bg: #12161a;
+    --code-head: #1d232a;
+    --code-text: #d7dde5;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%), 0 2px 6px rgb(0 0 0 / 30%);
+    --shadow-md: 0 6px 16px rgb(0 0 0 / 45%), 0 16px 40px rgb(0 0 0 / 35%);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14171b;
+  --bg-sunken: #101317;
+  --surface: #1a1e23;
+  --surface-2: #20252b;
+  --text: #e7eaee;
+  --text-soft: #b9c1cb;
+  --text-mute: #8d97a3;
+  --border: #2b3138;
+  --border-strong: #3a424b;
+
+  --accent: #ffa274;
+  --accent-hover: #ffbc9b;
+  --accent-bg: #3a1f11;
+  --brand: #ff7a52;
+
+  --tip: #4fd1c5;
+  --tip-bg: #0f2b2a;
+  --warn: #f0b429;
+  --warn-bg: #33280d;
+  --deep: #9aa8fb;
+  --deep-bg: #1a1f3d;
+  --try: #5fd873;
+  --try-bg: #16301d;
+  --cs: #c0a5ff;
+  --cs-bg: #251a42;
+
+  --code-bg: #12161a;
+  --code-head: #1d232a;
+  --code-text: #d7dde5;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%), 0 2px 6px rgb(0 0 0 / 30%);
+  --shadow-md: 0 6px 16px rgb(0 0 0 / 45%), 0 16px 40px rgb(0 0 0 / 35%);
+}
+
+/* --- ベース -------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  line-height: 1.9;
+  font-feature-settings: "palt" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, svg { max-width: 100%; }
+a { color: var(--accent); text-underline-offset: .18em; text-decoration-thickness: 1px; }
+a:hover { color: var(--accent-hover); }
+
+:focus-visible {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: .5rem;
+  z-index: 100;
+  padding: .6rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+.skip-link:focus { left: .75rem; }
+
+/* --- 読書進捗バー --------------------------------------------------------- */
+.reading-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 60;
+  pointer-events: none;
+}
+.reading-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+  transition: width .1s linear;
+}
+.is-cover .reading-progress { display: none; }
+
+/* --- 上部バー ------------------------------------------------------------ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  height: 3.5rem;
+  padding: 0 1rem;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.6) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: .01em;
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 7px;
+  background: var(--brand);
+  color: #08300f;
+  font: 700 .78rem/1 var(--font-ui);
+  letter-spacing: -.02em;
+}
+.brand-text { font-size: .98rem; }
+
+.verbadge {
+  margin-left: auto;
+  padding: .2rem .6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-mute);
+  font-size: .72rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.icon-btn:hover { background: var(--surface-2); border-color: var(--border); }
+.icon-btn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.theme-toggle .i-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .i-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .i-moon { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .i-sun { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle .i-moon { display: block; }
+}
+
+.nav-toggle { display: none; }
+
+/* --- 全体レイアウト ------------------------------------------------------- */
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  gap: 2.5rem;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+.is-cover .shell { grid-template-columns: minmax(0, 1fr); max-width: 60rem; }
+.is-cover .sidebar { display: none; }
+
+main { min-width: 0; padding: 2.5rem 0 4rem; }
+
+/* --- サイドバー ---------------------------------------------------------- */
+.sidebar {
+  position: sticky;
+  top: 3.5rem;
+  align-self: start;
+  max-height: calc(100vh - 3.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2.5rem 0 3rem;
+  scrollbar-width: thin;
+}
+.sidebar-title {
+  margin: 0 0 .85rem;
+  padding-left: .8rem;
+  color: var(--text-mute);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+.nav-list { margin: 0; padding: 0; list-style: none; }
+.nav-list > li { margin: 0; }
+.nav-list > li > a {
+  display: grid;
+  gap: .05rem;
+  padding: .45rem .8rem;
+  border-left: 2px solid transparent;
+  color: var(--text-soft);
+  text-decoration: none;
+  line-height: 1.55;
+}
+.nav-list > li > a:hover { background: var(--surface-2); color: var(--text); }
+.nav-num { font-size: .68rem; color: var(--text-mute); letter-spacing: .04em; }
+.nav-label { font-size: .875rem; font-weight: 500; }
+.nav-list > li.is-current > a {
+  border-left-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.nav-list > li.is-current .nav-num { color: var(--accent); }
+.nav-list > li.is-current .nav-label { font-weight: 700; }
+
+/* 現在の章の中の小見出し（book.js が差し込む） */
+.subnav { margin: .15rem 0 .5rem; padding: 0 0 0 1.55rem; list-style: none; }
+.subnav a {
+  display: block;
+  padding: .18rem .5rem;
+  border-left: 2px solid var(--border);
+  color: var(--text-mute);
+  font-size: .8rem;
+  line-height: 1.5;
+  text-decoration: none;
+}
+.subnav a:hover { color: var(--text); border-left-color: var(--border-strong); }
+.subnav a.is-active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+.sidebar-scrim { display: none; }
+
+/* --- 章の見出し ---------------------------------------------------------- */
+.chapter { max-width: var(--measure); }
+.chapter-head { margin-bottom: 2.75rem; }
+.eyebrow {
+  margin: 0 0 .5rem;
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+.eyebrow .dot { margin: 0 .5rem; color: var(--border-strong); }
+.chapter-head h1 {
+  margin: 0 0 .9rem;
+  font-size: clamp(1.65rem, 1.15rem + 1.8vw, 2.3rem);
+  line-height: 1.45;
+  letter-spacing: .005em;
+}
+.lede {
+  margin: 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-soft);
+  font-size: 1.02rem;
+  line-height: 1.95;
+}
+
+/* --- 本文 ---------------------------------------------------------------- */
+.prose > * { max-width: var(--measure); }
+.prose > .code-block,
+.prose > .term,
+.prose > .diagram,
+.prose > .table-wrap,
+.prose > .compare { max-width: none; }
+
+.prose h2 {
+  margin: 3.5rem 0 1.1rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.4rem;
+  line-height: 1.6;
+  letter-spacing: .005em;
+}
+.prose h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.prose h3 {
+  margin: 2.4rem 0 .8rem;
+  font-size: 1.12rem;
+  line-height: 1.65;
+}
+.prose h4 {
+  margin: 1.8rem 0 .5rem;
+  font-size: .98rem;
+  color: var(--text-soft);
+}
+.prose p { margin: 0 0 1.35rem; }
+.prose ul, .prose ol { margin: 0 0 1.5rem; padding-left: 1.5rem; }
+.prose li { margin-bottom: .5rem; }
+.prose li > ul, .prose li > ol { margin: .5rem 0 0; }
+.prose strong { font-weight: 700; }
+.prose hr { margin: 3rem 0; border: 0; border-top: 1px solid var(--border); }
+
+.prose blockquote {
+  margin: 0 0 1.5rem;
+  padding: .3rem 0 .3rem 1.15rem;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-soft);
+}
+
+.prose code {
+  padding: .12em .38em;
+  border-radius: 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: .855em;
+  word-break: break-word;
+}
+.prose a code { color: inherit; }
+
+kbd {
+  padding: .1em .45em;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: .82em;
+  white-space: nowrap;
+}
+
+/* --- 表 ------------------------------------------------------------------ */
+.table-wrap {
+  overflow-x: auto;
+  margin: 0 0 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.table-wrap table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.table-wrap th, .table-wrap td {
+  padding: .7rem .9rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.75;
+}
+.table-wrap thead th {
+  background: var(--surface-2);
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+.table-wrap td code { white-space: nowrap; }
+
+/* --- コードブロック ------------------------------------------------------- */
+.code-block {
+  margin: 0 0 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.code-head {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .4rem .5rem .4rem .9rem;
+  background: var(--code-head);
+  border-bottom: 1px solid var(--border);
+}
+.code-file {
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+.code-file--plain { font-family: var(--font-ui); font-weight: 500; }
+.code-copy {
+  margin-left: auto;
+  padding: .2rem .6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: .72rem;
+  cursor: pointer;
+}
+.code-copy:hover { color: var(--text); border-color: var(--text-mute); }
+.code-copy.is-done { color: var(--accent); border-color: var(--accent); }
+
+.code-block pre {
+  margin: 0;
+  padding: .95rem 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: .845rem;
+  line-height: 1.85;
+  color: var(--code-text);
+  tab-size: 4;
+}
+.code-block code { display: block; min-width: fit-content; }
+.code-block .cl {
+  display: block;
+  position: relative;
+  padding: 0 1.1rem 0 3.4rem;
+  counter-increment: codeline;
+  /* 空行は中身がないため高さが 0 になり、行番号が重なってしまう。
+     通常行と同じ高さ（line-height と同値）を最低限確保しておく。 */
+  min-height: 1.85em;
+}
+.code-block .cl::before {
+  content: counter(codeline);
+  position: absolute;
+  left: 0;
+  width: 2.5rem;
+  text-align: right;
+  color: var(--text-mute);
+  opacity: .55;
+  font-size: .78em;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.code-block code { counter-reset: codeline; }
+.code-cap {
+  padding: .6rem .9rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-mute);
+  font-size: .8rem;
+  line-height: 1.7;
+}
+
+/* Pygments のトークン配色（自前で最小限だけ定義） */
+.code-block .c, .code-block .c1, .code-block .cm, .code-block .cs,
+.code-block .ch, .code-block .cp { color: #7c8896; font-style: italic; }
+.code-block .k, .code-block .kn, .code-block .kc, .code-block .kd,
+.code-block .kp, .code-block .kr, .code-block .kt { color: #a6248f; }
+.code-block .s, .code-block .s1, .code-block .s2, .code-block .sa,
+.code-block .sb, .code-block .sc, .code-block .sd, .code-block .se,
+.code-block .sh, .code-block .si, .code-block .sx, .code-block .sr,
+.code-block .ss { color: #0a7a5e; }
+.code-block .nf, .code-block .fm { color: #2f6fd0; }
+.code-block .nc, .code-block .nn { color: #b06400; }
+.code-block .nb, .code-block .bp { color: #0a7a8f; }
+.code-block .nd { color: #b06400; }
+.code-block .mi, .code-block .mf, .code-block .mh, .code-block .mo,
+.code-block .m, .code-block .il { color: #b3541e; }
+.code-block .o, .code-block .ow { color: #5a6169; }
+.code-block .p { color: #6f7883; }
+.code-block .err { color: inherit; background: none; }
+
+:root[data-theme="dark"] .code-block .c,
+:root[data-theme="dark"] .code-block .c1,
+:root[data-theme="dark"] .code-block .cm,
+:root[data-theme="dark"] .code-block .cs,
+:root[data-theme="dark"] .code-block .ch,
+:root[data-theme="dark"] .code-block .cp { color: #7f8b99; }
+:root[data-theme="dark"] .code-block .k,
+:root[data-theme="dark"] .code-block .kn,
+:root[data-theme="dark"] .code-block .kc,
+:root[data-theme="dark"] .code-block .kd,
+:root[data-theme="dark"] .code-block .kp,
+:root[data-theme="dark"] .code-block .kr,
+:root[data-theme="dark"] .code-block .kt { color: #e88ad0; }
+:root[data-theme="dark"] .code-block .s,
+:root[data-theme="dark"] .code-block .s1,
+:root[data-theme="dark"] .code-block .s2,
+:root[data-theme="dark"] .code-block .sa,
+:root[data-theme="dark"] .code-block .sb,
+:root[data-theme="dark"] .code-block .sc,
+:root[data-theme="dark"] .code-block .sd,
+:root[data-theme="dark"] .code-block .se,
+:root[data-theme="dark"] .code-block .sh,
+:root[data-theme="dark"] .code-block .si,
+:root[data-theme="dark"] .code-block .sx,
+:root[data-theme="dark"] .code-block .sr,
+:root[data-theme="dark"] .code-block .ss { color: #6fd7ae; }
+:root[data-theme="dark"] .code-block .nf,
+:root[data-theme="dark"] .code-block .fm { color: #79b8ff; }
+:root[data-theme="dark"] .code-block .nc,
+:root[data-theme="dark"] .code-block .nn,
+:root[data-theme="dark"] .code-block .nd { color: #f0b429; }
+:root[data-theme="dark"] .code-block .nb,
+:root[data-theme="dark"] .code-block .bp { color: #5fd3e0; }
+:root[data-theme="dark"] .code-block .mi,
+:root[data-theme="dark"] .code-block .mf,
+:root[data-theme="dark"] .code-block .mh,
+:root[data-theme="dark"] .code-block .mo,
+:root[data-theme="dark"] .code-block .m,
+:root[data-theme="dark"] .code-block .il { color: #ffab70; }
+:root[data-theme="dark"] .code-block .o,
+:root[data-theme="dark"] .code-block .ow { color: #b9c1cb; }
+:root[data-theme="dark"] .code-block .p { color: #8d97a3; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .code-block .c,
+  :root:not([data-theme="light"]) .code-block .c1,
+  :root:not([data-theme="light"]) .code-block .cm,
+  :root:not([data-theme="light"]) .code-block .cs,
+  :root:not([data-theme="light"]) .code-block .ch,
+  :root:not([data-theme="light"]) .code-block .cp { color: #7f8b99; }
+  :root:not([data-theme="light"]) .code-block .k,
+  :root:not([data-theme="light"]) .code-block .kn,
+  :root:not([data-theme="light"]) .code-block .kc,
+  :root:not([data-theme="light"]) .code-block .kd,
+  :root:not([data-theme="light"]) .code-block .kp,
+  :root:not([data-theme="light"]) .code-block .kr,
+  :root:not([data-theme="light"]) .code-block .kt { color: #e88ad0; }
+  :root:not([data-theme="light"]) .code-block .s,
+  :root:not([data-theme="light"]) .code-block .s1,
+  :root:not([data-theme="light"]) .code-block .s2,
+  :root:not([data-theme="light"]) .code-block .sa,
+  :root:not([data-theme="light"]) .code-block .sb,
+  :root:not([data-theme="light"]) .code-block .sc,
+  :root:not([data-theme="light"]) .code-block .sd,
+  :root:not([data-theme="light"]) .code-block .se,
+  :root:not([data-theme="light"]) .code-block .sh,
+  :root:not([data-theme="light"]) .code-block .si,
+  :root:not([data-theme="light"]) .code-block .sx,
+  :root:not([data-theme="light"]) .code-block .sr,
+  :root:not([data-theme="light"]) .code-block .ss { color: #6fd7ae; }
+  :root:not([data-theme="light"]) .code-block .nf,
+  :root:not([data-theme="light"]) .code-block .fm { color: #79b8ff; }
+  :root:not([data-theme="light"]) .code-block .nc,
+  :root:not([data-theme="light"]) .code-block .nn,
+  :root:not([data-theme="light"]) .code-block .nd { color: #f0b429; }
+  :root:not([data-theme="light"]) .code-block .nb,
+  :root:not([data-theme="light"]) .code-block .bp { color: #5fd3e0; }
+  :root:not([data-theme="light"]) .code-block .mi,
+  :root:not([data-theme="light"]) .code-block .mf,
+  :root:not([data-theme="light"]) .code-block .mh,
+  :root:not([data-theme="light"]) .code-block .mo,
+  :root:not([data-theme="light"]) .code-block .m,
+  :root:not([data-theme="light"]) .code-block .il { color: #ffab70; }
+  :root:not([data-theme="light"]) .code-block .o,
+  :root:not([data-theme="light"]) .code-block .ow { color: #b9c1cb; }
+  :root:not([data-theme="light"]) .code-block .p { color: #8d97a3; }
+}
+
+/* --- ターミナル ----------------------------------------------------------- */
+/* Rust の教材に GUI の画面写真はない。かわりに、実際にコマンドを走らせて
+   捕獲したターミナル出力がその役目を果たす。中身は ANSI エスケープを
+   .a-* クラスに変換したもので、配色は Windows コンソールの既定
+   （Campbell）に合わせてある。読者が自分の PowerShell で見る色と一致する。
+
+   枠は明暗テーマにかかわらず常に暗い。ターミナルは暗いものなので、
+   そのほうが本物に近く、ANSI の色も意図どおりに出る。 */
+.term { margin: 0 0 1.85rem; }
+.term-frame {
+  max-width: 100%;
+  border: 1px solid #3a3a3a;
+  border-radius: 11px;
+  overflow: hidden;
+  background: #0c0c0c;
+  box-shadow: var(--shadow-md);
+}
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 2.05rem;
+  padding: .25rem .5rem .25rem .8rem;
+  background: linear-gradient(#2b2b2b, #212121);
+  border-bottom: 1px solid #3a3a3a;
+}
+.term-title {
+  color: #d6d6d6;
+  font-family: var(--font-ui);
+  font-size: .74rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 右上の窓ボタン。Windows のふうに □ ─ ✕ を並べる。 */
+.term-dots {
+  flex: none;
+  margin-left: auto;
+  width: 3.2rem;
+  height: .55rem;
+  background-image: radial-gradient(circle at 4px 4px, #6a6a6a 3.5px, transparent 4px);
+  background-size: .9rem 100%;
+  background-repeat: repeat-x;
+}
+
+/* 実測か再現かのバッジ。これが付いていないターミナル枠は
+   tools/preview.py が検出してビルドを止める。 */
+.term-badge {
+  flex: none;
+  padding: .1rem .5rem;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  cursor: help;
+}
+.term-badge--real {
+  background: #14361f;
+  border: 1px solid #2f7d4a;
+  color: #7ee29a;
+}
+.term-badge--repro {
+  background: #3a2e10;
+  border: 1px solid #8a6a1e;
+  color: #f0c964;
+}
+
+.term-body {
+  margin: 0;
+  padding: .85rem 1.05rem;
+  overflow-x: auto;
+  background: #0c0c0c;
+  color: #cccccc;
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  line-height: 1.7;
+  tab-size: 8;
+  white-space: pre;
+}
+.term-body code { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+
+/* ANSI SGR → Windows コンソール既定（Campbell）の色。
+   rustc は太字＋明色（91/92/94/96）と黄（33）を使う。 */
+.term-body .a-b { font-weight: 700; }
+.term-body .a-dim { opacity: .7; }
+.term-body .a-i { font-style: italic; }
+.term-body .a-u { text-decoration: underline; }
+.term-body .a-30 { color: #0c0c0c; }
+.term-body .a-31 { color: #c50f1f; }
+.term-body .a-32 { color: #13a10e; }
+.term-body .a-33 { color: #c19c00; }
+.term-body .a-34 { color: #0037da; }
+.term-body .a-35 { color: #881798; }
+.term-body .a-36 { color: #3a96dd; }
+.term-body .a-37 { color: #cccccc; }
+.term-body .a-90 { color: #767676; }
+.term-body .a-91 { color: #e74856; }
+.term-body .a-92 { color: #16c60c; }
+.term-body .a-93 { color: #f9f1a5; }
+.term-body .a-94 { color: #3b78ff; }
+.term-body .a-95 { color: #b4009e; }
+.term-body .a-96 { color: #61d6d6; }
+.term-body .a-97 { color: #f2f2f2; }
+/* 太字の暗い青（rustc の行番号と縦線）は 0037da だと暗すぎて読めないので、
+   太字が付いたときだけ明るい側に寄せる。実機の Windows Terminal も
+   太字を明色で描くため、これがむしろ実物に近い。 */
+.term-body .a-b.a-34 { color: #3b78ff; }
+.term-body .a-b.a-31 { color: #e74856; }
+.term-body .a-b.a-32 { color: #16c60c; }
+.term-body .a-b.a-36 { color: #61d6d6; }
+.term-body .a-b.a-33 { color: #f9f1a5; }
+
+/* プロンプト行（捕獲したコマンド自体）を、出力と区別して見せる。 */
+.term-cmd { color: #f2f2f2; font-weight: 700; }
+.term-cmd .term-prompt { color: #61d6d6; font-weight: 400; }
+
+.term figcaption, .diagram figcaption {
+  margin-top: .7rem;
+  color: var(--text-mute);
+  font-size: .84rem;
+  line-height: 1.75;
+}
+.term figcaption::before, .diagram figcaption::before {
+  content: "▲ ";
+  color: var(--border-strong);
+}
+/* 再現画面の出典。実測との違いを本文側でも読めるようにしておく。 */
+.repro-src {
+  display: block;
+  margin-top: .3rem;
+  color: var(--warn);
+  font-size: .78rem;
+}
+
+/* --- 概念図 -------------------------------------------------------------- */
+.diagram {
+  margin: 0 0 1.85rem;
+  padding: 1.4rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.diagram svg { display: block; width: 100%; height: auto; margin: 0 auto; }
+.diagram figcaption { margin-top: 1rem; }
+
+/* 図の中で使う共通のあしらい。配色はテーマに追従する。 */
+.diagram svg { font-family: var(--font-ui); }
+.diagram .d-box { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1.5; }
+.diagram .d-box-plain { fill: var(--bg); stroke: var(--border-strong); stroke-width: 1.5; }
+.diagram .d-accent { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.5; }
+.diagram .d-warn { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.5; }
+.diagram .d-deep { fill: var(--deep-bg); stroke: var(--deep); stroke-width: 1.5; }
+.diagram .d-tip { fill: var(--tip-bg); stroke: var(--tip); stroke-width: 1.5; }
+.diagram .d-fill-accent { fill: var(--accent); stroke: none; }
+.diagram .d-dash { fill: none; stroke: var(--border-strong); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.diagram .d-line { fill: none; stroke: var(--border-strong); stroke-width: 1.5; }
+.diagram .d-flow { fill: none; stroke: var(--accent); stroke-width: 2; }
+.diagram .d-flow-warn { fill: none; stroke: var(--warn); stroke-width: 2; }
+.diagram text { fill: var(--text); font-size: 13px; }
+.diagram .d-title { font-size: 13.5px; font-weight: 700; }
+.diagram .d-mute { fill: var(--text-mute); font-size: 11.5px; }
+.diagram .d-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  fill: var(--text-soft);
+}
+.diagram .d-mark { fill: var(--accent); font-size: 12px; font-weight: 700; }
+.diagram .d-head-accent { fill: var(--accent); font-size: 11.5px; font-weight: 700; }
+.diagram .d-head-warn { fill: var(--warn); font-size: 11.5px; font-weight: 700; }
+.diagram .d-arrowhead { fill: var(--accent); stroke: none; }
+.diagram .d-arrowhead-mute { fill: var(--border-strong); stroke: none; }
+.diagram .d-arrowhead-warn { fill: var(--warn); stroke: none; }
+
+/* この教材で足したもの。C# との対比と、「無効になった値」の表現に使う。 */
+.diagram .d-cs { fill: var(--cs-bg); stroke: var(--cs); stroke-width: 1.5; }
+.diagram .d-head-cs { fill: var(--cs); font-size: 11.5px; font-weight: 700; }
+.diagram .d-head-tip { fill: var(--tip); font-size: 11.5px; font-weight: 700; }
+.diagram .d-head-deep { fill: var(--deep); font-size: 11.5px; font-weight: 700; }
+.diagram .d-arrowhead-deep { fill: var(--deep); stroke: none; }
+.diagram .d-flow-deep { fill: none; stroke: var(--deep); stroke-width: 2; }
+.diagram .d-flow-mute { fill: none; stroke: var(--border-strong); stroke-width: 2; }
+.diagram .d-flow-dash { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; }
+/* move されて使えなくなった値。薄く見せたうえで打ち消し線を引く。 */
+.diagram .d-dead { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1.5; opacity: .45; }
+.diagram .d-strike { stroke: var(--warn); stroke-width: 2; }
+.diagram .d-dead-text { fill: var(--text-mute); font-size: 12px; opacity: .7; }
+.diagram .d-mono-title { font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; fill: var(--text); }
+
+/* --- コールアウト --------------------------------------------------------- */
+.note {
+  --nc: var(--tip);
+  --nbg: var(--tip-bg);
+  position: relative;
+  margin: 0 0 1.75rem;
+  padding: 1rem 1.15rem 1rem 3.1rem;
+  border: 1px solid color-mix(in srgb, var(--nc) 32%, var(--border));
+  border-left: 3px solid var(--nc);
+  border-radius: var(--radius);
+  background: var(--nbg);
+}
+.note::before {
+  content: "💡";
+  position: absolute;
+  left: 1rem;
+  top: .95rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+.note > :last-child { margin-bottom: 0; }
+.note > p:first-child { margin-top: 0; }
+.note-title {
+  display: block;
+  margin-bottom: .35rem;
+  color: var(--nc);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.note.pitfall { --nc: var(--warn); --nbg: var(--warn-bg); }
+.note.pitfall::before { content: "⚠️"; }
+.note.deep { --nc: var(--deep); --nbg: var(--deep-bg); }
+.note.deep::before { content: "🔍"; }
+.note.try { --nc: var(--try); --nbg: var(--try-bg); }
+.note.try::before { content: "✅"; }
+
+/* この教材だけの囲み。読者は C# が書けるので、対応する C# の書き方や、
+   逆に C# の直感が裏切られる箇所をその場で示す。
+   絵文字だと意味が伝わらないので、印は「C#」の文字そのものにしている。 */
+.note.csharp { --nc: var(--cs); --nbg: var(--cs-bg); padding-left: 3.4rem; }
+.note.csharp::before {
+  content: "C#";
+  top: .9rem;
+  left: .85rem;
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--cs);
+  border: 1.5px solid color-mix(in srgb, var(--cs) 55%, transparent);
+  border-radius: 6px;
+  padding: 0 .2rem;
+  line-height: 1.35;
+}
+
+.note .code-block { box-shadow: none; margin-bottom: 1rem; }
+.note .term-frame { box-shadow: none; margin-bottom: 1rem; }
+
+/* --- 「こう書く」対比の 2 段組 -------------------------------------------- */
+/* 左が避けたい書き方 / 右が推したい書き方、という並びを前提に色を付ける。
+   古い記事の書き方 vs いまの書き方、C# の書き方 vs Rust の書き方の
+   どちらにも使う。 */
+.compare {
+  display: grid;
+  gap: 1rem;
+  margin: 0 0 1.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+}
+.compare .code-block { margin: 0; height: 100%; }
+.compare > .code-block:first-child .code-head {
+  background: color-mix(in srgb, var(--warn) 16%, var(--code-head));
+  border-bottom-color: color-mix(in srgb, var(--warn) 35%, var(--border));
+}
+.compare > .code-block:first-child .code-file { color: var(--warn); }
+.compare > .code-block:last-child .code-head {
+  background: color-mix(in srgb, var(--accent) 16%, var(--code-head));
+  border-bottom-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+.compare > .code-block:last-child .code-file { color: var(--accent); }
+
+/* --- 章末のまとめ --------------------------------------------------------- */
+.recap {
+  margin: 3rem 0 0;
+  padding: 1.5rem 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.recap h2 {
+  margin: 0 0 .9rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: 1.05rem !important;
+}
+.recap ul { margin-bottom: 0; }
+
+/* --- ページ送り ---------------------------------------------------------- */
+.pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+.pager-link {
+  display: grid;
+  gap: .2rem;
+  padding: .9rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--text);
+}
+a.pager-link:hover { border-color: var(--accent); background: var(--accent-bg); }
+.pager-empty { border: 0; background: none; }
+.pager-next { text-align: right; }
+.pager-dir { color: var(--text-mute); font-size: .75rem; }
+.pager-title { font-weight: 600; font-size: .95rem; }
+
+/* --- 表紙 ---------------------------------------------------------------- */
+.cover { padding-top: 1.5rem; }
+.cover-head { margin-bottom: 3.5rem; }
+.cover-head h1 {
+  margin: .2rem 0 .5rem;
+  font-size: clamp(2rem, 1.3rem + 3vw, 3.1rem);
+  line-height: 1.35;
+  letter-spacing: -.005em;
+}
+.cover-sub {
+  margin: 0 0 1.5rem;
+  color: var(--text-soft);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.cover-lede { max-width: 40rem; margin: 0 0 2rem; color: var(--text-soft); }
+.cover-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; }
+.btn {
+  display: inline-block;
+  padding: .6rem 1.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  font-size: .95rem;
+  text-decoration: none;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--bg); }
+
+.promise {
+  margin-bottom: 3.5rem;
+  padding: 1.75rem 1.8rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.promise h2 { margin: 0 0 1.1rem; font-size: 1.15rem; }
+.promise-list { margin: 0 0 1.25rem; padding: 0; list-style: none; }
+.promise-list li {
+  position: relative;
+  margin-bottom: 1rem;
+  padding-left: 1.7rem;
+  color: var(--text-soft);
+  font-size: .95rem;
+}
+.promise-list li::before {
+  content: "";
+  position: absolute;
+  left: .1rem;
+  top: .72em;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  background: var(--brand);
+}
+/* 各項目の 1 行目（見出し）だけをブロックにする。
+   本文の途中で強調に使った strong まで改行させないよう、
+   :first-child に限定している。 */
+.promise-list strong { color: var(--text); }
+.promise-list li > strong:first-child { display: block; font-size: 1rem; }
+.verline {
+  margin: 0;
+  padding-top: 1.1rem;
+  border-top: 1px dashed var(--border-strong);
+  color: var(--text-mute);
+  font-size: .86rem;
+}
+.verline strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.toc-section h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .9rem;
+  margin: 0 0 1.25rem;
+  font-size: 1.15rem;
+}
+.toc-total { color: var(--text-mute); font-size: .82rem; font-weight: 400; }
+.toc-cards {
+  display: grid;
+  gap: .7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
+}
+.toc-card a {
+  display: grid;
+  gap: .25rem;
+  height: 100%;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+.toc-card a:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+.toc-num { color: var(--accent); font-size: .72rem; font-weight: 700; letter-spacing: .06em; }
+.toc-title { font-size: 1rem; font-weight: 700; line-height: 1.5; }
+.toc-lede {
+  color: var(--text-mute);
+  font-size: .82rem;
+  line-height: 1.75;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.toc-time { color: var(--text-mute); font-size: .72rem; }
+
+/* --- フッター ------------------------------------------------------------ */
+.site-footer {
+  margin-top: 2rem;
+  padding: 2rem 1.5rem 3rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-sunken);
+  color: var(--text-mute);
+  text-align: center;
+  font-size: .84rem;
+}
+.site-footer p { margin: 0 0 .3rem; }
+.footer-meta { font-variant-numeric: tabular-nums; font-size: .78rem; }
+
+.missing {
+  padding: .8rem 1rem;
+  border: 2px dashed var(--warn);
+  border-radius: 8px;
+  color: var(--warn);
+  font-weight: 700;
+}
+
+/* --- 画面が狭いとき ------------------------------------------------------- */
+@media (max-width: 62rem) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 1.15rem; }
+  .nav-toggle { display: grid; }
+  .brand-text { display: none; }
+  .verbadge { font-size: .68rem; }
+
+  .sidebar {
+    position: fixed;
+    top: 3.5rem;
+    left: 0;
+    bottom: 0;
+    z-index: 45;
+    width: min(19rem, 82vw);
+    max-height: none;
+    padding: 1.5rem 0 3rem;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    transform: translateX(-102%);
+    transition: transform .22s ease;
+  }
+  body.nav-open .sidebar { transform: none; }
+  body.nav-open .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 3.5rem 0 0;
+    z-index: 44;
+    background: rgb(0 0 0 / 35%);
+  }
+  main { padding: 2rem 0 3rem; }
+  .pager { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 34rem) {
+  body { font-size: 16px; }
+  .verbadge { display: none; }
+  .code-block .cl { padding-left: 2.9rem; }
+  .code-block .cl::before { width: 2rem; }
+  .diagram { padding: 1rem .7rem; }
+  .promise, .recap { padding: 1.25rem 1.15rem; }
+}
+
+@media print {
+  .topbar, .sidebar, .pager, .reading-progress, .code-copy { display: none !important; }
+  .shell { display: block; padding: 0; }
+  body { font-size: 11pt; }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "run-iterators",
+  "title": "Windows PowerShell",
+  "note": "examples/13-iterators の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\13-iterators>",
+      "command": "cargo run --quiet",
+      "output": "── 1. Where / Select はそのまま filter / map ──\r\n  開発の人 = [\"すずき\", \"さとう\"]\r\n\r\n── 2. 遅延評価も同じ ──\r\n  ここまで何も出ていないことに注目\r\n    （map が動いた: すずき）\r\n    （map が動いた: たなか）\r\n    （map が動いた: さとう）\r\n    （map が動いた: いとう）\r\n    （map が動いた: やまだ）\r\n  合計 = 2790\r\n\r\n── 3. 集約 ──\r\n  人数     = 5\r\n  最高給与 = Some(710)\r\n  平均給与 = 558.0\r\n  700 超えがいるか = true\r\n  全員 400 超えか  = true\r\n\r\n── 4. First / FirstOrDefault は find ──\r\n  総務の人 = Some(\"やまだ\")\r\n\r\n── 5. OrderBy は sort_by_key ──\r\n  給与順 = さとう(710) > すずき(620) > いとう(530) > たなか(480) > やまだ(450)\r\n\r\n── 6. GroupBy は fold で書く ──\r\n  営業: [\"たなか\", \"いとう\"]\r\n  総務: [\"やまだ\"]\r\n  開発: [\"すずき\", \"さとう\"]\r\n\r\n── 7. Take / Skip / Zip ──\r\n  take(3)      = [1, 2, 3]\r\n  skip(7)      = [8, 9, 10]\r\n  step_by(3)   = [1, 4, 7, 10]\r\n  zip          = [\"1a\", \"2b\", \"3c\"]\r\n\r\n── 8. クロージャは環境を捕まえる ──\r\n  500 以上は 3 人\r\n  給与: 620\r\n\r\n── 9. 失敗しうる変換を collect でまとめる ──\r\n  全部数値   = Ok([1, 2, 3])\r\n  ひとつ駄目 = true\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

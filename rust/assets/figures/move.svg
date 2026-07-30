@@ -1,0 +1,47 @@
+<svg viewBox="0 0 720 330" role="img" aria-label="let s2 = s1 で所有権が移る図。ヒープ上の文字列はそのままで、それを指すハンドルが s1 から s2 へ移り、s1 は使えなくなる。">
+  <rect x="1" y="1" width="718" height="328" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="32" class="d-head-accent">let s1 = String::from("こんにちは");  ここまでは s1 が持ち主</text>
+
+  <!-- 上段: move 前 -->
+  <rect x="28" y="46" width="290" height="106" rx="10" class="d-box"/>
+  <text x="44" y="66" class="d-mute">スタック（変数そのもの）</text>
+  <rect x="44" y="76" width="120" height="60" rx="8" class="d-accent"/>
+  <text x="104" y="96" text-anchor="middle" class="d-mono-title">s1</text>
+  <text x="104" y="113" text-anchor="middle" class="d-mute">ptr / len / cap</text>
+  <text x="104" y="128" text-anchor="middle" class="d-mute">= 24 バイト</text>
+
+  <rect x="402" y="46" width="290" height="106" rx="10" class="d-box"/>
+  <text x="418" y="66" class="d-mute">ヒープ（中身の置き場）</text>
+  <rect x="418" y="76" width="258" height="60" rx="8" class="d-tip"/>
+  <text x="547" y="103" text-anchor="middle" class="d-code">こ ん に ち は</text>
+  <text x="547" y="124" text-anchor="middle" class="d-mute">UTF-8 で 15 バイト</text>
+
+  <path d="M164 106 L418 106" class="d-flow"/>
+  <path d="M418 106 l-10 -5 v10 z" class="d-arrowhead"/>
+  <text x="291" y="98" text-anchor="middle" class="d-mark">指している</text>
+
+  <!-- 区切り -->
+  <path d="M28 168 L692 168" class="d-dash"/>
+  <text x="28" y="196" class="d-head-warn">let s2 = s1;  ← ここで所有権が引っ越す</text>
+
+  <!-- 下段: move 後 -->
+  <rect x="28" y="210" width="290" height="100" rx="10" class="d-box"/>
+  <rect x="44" y="226" width="120" height="66" rx="8" class="d-dead"/>
+  <text x="104" y="252" text-anchor="middle" class="d-dead-text">s1</text>
+  <text x="104" y="271" text-anchor="middle" class="d-dead-text">もう使えない</text>
+  <path d="M52 234 L156 284" class="d-strike"/>
+  <path d="M156 234 L52 284" class="d-strike"/>
+
+  <rect x="180" y="226" width="122" height="66" rx="8" class="d-accent"/>
+  <text x="241" y="252" text-anchor="middle" class="d-mono-title">s2</text>
+  <text x="241" y="271" text-anchor="middle" class="d-mute">新しい持ち主</text>
+
+  <rect x="402" y="210" width="290" height="100" rx="10" class="d-box"/>
+  <rect x="418" y="226" width="258" height="66" rx="8" class="d-tip"/>
+  <text x="547" y="252" text-anchor="middle" class="d-code">こ ん に ち は</text>
+  <text x="547" y="275" text-anchor="middle" class="d-head-tip">中身は 1 バイトも動いていない</text>
+
+  <path d="M302 259 L418 259" class="d-flow"/>
+  <path d="M418 259 l-10 -5 v10 z" class="d-arrowhead"/>
+</svg>

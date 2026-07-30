@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はじめに — この教材の歩き方 | Rust 入門</title>
+<meta name="description" content="Rust が何のための言語で、なぜ「難しい」と言われるのか。そして C# が書けるあなたが、どこを速く飛ばし、どこで立ち止まるべきかを先に決めます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li class="is-current"><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">はじめに<span class="dot">·</span>読了目安 9 分</p>
+        <h1>はじめに — この教材の歩き方</h1>
+        <p class="lede">Rust が何のための言語で、なぜ「難しい」と言われるのか。そして C# が書けるあなたが、どこを速く飛ばし、どこで立ち止まるべきかを先に決めます。</p>
+      </header>
+      <div class="prose">
+<h2 id="この教材が解こうとしている問題">この教材が解こうとしている問題</h2>
+
+<p>
+Rust の入門でいちばん多い挫折は、文法が難しいことではありません。
+<strong>「記事のとおりに書いたのに動かない」</strong>ことです。
+</p>
+
+<p>
+Rust は 6 週間ごとに新しい版が出て、外部ライブラリの作法も年単位で変わっていきます。
+そのため Web 上の記事は、書かれた時点では正しくても、いま試すと通らないことがよくあります。
+初心者にとって最悪なのは、エラーメッセージを読んでも
+「自分が間違えたのか、記事が古いのか」が判断できないことです。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">やっかいなのは「エラーの理由がずれる」こと</span>
+  <p>
+    実例を 1 つ出します。入門の定番である数当てゲームは、乱数の <code>rand</code> クレートを使います。
+    ネット上の記事はほぼすべて次の書き方です。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">よく見かける書き方</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">rand</span><span class="p">::</span><span class="n">Rng</span><span class="p">;</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">secret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rand</span><span class="p">::</span><span class="n">thread_rng</span><span class="p">().</span><span class="n">gen_range</span><span class="p">(</span><span class="mi">1</span><span class="o">..=</span><span class="mi">100</span><span class="p">);</span></span></code></pre></figure>
+  <p>
+    これは <code>rand</code> 0.8 の書き方で、いまは動きません。
+    そこまでは、まだ親切なほうです。<strong>本当に厄介なのはこの次です。</strong>
+    「0.9 で <code>rng()</code> と <code>random_range()</code> に変わった」と知って直しても、
+    やはり動きません。しかも出るエラーが
+    <code>use rand::Rng;</code> を書いているのに
+    「そんなメソッドはありません」という、意味の分からないものになります。
+  </p>
+  <p>
+    答えは付録に書きますが、ここで言いたいのは
+    <strong>この種の間違いは、Web の記事を読んで書くかぎり避けられない</strong>ということです。
+  </p>
+</div>
+
+<p>
+そこでこの教材は、書き方をひとつ決めました。
+<strong>本文に載っているものは、書き写したものではなく、実際に動かした結果そのもの</strong>です。
+</p>
+
+<ul>
+  <li>コードは <code>rust/examples/</code> にある実ファイルが唯一の原本です。ページを組み立てるときに、その中身をそのまま読み込んで表示しています。</li>
+  <li><strong>「コンパイルが通らない例」も、本当に通らないことを機械的に確かめています。</strong>「これは E0382 になります」と書いた例は、全部実際に <code>rustc</code> に通して、そのエラーコードが出ることを検証したものです。</li>
+  <li>ターミナルの画面は、実際にコマンドを走らせて捕獲した出力です。色まで本物です。</li>
+  <li>外部クレートについての記述も、実際にそのクレートを取ってきてコンパイルして確かめています。</li>
+</ul>
+
+<p>
+つまり「本文とコードと画面が食い違う」ことが、構造的に起きません。
+安心して、書いてあるとおりに手を動かしてください。
+</p>
+
+<div class="note">
+  <span class="note-title">実測と再現の区別</span>
+  <p>
+    ターミナルの画面には <strong>実測</strong> か <strong>再現</strong> のバッジが必ず付いています。
+  </p>
+  <ul>
+    <li><strong>実測</strong> … 実際にコマンドを走らせて捕獲したもの。</li>
+    <li><strong>再現</strong> … Windows のインストーラのように、この教材をビルドしている環境では出せない画面。
+        公式の情報に基づいて再現したもので、<strong>何に基づくかを必ずキャプションに書いています</strong>。</li>
+  </ul>
+  <p>
+    なお実測の画面についても、パスの表記だけは Windows の形に直しています
+    （<code>target/debug/hello</code> → <code>target\debug\hello.exe</code> など）。
+    エラーメッセージの本文・バージョン番号・かかった秒数には手を入れていません。
+  </p>
+</div>
+
+<h2 id="Rust-とはなにか">Rust とはなにか</h2>
+
+<p>
+Rust は、システムを書くための言語です。
+OS やブラウザのように「速さとメモリの効率が要る」領域で、
+それでいて<strong>メモリまわりの事故を起こさない</strong>ことを目指して作られました。
+</p>
+
+<p>
+Firefox のレンダリング部分、Windows のカーネルの一部、Linux カーネルのドライバ、
+Discord や Cloudflare のサーバ、Deno や Node.js の周辺ツール、
+そして <code>ripgrep</code> や <code>bat</code> のようなコマンドライン道具が Rust で書かれています。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 270" role="img" aria-label="Rust の立ち位置。実行時に検査するか、書く人が気をつけるか、コンパイル時に検査するかという 3 つの方針の比較。">
+  <rect x="1" y="1" width="718" height="268" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">「安全」をいつ確かめるか、という設計の違い</text>
+
+  <!-- 3 columns -->
+  <rect x="24" y="46" width="216" height="146" rx="9" class="d-cs"/>
+  <text x="132" y="70" text-anchor="middle" class="d-title">C# / Java</text>
+  <text x="132" y="92" text-anchor="middle" class="d-mute">実行時に面倒を見る</text>
+  <text x="132" y="116" text-anchor="middle" class="d-code">GC + 例外</text>
+  <text x="132" y="142" text-anchor="middle" class="d-head-tip">安全</text>
+  <text x="132" y="164" text-anchor="middle" class="d-head-warn">実行時のコストがある</text>
+  <text x="132" y="182" text-anchor="middle" class="d-mute">停止時間、メモリ消費</text>
+
+  <rect x="252" y="46" width="216" height="146" rx="9" class="d-warn"/>
+  <text x="360" y="70" text-anchor="middle" class="d-title">C / C++</text>
+  <text x="360" y="92" text-anchor="middle" class="d-mute">書く人が気をつける</text>
+  <text x="360" y="116" text-anchor="middle" class="d-code">手動の確保と解放</text>
+  <text x="360" y="142" text-anchor="middle" class="d-head-tip">速い</text>
+  <text x="360" y="164" text-anchor="middle" class="d-head-warn">間違いが実行時に出る</text>
+  <text x="360" y="182" text-anchor="middle" class="d-mute">二重解放、解放後の参照</text>
+
+  <rect x="480" y="46" width="216" height="146" rx="9" class="d-accent"/>
+  <text x="588" y="70" text-anchor="middle" class="d-title">Rust</text>
+  <text x="588" y="92" text-anchor="middle" class="d-mute">コンパイル時に確かめる</text>
+  <text x="588" y="116" text-anchor="middle" class="d-code">所有権と借用の規則</text>
+  <text x="588" y="142" text-anchor="middle" class="d-head-tip">安全でかつ速い</text>
+  <text x="588" y="164" text-anchor="middle" class="d-head-warn">最初の学習コストが高い</text>
+  <text x="588" y="182" text-anchor="middle" class="d-mute">この教材が引き受ける部分</text>
+
+  <!-- 下 -->
+  <rect x="24" y="206" width="672" height="48" rx="9" class="d-dash"/>
+  <text x="44" y="228" class="d-head-accent">つまり「難しい」の正体</text>
+  <text x="44" y="246" class="d-mute">実行してから分かっていた不具合が、コンパイル時に前倒しで出てくる。総量は減るが、最初に全部来るので重く感じる。</text>
+</svg>
+<figcaption>「安全をいつ確かめるか」という設計の違い。C# は実行時に GC と例外で面倒を見る。Rust はコンパイル時に検査してしまうので、実行時のコストを払わずに安全を得る。そのぶん最初の学習が重い。</figcaption></figure>
+
+<p>
+図の右端を見てください。Rust が「難しい」と言われる理由は、ここに全部あります。
+<strong>C# なら実行してから分かっていた不具合が、コンパイル時に前倒しで出てくる</strong>のです。
+総量としては減るのですが、最初にまとめて来るので重く感じます。
+</p>
+
+<div class="note deep">
+  <span class="note-title">GC が無いとどうなるのか</span>
+  <p>
+    C# はガベージコレクタが「もう誰も見ていないオブジェクト」を見つけて捨ててくれます。
+    Rust にはそれがありません。かわりに
+    <strong>「値には持ち主がひとりだけいる」</strong>という規則をコンパイラが強制し、
+    持ち主がいなくなった瞬間に片付けます。
+  </p>
+  <p>
+    この規則が第 6 章の<strong>所有権</strong>です。この教材でいちばん大事な章であり、
+    ここを越えれば残りはずっと楽になります。
+  </p>
+</div>
+
+<h2 id="C-が書ける人にとっての-Rust">C# が書ける人にとっての Rust</h2>
+
+<p>
+あなたは C# が書けるので、この教材では次のことを説明しません。
+</p>
+
+<ul>
+  <li>関数とは何か、引数とは何か</li>
+  <li>クラス、インターフェース、ジェネリクスの考え方</li>
+  <li>ビルドとは何か、パッケージ管理とは何か</li>
+</ul>
+
+<p>
+そのかわり、<strong>C# との対応関係</strong>と、
+<strong>C# の直感がかえって邪魔になる箇所</strong>を各章で名指しします。
+後者のほうが大事です。似ているのに違うものが、いちばん時間を食うからです。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">この囲みの意味</span>
+  <p>
+    この <code>C#</code> の印が付いた囲みでは、C# との対応と食い違いを扱います。
+    たとえば次のようなものです。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th><th>注意</th></tr></thead>
+    <tbody>
+      <tr><td><code>var</code></td><td><code>let</code></td><td>Rust は<strong>既定で書き換え不可</strong></td></tr>
+      <tr><td><code>null</code></td><td><code>Option&lt;T&gt;</code></td><td>null という概念自体が無い</td></tr>
+      <tr><td>例外 / <code>try-catch</code></td><td><code>Result&lt;T, E&gt;</code> / <code>?</code></td><td>失敗は戻り値で返す</td></tr>
+      <tr><td><code>IDisposable</code> / <code>using</code></td><td><code>Drop</code></td><td>書き忘れようがない</td></tr>
+      <tr><td>インターフェース</td><td>トレイト</td><td>他人の型にも後から実装できる</td></tr>
+      <tr><td>LINQ</td><td>イテレータ</td><td><strong>ほぼそのまま対応する</strong></td></tr>
+      <tr><td><code>string</code>（UTF-16）</td><td><code>String</code>（UTF-8）</td><td>「長さ」の意味が変わる</td></tr>
+      <tr><td><code>async</code> / <code>Task</code></td><td><code>async</code> / <code>Future</code></td><td><strong>走り始める瞬間が違う</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    下の 3 つが特に危険です。似ているので気づかないまま間違え、
+    しかも間違いが表に出るまで時間がかかります。
+  </p>
+</div>
+
+<h2 id="この教材が前提とする版">この教材が前提とする版</h2>
+
+<p>
+ページの上部にあるバッジに、この教材が検証された正確な版が出ています。
+これは執筆時に手で書いたものではなく、<strong>ページを組み立てた環境から自動で読み取った実際の値</strong>です。
+エディションも、実際に <code>cargo new</code> を走らせて生成された <code>Cargo.toml</code> から読んでいます。
+</p>
+
+<div class="note deep">
+  <span class="note-title">エディションって何？ 版とは別物？</span>
+  <p>
+    Rust には <strong>エディション</strong>という仕組みがあります。
+    <code>2015</code> / <code>2018</code> / <code>2021</code> / <code>2024</code> の 4 つがあり、
+    新しいコンパイラは<strong>どのエディションのコードもコンパイルできます</strong>。
+  </p>
+  <p>
+    つまり「新しい Rust を入れたら古いコードが動かなくなった」が起きません。
+    エディションはプロジェクトごとに <code>Cargo.toml</code> で選びます。
+    いまの <code>cargo new</code> は <code>2024</code> を書き込みます。
+  </p>
+  <p>
+    版（1.97 のような番号）は 6 週間ごとに上がり、エディションは数年に 1 度です。
+    この教材は最新の stable と <code>2024</code> エディションで書いています。
+  </p>
+</div>
+
+<h2 id="この教材の読み方">この教材の読み方</h2>
+
+<p>
+第 1 章から順番に読み進める作りになっています。とくに次の 4 つの章は飛ばさないでください。
+</p>
+
+<ul>
+  <li><strong>第 6 章（所有権）</strong> — Rust のすべての土台です。ここが分かると残りが一気に楽になります。</li>
+  <li><strong>第 7 章（借用）</strong> — 第 6 章と対になっています。2 つで 1 セットと考えてください。</li>
+  <li><strong>第 14 章（トレイト）</strong> — インターフェースに似ていますが、できることが違います。</li>
+  <li><strong>第 20 章（async）</strong> — C# の <code>async</code> の知識がそのまま通じません。ここは必ず読んでください。</li>
+</ul>
+
+<p>
+逆に、第 4 章と第 5 章（変数・制御フロー）は
+C# の知識でほとんど読み飛ばせるように、差分だけを短く書いてあります。
+</p>
+
+<p>本文中では、次の 5 種類の囲みを使い分けます。</p>
+
+<div class="note">
+  <span class="note-title">ヒント</span>
+  <p>知っておくと少し楽になる話。読み飛ばしても先に進めます。</p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">つまずきポイント</span>
+  <p>ここを知らないと詰まります。とくに「古い記事との違い」はここで扱います。</p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">もっと詳しく</span>
+  <p>仕組みの背景。急いでいる人は後回しでかまいません。</p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">C# ならこう書く</span>
+  <p>C# との対応関係と、C# の直感が裏切られる箇所。</p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>手を動かす小さな課題。読むだけより圧倒的に身につきます。</p>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>Rust 入門の最大の敵は「古い情報」。この教材は実行済みのコードと実測の出力でそれを避ける。</li>
+    <li>「通らない例」も実際にコンパイルして、エラーコードまで検証している。</li>
+    <li>Rust は GC を持たず、コンパイル時の検査で安全と速さを両立させる。だから最初が重い。</li>
+    <li>C# の知識は大いに使える。ただし文字列・<code>async</code>・インターフェースの 3 つは要注意。</li>
+    <li>エディションは版とは別物。新しいコンパイラでも古いコードは動く。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<span class="pager-link pager-empty"></span>
+<a class="pager-link pager-next" href="../01-setup/"><span class="pager-dir">次の章 →</span><span class="pager-title">環境構築</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

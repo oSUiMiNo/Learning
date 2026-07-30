@@ -1,0 +1,15 @@
+{
+  "name": "run-traits",
+  "title": "Windows PowerShell",
+  "note": "examples/14-traits の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\14-traits>",
+      "command": "cargo run --quiet",
+      "output": "── 1. 同じトレイトを別の型が実装する ──\r\n  こんにちは、すずき さん\r\n  こんにちは、たなか さん\r\n  ピー・ガガ・ユニット 7 起動\r\n\r\n── 2. 標準の型にも後から実装できる ──\r\n  こんにちは、整数の 42 さん\r\n\r\n── 3. impl Trait ──\r\n  ピー・ガガ・ユニット 1 起動\r\n\r\n── 4. dyn Trait で違う型を混ぜる ──\r\n  こんにちは、さとう さん\r\n  ピー・ガガ・ユニット 99 起動\r\n  こんにちは、整数の 5 さん\r\n\r\n── 5. 複数のトレイト境界 ──\r\n  5 は小さい\r\n  500 は大きい\r\n\r\n── 6. 標準トレイトを derive で手に入れる ──\r\n  Version(1, 2) < Version(1, 10) = true\r\n\r\n── 7. 孤児則 ──\r\n  「型」と「トレイト」の少なくとも一方が自分のものでないと実装できない\r\n  例: 標準の Display を標準の Vec に実装することはできない\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

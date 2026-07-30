@@ -1,0 +1,15 @@
+{
+  "name": "cargo-clippy",
+  "title": "Windows PowerShell",
+  "note": "clippy の指摘の出かた",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\sloppy>",
+      "command": "cargo clippy",
+      "output": "\u001b[1m\u001b[92m    Checking\u001b[0m sloppy v0.1.0 (C:\\rust\\sloppy)\r\n\u001b[1m\u001b[96m    Building\u001b[0m [                             ] 0/1: sloppy(bin)                             \r\u001b[K\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: length comparison to zero\u001b[0m\r\n \u001b[1m\u001b[94m--> \u001b[0msrc/main.rs:3:8\r\n  \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m3\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     if numbers.len() == 0 {\r\n  \u001b[1m\u001b[94m|\u001b[0m        \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^^^\u001b[0m \u001b[1m\u001b[33mhelp: using `is_empty` is clearer and more explicit: `numbers.is_empty()`\u001b[0m\r\n  \u001b[1m\u001b[94m|\u001b[0m\r\n  \u001b[1m\u001b[94m= \u001b[0m\u001b[1mhelp\u001b[0m: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#len_zero\r\n  \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(clippy::len_zero)]` on by default\r\n\r\n\u001b[1m\u001b[96m    Building\u001b[0m [                             ] 0/1: sloppy(bin)                             \r\u001b[K\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: useless use of `vec!`\u001b[0m\r\n \u001b[1m\u001b[94m--> \u001b[0msrc/main.rs:2:19\r\n  \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m2\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let numbers = vec![1, 2, 3];\r\n  \u001b[1m\u001b[94m|\u001b[0m                   \u001b[1m\u001b[33m^^^^^^^^^^^^^\u001b[0m \u001b[1m\u001b[33mhelp: you can use an array directly: `[1, 2, 3]`\u001b[0m\r\n  \u001b[1m\u001b[94m|\u001b[0m\r\n  \u001b[1m\u001b[94m= \u001b[0m\u001b[1mhelp\u001b[0m: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#useless_vec\r\n  \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(clippy::useless_vec)]` on by default\r\n\r\n\u001b[1m\u001b[96m    Building\u001b[0m [                             ] 0/1: sloppy(bin)                             \r\u001b[K\u001b[1m\u001b[33mwarning\u001b[0m: `sloppy` (bin \"sloppy\") generated 2 warnings (run `cargo clippy --fix --bin \"sloppy\" -p sloppy -- ` to apply 2 suggestions)\r\n\u001b[1m\u001b[92m    Finished\u001b[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.12s\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

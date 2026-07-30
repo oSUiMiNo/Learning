@@ -1,0 +1,15 @@
+{
+  "name": "run-smart-pointers",
+  "title": "Windows PowerShell",
+  "note": "examples/18-smart-pointers の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\18-smart-pointers>",
+      "command": "cargo run --quiet",
+      "output": "── 1. Box でヒープに置く ──\r\n  合計 = 6\r\n  Box が無いと、この enum は「サイズが無限」になって定義できない\r\n\r\n── 2. Rc で共有する ──\r\n  作った直後のカウント = 1\r\n  2 人が見ている       = 3\r\n  どちらも同じ中身     = 仕様書 / 仕様書\r\n  抜けた後のカウント   = 1\r\n\r\n── 3. RefCell で内部可変性 ──\r\n  hits = 3\r\n  変数に mut を付けていないのに書き換えられた\r\n\r\n── 4. RefCell の代償 ──\r\n  読み中に書き込み借用しようとして弾かれた（実行時検査）\r\n  借用を手放してからなら書ける: true\r\n\r\n── 5. Rc + RefCell の組み合わせ ──\r\n  共有した Vec = [\"追記した\"]\r\n\r\n── 6. Weak で循環参照を避ける ──\r\n  親のカウント（強い）= 1\r\n  親のカウント（弱い）= 1\r\n  子 から 親 を辿れた\r\n  両方を Rc にすると、カウントが 0 にならず解放されない\r\n\r\n── 7. 使い分け ──\r\n  所有者が 1 人でヒープに置きたい      → Box\r\n  読む持ち主が複数（単一スレッド）      → Rc\r\n  読む持ち主が複数（複数スレッド）      → Arc\r\n  不変に見せたまま中身を書き換えたい    → RefCell / Mutex\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

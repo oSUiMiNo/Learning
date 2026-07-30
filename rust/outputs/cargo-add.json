@@ -1,0 +1,20 @@
+{
+  "name": "cargo-add",
+  "title": "Windows PowerShell",
+  "note": "cargo add で依存クレートを足す",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\guessing>",
+      "command": "cargo add rand",
+      "output": "\u001b[1m\u001b[92m    Updating\u001b[0m crates.io index\r\n\u001b[1m\u001b[92m      Adding\u001b[0m rand v0.10.2 to dependencies\r\n             Features:\r\n             \u001b[1m\u001b[92m+\u001b[0m alloc\r\n             \u001b[1m\u001b[92m+\u001b[0m std\r\n             \u001b[1m\u001b[92m+\u001b[0m std_rng\r\n             \u001b[1m\u001b[92m+\u001b[0m sys_rng\r\n             \u001b[1m\u001b[92m+\u001b[0m thread_rng\r\n             \u001b[1m\u001b[91m-\u001b[0m chacha\r\n             \u001b[1m\u001b[91m-\u001b[0m log\r\n             \u001b[1m\u001b[91m-\u001b[0m serde\r\n             \u001b[1m\u001b[91m-\u001b[0m simd_support\r\n             \u001b[1m\u001b[91m-\u001b[0m unbiased\r\n\u001b[1m\u001b[92m    Updating\u001b[0m crates.io index\r\n\u001b[1m\u001b[92m     Locking\u001b[0m 8 packages to latest Rust 1.97.1 compatible versions\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\guessing>",
+      "command": "type Cargo.toml",
+      "output": "[package]\nname = \"guessing\"\nversion = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\nrand = \"0.10.2\"\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

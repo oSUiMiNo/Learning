@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第11章 エラー処理 — 例外のない世界 | Rust 入門</title>
+<meta name="description" content="失敗は投げるのではなく、戻り値で返します。`Result&lt;T, E&gt;` と `?` の 2 つで、try-catch と同じくらい短く書けます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li class="is-current"><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 11 章<span class="dot">·</span>読了目安 16 分</p>
+        <h1>第11章 エラー処理 — 例外のない世界</h1>
+        <p class="lede">失敗は投げるのではなく、戻り値で返します。`Result&lt;T, E&gt;` と `?` の 2 つで、try-catch と同じくらい短く書けます。</p>
+      </header>
+      <div class="prose">
+<p>
+Rust に例外はありません。失敗は<strong>戻り値で返します</strong>。
+</p>
+
+<p>
+最初は面倒に思えますが、道具は 2 つだけです。
+<code>Result&lt;T, E&gt;</code> という型と、<code>?</code> という演算子。
+これで <code>try-catch</code> と同じくらい短く書けます。
+</p>
+
+<h2 id="例外との違い">例外との違い</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 330" role="img" aria-label="例外による巻き戻しと、Result と ? 演算子による伝播の比較。どちらも呼び出し元へ戻るが、Rust では戻り値の型に現れる。">
+  <rect x="1" y="1" width="718" height="328" rx="14" class="d-box-plain"/>
+
+  <!-- 左: 例外 -->
+  <rect x="20" y="20" width="330" height="234" rx="10" class="d-cs"/>
+  <text x="185" y="44" text-anchor="middle" class="d-head-cs">C# — 例外は型に出てこない</text>
+
+  <rect x="46" y="58" width="278" height="30" rx="7" class="d-box"/>
+  <text x="185" y="78" text-anchor="middle" class="d-code">int Parse(string s)</text>
+  <text x="185" y="104" text-anchor="middle" class="d-mute">署名からは失敗しうると読み取れない</text>
+
+  <rect x="46" y="116" width="278" height="30" rx="7" class="d-warn"/>
+  <text x="185" y="136" text-anchor="middle" class="d-code">throw new FormatException()</text>
+
+  <path d="M185 146 L185 176" class="d-flow-warn"/>
+  <path d="M185 176 l-5 -9 h10 z" class="d-arrowhead-warn"/>
+  <text x="196" y="166" class="d-mute">巻き戻る</text>
+
+  <rect x="46" y="184" width="278" height="30" rx="7" class="d-box"/>
+  <text x="185" y="204" text-anchor="middle" class="d-code">try / catch で捕まえる</text>
+  <text x="185" y="234" text-anchor="middle" class="d-head-warn">捕まえ忘れると落ちる</text>
+
+  <!-- 右: Result -->
+  <rect x="370" y="20" width="330" height="234" rx="10" class="d-accent"/>
+  <text x="535" y="44" text-anchor="middle" class="d-head-accent">Rust — 失敗が戻り値に書いてある</text>
+
+  <rect x="396" y="58" width="278" height="30" rx="7" class="d-box"/>
+  <text x="535" y="78" text-anchor="middle" class="d-code">fn parse(s: &amp;str) -&gt; Result&lt;i32, E&gt;</text>
+  <text x="535" y="104" text-anchor="middle" class="d-mute">署名を見れば失敗しうると分かる</text>
+
+  <rect x="396" y="116" width="132" height="30" rx="7" class="d-tip"/>
+  <text x="462" y="136" text-anchor="middle" class="d-code">Ok(42)</text>
+  <rect x="542" y="116" width="132" height="30" rx="7" class="d-warn"/>
+  <text x="608" y="136" text-anchor="middle" class="d-code">Err(e)</text>
+
+  <path d="M462 146 L462 176" class="d-flow"/>
+  <path d="M462 176 l-5 -9 h10 z" class="d-arrowhead"/>
+  <path d="M608 146 L608 176" class="d-flow-warn"/>
+  <path d="M608 176 l-5 -9 h10 z" class="d-arrowhead-warn"/>
+
+  <rect x="396" y="184" width="278" height="30" rx="7" class="d-box"/>
+  <text x="535" y="204" text-anchor="middle" class="d-code">match / ? で処理する</text>
+  <text x="535" y="234" text-anchor="middle" class="d-head-accent">無視すると警告が出る</text>
+
+  <!-- 下: ? の意味 -->
+  <rect x="20" y="268" width="680" height="48" rx="10" class="d-dash"/>
+  <text x="40" y="290" class="d-head-accent">? はこれの省略記法</text>
+  <text x="40" y="308" class="d-code">let n = parse(s)?;   →   match parse(s) { Ok(v) =&gt; v, Err(e) =&gt; return Err(e.into()) }</text>
+</svg>
+<figcaption>C# の例外は署名に現れないため「この関数は失敗しうるか」が読み取れず、捕まえ忘れると落ちる。Rust は Result が戻り値の型に書いてあるので、失敗しうることが必ず見える。? は match の省略記法。</figcaption></figure>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">E</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">T</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">E</span><span class="p">),</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+<code>Option</code> と同じく、ただの列挙型です。
+<code>None</code> のかわりに「なぜ失敗したか」を <code>Err</code> に入れられる、という違いだけです。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">例外と Result の比較</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C# の例外</th><th>Rust の <code>Result</code></th></tr></thead>
+    <tbody>
+      <tr><td>署名に出るか</td><td><strong>出ない</strong></td><td><strong>出る</strong></td></tr>
+      <tr><td>無視できるか</td><td>できる（<code>catch {}</code> で握り潰せる）</td><td><code>#[must_use]</code> なので警告が出る</td></tr>
+      <tr><td>伝播のしかた</td><td>自動（何も書かなくても上へ飛ぶ）</td><td><code>?</code> を書く</td></tr>
+      <tr><td>コスト</td><td>投げると重い（スタックの巻き戻し）</td><td>ただの値。ゼロコスト</td></tr>
+      <tr><td>捕まえ忘れ</td><td>実行時に落ちる</td><td>コンパイル時に気づく</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    一番の実利は 1 行目です。<strong>関数の署名を見れば失敗しうるか分かります。</strong>
+    C# では、ドキュメントを読むか実装を追うしかありません。
+  </p>
+  <p>
+    逆に一番の手間は 3 行目です。伝播を自分で書く必要があります。
+    それが <code>?</code> です。
+  </p>
+</div>
+
+<h2 id="-演算子">? 演算子</h2>
+
+<p>
+<code>?</code> は「成功なら中身を取り出す、失敗ならその場で <code>return</code>」の省略記法です。
+</p>
+
+<div class="compare">
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">? を使わない</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">into</span><span class="p">()),</span></span><span class="cl"><span class="p">};</span></span></code></pre><figcaption class="code-cap">やっていることはこれ</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">? を使う</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span></code></pre><figcaption class="code-cap">同じ意味</figcaption></figure>
+</div>
+
+<p>
+だから <code>?</code> を並べるだけで、失敗はそのまま上へ伝わります。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[(</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="p">)])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">ConfigError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">http</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read_port</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;http_port&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">https</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read_port</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;https_port&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;http:{http} / https:{https}&quot;</span><span class="p">))</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note pitfall">
+  <span class="note-title">? は Result を返す関数の中でしか使えない</span>
+  <p>
+    <code>?</code> は失敗時に <code>return Err(..)</code> するので、
+    その関数自身が <code>Result</code> を返していなければなりません。
+  </p>
+  <p>
+    <code>main</code> で使いたいときは、<code>main</code> の戻り値を変えます。
+    <strong>これは Rust 1.26 から可能になった書き方です。</strong>
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">read_to_string</span><span class="p">(</span><span class="s">&quot;config.toml&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{text}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span><span class="w">          </span><span class="c1">// 最後に Ok(()) を忘れないこと</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <p>
+    <code>Option</code> を返す関数の中でも <code>?</code> が使えます
+    （<code>None</code> なら <code>return None</code>）。
+    ただし <code>Result</code> と <code>Option</code> は混ぜられません。
+  </p>
+</div>
+
+<h2 id="自分のエラー型を作る">自分のエラー型を作る</h2>
+
+<p>
+エラーの種類を列挙型で表すのが定石です。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="cp">#[derive(Debug)]</span></span><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nc">ConfigError</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Missing</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="n">NotANumber</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="nc">ParseIntError</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="n">OutOfRange</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+これに 2 つのトレイトを実装すると、「まともなエラー型」になります。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>トレイト</th><th>役目</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>Debug</code></td><td>開発者向けの表示（<code>{:?}</code>）</td><td>—</td></tr>
+    <tr><td><code>Display</code></td><td><strong>人間向けの文言</strong>（<code>{}</code>）</td><td><code>Exception.Message</code></td></tr>
+    <tr><td><code>std::error::Error</code></td><td>標準のエラーとして扱えるようにする。<code>source()</code> で原因を辿れる</td><td><code>Exception.InnerException</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">例外クラスとの対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>class MyException : Exception</code></td><td><code>enum MyError</code> ＋ トレイト実装</td></tr>
+      <tr><td><code>Message</code></td><td><code>impl Display</code></td></tr>
+      <tr><td><code>InnerException</code></td><td><code>fn source()</code></td></tr>
+      <tr><td>継承階層で分類</td><td><strong>列挙型の選択肢で分類</strong></td></tr>
+      <tr><td><code>catch (SpecificException e)</code></td><td><code>match err { MyError::Specific(..) =&gt; .. }</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    継承ではなく列挙型なので、<strong>ここでも網羅性が効きます。</strong>
+    エラーの種類を足したら、対応し忘れた <code>match</code> が全部エラーになります。
+  </p>
+</div>
+
+<h2 id="実際に動かす">実際に動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="11-errors/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! エラー処理。例外を投げるかわりに、失敗を戻り値で返します。</span></span><span class="cl"></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">;</span></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">num</span><span class="p">::</span><span class="n">ParseIntError</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 自分で定義するエラー型。</span></span><span class="cl"><span class="sd">/// C# の例外クラスに当たるが、継承ではなくトレイト実装で作る。</span></span><span class="cl"><span class="cp">#[derive(Debug)]</span></span><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nc">ConfigError</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Missing</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="n">NotANumber</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="nc">ParseIntError</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="n">OutOfRange</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 人間に見せる文言。C# の Message プロパティに相当する。</span></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">fmt</span><span class="p">::</span><span class="n">Display</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ConfigError</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">fmt</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">fmt</span><span class="p">::</span><span class="n">Formatter</span><span class="o">&lt;&#39;</span><span class="nb">_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">fmt</span><span class="p">::</span><span class="nb">Result</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">ConfigError</span><span class="p">::</span><span class="n">Missing</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;設定 {key} がありません&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">            </span><span class="n">ConfigError</span><span class="p">::</span><span class="n">NotANumber</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">                </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;設定 {key} が数値として読めません（{source}）&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">            </span><span class="p">}</span></span><span class="cl"><span class="w">            </span><span class="n">ConfigError</span><span class="p">::</span><span class="n">OutOfRange</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">                </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;設定 {key} の値 {value} は範囲外です&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">            </span><span class="p">}</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// これを実装すると「標準のエラー」として扱える。</span></span><span class="cl"><span class="sd">/// source() で原因の連鎖を辿れるようになる。</span></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ConfigError</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">source</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;&amp;</span><span class="p">(</span><span class="k">dyn</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">&#39;</span><span class="nb">static</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">ConfigError</span><span class="p">::</span><span class="n">NotANumber</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">source</span><span class="p">,</span><span class="w"> </span><span class="o">..</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">source</span><span class="p">),</span></span><span class="cl"><span class="w">            </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">None</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 失敗しうる関数は Result を返す。呼び出し側は無視できない。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">read_port</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[(</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="p">)],</span><span class="w"> </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">u16</span><span class="p">,</span><span class="w"> </span><span class="n">ConfigError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="c1">// 探す。無ければ即座に Err を返す。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">raw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">settings</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">iter</span><span class="p">()</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="o">*</span><span class="n">k</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">key</span><span class="p">)</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="o">*</span><span class="n">v</span><span class="p">)</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">ok_or_else</span><span class="p">(</span><span class="o">||</span><span class="w"> </span><span class="n">ConfigError</span><span class="p">::</span><span class="n">Missing</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">to_string</span><span class="p">()))</span><span class="o">?</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 数値に変換する。失敗したら自分のエラー型に包み替える。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raw</span><span class="p">.</span><span class="n">parse</span><span class="p">().</span><span class="n">map_err</span><span class="p">(</span><span class="o">|</span><span class="n">source</span><span class="o">|</span><span class="w"> </span><span class="n">ConfigError</span><span class="p">::</span><span class="n">NotANumber</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="nc">key</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span></span><span class="cl"><span class="w">        </span><span class="n">source</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="p">})</span><span class="o">?</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 範囲を検査する。</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="p">(</span><span class="mi">1</span><span class="o">..=</span><span class="mi">65535</span><span class="p">).</span><span class="n">contains</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">ConfigError</span><span class="p">::</span><span class="n">OutOfRange</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="nc">key</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span></span><span class="cl"><span class="w">            </span><span class="n">value</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">});</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u16</span><span class="p">)</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// ? を並べるだけで、失敗はそのまま上へ伝わる。</span></span><span class="cl"><span class="sd">/// C# なら try-catch を書かずに例外が伝播していくのと同じ感覚。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="p">[(</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="p">)])</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">ConfigError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">http</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read_port</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;http_port&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">https</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read_port</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;https_port&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;http:{http} / https:{https}&quot;</span><span class="p">))</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">cases</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="p">[(</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="p">)];</span><span class="w"> </span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span></span><span class="cl"><span class="w">        </span><span class="o">&amp;</span><span class="p">[(</span><span class="s">&quot;http_port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;80&quot;</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;https_port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;443&quot;</span><span class="p">)],</span></span><span class="cl"><span class="w">        </span><span class="o">&amp;</span><span class="p">[(</span><span class="s">&quot;http_port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;80&quot;</span><span class="p">)],</span></span><span class="cl"><span class="w">        </span><span class="o">&amp;</span><span class="p">[(</span><span class="s">&quot;http_port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;はちじゅう&quot;</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;https_port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;443&quot;</span><span class="p">)],</span></span><span class="cl"><span class="w">        </span><span class="o">&amp;</span><span class="p">[(</span><span class="s">&quot;http_port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;99999&quot;</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;https_port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;443&quot;</span><span class="p">)],</span></span><span class="cl"><span class="w">    </span><span class="p">];</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 成功と失敗を並べて見る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">settings</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">cases</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">enumerate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="nb">Ok</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}: OK   {summary}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span></span><span class="cl"><span class="w">            </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {}: NG   {e}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 原因の連鎖を辿る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="n">cases</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  一番外のエラー: {e}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="p">::</span><span class="n">source</span><span class="p">(</span><span class="o">&amp;</span><span class="n">e</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">cause</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  その原因      : {cause}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">            </span><span class="n">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cause</span><span class="p">.</span><span class="n">source</span><span class="p">();</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. panic! は「もう続けられない」とき ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// unwrap は「失敗したら panic」。書き捨てや、失敗しえない場面だけで使う。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sure</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">ParseIntError</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;42&quot;</span><span class="p">.</span><span class="n">parse</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  unwrap = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sure</span><span class="p">.</span><span class="n">unwrap</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="c1">// expect はメッセージを添えられるので、unwrap より事故の調査が楽になる。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;7&quot;</span><span class="p">.</span><span class="n">parse</span><span class="p">().</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;ここは必ず数値のはず&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  expect = {n}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  Result を無視すると警告が出る。C# の「例外を握り潰す」が起きにくい&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\11-errors&gt;</span> cargo run --quiet</span>
+── 1. 成功と失敗を並べて見る ──
+  1: OK   http:80 / https:443
+  2: NG   設定 https_port がありません
+  3: NG   設定 http_port が数値として読めません（invalid digit found in string）
+  4: NG   設定 http_port の値 99999 は範囲外です
+
+── 2. 原因の連鎖を辿る ──
+  一番外のエラー: 設定 http_port が数値として読めません（invalid digit found in string）
+  その原因      : invalid digit found in string
+
+── 3. panic! は「もう続けられない」とき ──
+  unwrap = 42
+  expect = 7
+  Result を無視すると警告が出る。C# の「例外を握り潰す」が起きにくい</code></pre></div><figcaption>実行結果。4 つの入力に対して、成功と 3 種類の失敗が並ぶ。2 番目のブロックでは原因の連鎖（source）を辿っている。</figcaption></figure>
+
+<h2 id="手で書くのは大変なのでクレートを使う">手で書くのは大変なので、クレートを使う</h2>
+
+<p>
+上のコードは <code>Display</code> と <code>Error</code> を手で実装しています。
+説明のためにそうしましたが、<strong>実務ではクレートに任せます。</strong>
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>クレート</th><th>用途</th><th>使う場面</th></tr></thead>
+  <tbody>
+    <tr><td><code>thiserror</code></td><td>エラー型の定義を楽にする</td><td><strong>ライブラリを書くとき</strong></td></tr>
+    <tr><td><code>anyhow</code></td><td>種類を気にせず「何かエラー」として扱う</td><td><strong>アプリを書くとき</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="compare">
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">thiserror を使う</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">thiserror</span><span class="p">::</span><span class="n">Error</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="cp">#[derive(Debug, Error)]</span></span><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nc">ConfigError</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="cp">#[error(</span><span class="s">&quot;設定 {0} がありません&quot;</span><span class="cp">)]</span></span><span class="cl"><span class="w">    </span><span class="n">Missing</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[error(</span><span class="s">&quot;設定 {key} が数値として読めません&quot;</span><span class="cp">)]</span></span><span class="cl"><span class="w">    </span><span class="n">NotANumber</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">key</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="cp">#[source]</span></span><span class="cl"><span class="w">        </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="nc">std</span><span class="p">::</span><span class="n">num</span><span class="p">::</span><span class="n">ParseIntError</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="p">},</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">Display も Error も自動で実装される</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">anyhow を使う</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">anyhow</span><span class="p">::{</span><span class="n">Context</span><span class="p">,</span><span class="w"> </span><span class="nb">Result</span><span class="p">};</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">path</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">read_to_string</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></span><span class="cl"><span class="w">        </span><span class="p">.</span><span class="n">with_context</span><span class="p">(</span><span class="o">||</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{path} を読めませんでした&quot;</span><span class="p">))</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">型を定義せずに済む。文脈を足せる</figcaption></figure>
+</div>
+
+<div class="note">
+  <span class="note-title">使い分けの目安</span>
+  <ul>
+    <li><strong>アプリ（実行ファイル）を書くなら <code>anyhow</code></strong> ─
+        呼び出し側は「失敗した」ことと理由の文言が分かれば十分なことが多い。</li>
+    <li><strong>ライブラリを書くなら <code>thiserror</code></strong> ─
+        使う側がエラーの種類で分岐できるように、型を公開すべき。</li>
+  </ul>
+  <p>
+    <code>anyhow</code> の <code>with_context</code> は特に便利です。
+    「どのファイルを読もうとして失敗したか」といった文脈を、
+    エラーを上に投げながら積み上げられます。
+  </p>
+</div>
+
+<h2 id="panic-はいつ使うのか">panic! はいつ使うのか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th><code>Result</code> を返す</th><th><code>panic!</code> する</th></tr></thead>
+  <tbody>
+    <tr><td>意味</td><td>「起こりうる失敗」</td><td>「起こってはならないこと」</td></tr>
+    <tr><td>例</td><td>ファイルが無い、入力が数値でない、通信が切れた</td><td>配列の範囲外、ゼロ除算、内部の不整合</td></tr>
+    <tr><td>C# なら</td><td>想定される例外</td><td><code>InvalidOperationException</code> / <code>Debug.Assert</code></td></tr>
+    <tr><td>呼び出し側</td><td>対処できる</td><td>対処できない。プログラムを直すべき</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">panic はライブラリでは避ける</span>
+  <p>
+    <code>panic!</code> は既定でスレッドを終了させます。
+    ライブラリの中で panic すると、<strong>使う側に対処の余地がありません</strong>。
+  </p>
+  <p>
+    「入力が不正なら panic」ではなく「不正なら <code>Err</code> を返す」にしてください。
+    <code>unwrap()</code> をライブラリのコードに残さない、というのは同じことを言っています。
+  </p>
+</div>
+
+<h2 id="覚えておくと便利なメソッド">覚えておくと便利なメソッド</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>result?</code></td><td>失敗なら return。<strong>基本はこれ</strong></td></tr>
+    <tr><td><code>result.unwrap_or(既定値)</code></td><td>失敗なら既定値</td></tr>
+    <tr><td><code>result.unwrap_or_else(|e| ..)</code></td><td>失敗なら計算して既定値</td></tr>
+    <tr><td><code>result.map_err(|e| ..)</code></td><td><strong>エラーの型を変える</strong></td></tr>
+    <tr><td><code>result.ok()</code></td><td><code>Option</code> にする（エラーを捨てる）</td></tr>
+    <tr><td><code>option.ok_or(err)</code></td><td><code>Option</code> を <code>Result</code> にする</td></tr>
+    <tr><td><code>option.ok_or_else(|| err)</code></td><td>同じ。エラーの生成を遅らせる</td></tr>
+    <tr><td><code>result.is_ok()</code> / <code>is_err()</code></td><td>成否だけ調べる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note deep">
+  <span class="note-title">map_err と ? の関係</span>
+  <p>
+    <code>?</code> は自動で <code>From</code> による型変換を試みます。
+    つまり <code>impl From&lt;ParseIntError&gt; for MyError</code> を書いておけば、
+    <code>s.parse()?</code> がそのまま <code>MyError</code> に変換されます。
+  </p>
+  <p>
+    <code>thiserror</code> の <code>#[from]</code> はこれを自動生成するものです。
+    変換を都度書きたい場合は <code>map_err</code> を使います。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/11-errors</code> を動かして、4 つの入力の結果を確認してください。</li>
+    <li><code>load()</code> の <code>?</code> を 1 つ消して、どんなエラーになるか見てください。</li>
+    <li><code>fn main()</code> を <code>fn main() -&gt; Result&lt;(), ConfigError&gt;</code> に変え、<code>load(cases[1])?</code> と書いてみてください。<strong>プログラムが 0 以外で終了し、エラーが表示されます。</strong></li>
+    <li><code>"42".parse::&lt;i32&gt;()</code> の結果を <code>let _ = ...;</code> と書かずに放置して、警告が出ることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>例外は無い。失敗は <code>Result&lt;T, E&gt;</code> で<strong>戻り値として返す</strong>。</li>
+    <li><code>?</code> は「成功なら取り出す、失敗なら return」の省略記法。</li>
+    <li><code>?</code> を使う関数自身が <code>Result</code> を返す必要がある。<code>main</code> も <code>Result</code> を返せる。</li>
+    <li>エラー型は列挙型 ＋ <code>Display</code> ＋ <code>Error</code>。手で書くなら <code>thiserror</code>、アプリなら <code>anyhow</code>。</li>
+    <li><code>panic!</code> は「起こってはならないこと」だけ。ライブラリでは避ける。</li>
+    <li>署名を見れば失敗しうるか分かる。これが例外との最大の違い。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../10-enums/"><span class="pager-dir">← 前の章</span><span class="pager-title">列挙型と match</span></a>
+<a class="pager-link pager-next" href="../12-collections/"><span class="pager-dir">次の章 →</span><span class="pager-title">コレクション</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

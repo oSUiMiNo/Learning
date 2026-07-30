@@ -1,0 +1,283 @@
+<p>
+Cargo は Rust の <code>dotnet</code> コマンドに当たるものです。
+プロジェクトを作り、依存を解決し、ビルドし、テストを走らせ、
+ドキュメントを生成します。<strong>これ 1 つで一通り済みます。</strong>
+</p>
+
+<p>
+C# の <code>dotnet new console</code> から <code>dotnet run</code> までと、
+やることはほとんど同じです。まず作って動かしてしまいましょう。
+</p>
+
+<!--figure: cargo-flow | cargo new から cargo run までの流れ。生成されるのは Cargo.toml と src/main.rs だけで、あとはビルド時に target/ の下に作られる。右側は C# との対応。 -->
+
+<h2>プロジェクトを作る</h2>
+
+<p>
+PowerShell で作業したいフォルダに移り、<code>cargo new</code> を打ちます。
+</p>
+
+<!--term: cargo-new | cargo new を実行し、生成された 2 つのファイルの中身をそのまま表示したもの。作られるファイルは驚くほど少ない。 -->
+
+<p>
+できたものは 2 ファイルだけです。<code>Cargo.toml</code> を見てみます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>行</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>[package]</code></td><td>このパッケージ自身の情報</td></tr>
+    <tr><td><code>name</code></td><td>パッケージ名。実行ファイルの名前にもなる</td></tr>
+    <tr><td><code>version</code></td><td>版。セマンティックバージョニング</td></tr>
+    <tr><td><code>edition</code></td><td><strong>エディション。いまは 2024</strong></td></tr>
+    <tr><td><code>[dependencies]</code></td><td>依存クレートを書く場所。最初は空</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">Cargo.toml と .csproj</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>.csproj</code></td><td><code>Cargo.toml</code></td></tr>
+      <tr><td><code>packages.lock.json</code></td><td><code>Cargo.lock</code></td></tr>
+      <tr><td>NuGet</td><td>crates.io</td></tr>
+      <tr><td><code>bin/Debug/net8.0/</code></td><td><code>target/debug/</code></td></tr>
+      <tr><td>ソリューション（.sln）</td><td>ワークスペース</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    大きな違いは、<strong><code>.csproj</code> のようにファイルを列挙しない</strong>ことです。
+    Cargo は <code>src/main.rs</code> を入口として、
+    <code>mod</code> 宣言をたどって必要なファイルを見つけます（第 16 章）。
+    「ファイルを追加したのにビルドに含まれない」という事故は起きません。
+  </p>
+</div>
+
+<h2>動かす</h2>
+
+<p>
+<code>cargo run</code> と打つだけで、ビルドと実行がまとめて行われます。
+</p>
+
+<!--term: cargo-run-hello | 1 回目は Compiling が走り、2 回目は Finished だけになる。Cargo は変更がなければ再ビルドしない。 -->
+
+<p>
+出力の 3 行を見てください。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>行</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>Compiling</code></td><td>コンパイル中。パッケージ名と版、場所が出る</td></tr>
+    <tr><td><code>Finished</code></td><td>完了。<code>dev</code> プロファイル（最適化なし・デバッグ情報あり）だと明記されている</td></tr>
+    <tr><td><code>Running</code></td><td>どの実行ファイルを起動したか</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+そして 2 回目の実行では <code>Compiling</code> が消えています。
+<strong>Cargo は変更がなければ再ビルドしません。</strong>
+</p>
+
+<div class="note">
+  <span class="note-title">主なコマンド</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>コマンド</th><th>やること</th></tr></thead>
+    <tbody>
+      <tr><td><code>cargo run</code></td><td>ビルドして実行</td></tr>
+      <tr><td><code>cargo run -- 引数</code></td><td>プログラムに引数を渡す（<code>--</code> の後がプログラムの引数）</td></tr>
+      <tr><td><code>cargo build</code></td><td>ビルドだけ</td></tr>
+      <tr><td><code>cargo build --release</code></td><td>最適化してビルド（第 21 章）</td></tr>
+      <tr><td><code>cargo check</code></td><td>型検査だけ。速い</td></tr>
+      <tr><td><code>cargo clean</code></td><td><code>target/</code> を消す</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2>Hello の中身を読む</h2>
+
+<p>
+生成された <code>main.rs</code> は 3 行です。それに少し足したものがこれです。
+</p>
+
+<!--code: 03-cargo/src/main.rs-->
+
+<p>
+このファイルだけで、Rust のプログラムの形がほぼ全部見えています。
+</p>
+
+<h3>main が入口</h3>
+
+<p>
+C# の <code>Main</code> と同じですが、クラスの中に入れる必要はありません。
+ファイルの一番上に置けます。
+</p>
+
+<h3>println! の ! はマクロの印</h3>
+
+<p>
+<code>!</code> が付いているものは<strong>マクロ</strong>です。
+関数ではなく、コンパイル時にコードへ展開されます。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">書式指定の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>$"こんにちは {name}"</code></td><td><code>format!("こんにちは {name}")</code></td></tr>
+      <tr><td><code>Console.WriteLine(...)</code></td><td><code>println!(...)</code></td></tr>
+      <tr><td><code>Console.Write(...)</code></td><td><code>print!(...)</code></td></tr>
+      <tr><td><code>string.Format("{0}", x)</code></td><td><code>format!("{}", x)</code></td></tr>
+      <tr><td><code>obj.ToString()</code></td><td><code>{}</code>（Display トレイト）</td></tr>
+      <tr><td>デバッグ表示</td><td><code>{:?}</code>（Debug トレイト）</td></tr>
+      <tr><td><code>x.ToString("F3")</code></td><td><code>{:.3}</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# の文字列補間 <code>$"..."</code> と同じ感覚で
+    <code>println!("{name}")</code> と書けます。
+    これは Rust 2021 から入った書き方です。
+    古い記事は <code>println!("{}", name)</code> と書いていますが、どちらも今も有効です。
+  </p>
+</div>
+
+<h3>セミコロンの有無に意味がある</h3>
+
+<p>
+<code>add</code> 関数の中を見てください。<code>a + b</code> にセミコロンが付いていません。
+</p>
+
+<div class="compare">
+  <div class="src" data-lang="rust" data-file="セミコロンなし" data-cap="式。これが戻り値になる">
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+  </div>
+  <div class="src" data-lang="rust" data-file="return を書く" data-cap="同じ意味。早期 return では必要">
+fn add(a: i32, b: i32) -> i32 {
+    return a + b;
+}
+  </div>
+</div>
+
+<p>
+Rust では<strong>ブロックの最後の式が、そのブロックの値</strong>になります。
+セミコロンを付けると「文」になり、値を返さなくなります。
+第 5 章で詳しく扱いますが、ここでは
+「最後の行のセミコロンを消し忘れると型エラーになる」ことだけ覚えてください。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">最頻出のミス: 最後にセミコロンを付けてしまう</span>
+  <p>
+    次のように書くと、<strong>「<code>i32</code> を返すはずなのに <code>()</code> を返している」</strong>
+    という E0308 になります。
+  </p>
+  <div class="src" data-lang="rust" data-cap="✗ セミコロンがあるので値を返していない">
+fn add(a: i32, b: i32) -> i32 {
+    a + b;
+}
+  </div>
+  <p>
+    <code>()</code> は「ユニット型」で、C# の <code>void</code> に当たります。
+    エラーに <code>expected `i32`, found `()`</code> と出たら、
+    まず<strong>最後の行のセミコロンを疑ってください</strong>。
+  </p>
+</div>
+
+<h2>依存クレートを足す</h2>
+
+<p>
+crates.io にあるライブラリは <code>cargo add</code> で足せます。
+乱数を扱う <code>rand</code> を入れてみます。
+</p>
+
+<!--term: cargo-add | cargo add rand を実行した結果。有効になった機能（Features）の一覧が出て、Cargo.toml に 1 行足される。ここで解決された版が、この教材を作った時点の最新。 -->
+
+<p>
+<code>+</code> が付いているのが有効になった機能、
+<code>-</code> が無効のままの機能です。
+Rust のクレートは<strong>機能を選んで削れる</strong>ので、
+使わない部分をビルドしなくて済みます。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">cargo add は昔は無かった</span>
+  <p>
+    <code>cargo add</code> が Cargo に標準で入ったのは 1.62（2022 年）です。
+    それより前は <code>cargo-edit</code> という別のツールを入れる必要がありました。
+  </p>
+  <p>
+    そのため古い記事には
+    「<code>cargo install cargo-edit</code> してから <code>cargo add</code>」
+    と書かれていることがあります。<strong>いまは不要です。</strong>
+    あるいは「<code>Cargo.toml</code> を手で編集する」と書かれていることもありますが、
+    それも今でも正しい方法です（<code>cargo add</code> がやってくれるのと同じことです）。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">依存にまつわるコマンド</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>コマンド</th><th>やること</th></tr></thead>
+    <tbody>
+      <tr><td><code>cargo add rand</code></td><td>最新版を足す</td></tr>
+      <tr><td><code>cargo add serde --features derive</code></td><td>機能を指定して足す</td></tr>
+      <tr><td><code>cargo remove rand</code></td><td>外す</td></tr>
+      <tr><td><code>cargo update</code></td><td><code>Cargo.lock</code> を更新する</td></tr>
+      <tr><td><code>cargo tree</code></td><td>依存関係を木で見る</td></tr>
+      <tr><td><code>cargo info rand</code></td><td>クレートの情報を見る</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2>Cargo.lock は何のためにあるか</h2>
+
+<p>
+<code>cargo build</code> すると <code>Cargo.lock</code> ができます。
+これは「実際に使った版を 1 つずつ記録したもの」です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>Git に入れるか</th></tr></thead>
+  <tbody>
+    <tr><td>実行ファイルを作るプロジェクト</td><td><strong>入れる。</strong>誰がビルドしても同じ結果になる</td></tr>
+    <tr><td>ライブラリ</td><td>入れないのが慣習。使う側の都合に合わせる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>cargo new hello</code> して <code>cargo run</code> するところまでを、自分の手で通してください。</li>
+    <li><code>add</code> 関数の <code>a + b</code> にセミコロンを付けて <code>cargo build</code> し、E0308 が出ることを確認してください。<strong>わざとエラーを出す練習は無駄になりません。</strong></li>
+    <li><code>cargo run -- こんにちは</code> のように引数を付けて実行し、<code>--</code> の意味を確かめてください（今のコードは引数を読まないので何も変わりませんが、エラーにもなりません）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>cargo new</code> → <code>cargo run</code> で始まる。作られるのは <code>Cargo.toml</code> と <code>src/main.rs</code> だけ。</li>
+    <li><code>Cargo.toml</code> は <code>.csproj</code>、crates.io は NuGet に当たる。<strong>ファイルの列挙は不要</strong>。</li>
+    <li><code>!</code> が付いているのはマクロ。<code>println!("{name}")</code> は C# の <code>$"{name}"</code> と同じ感覚で使える。</li>
+    <li><strong>ブロックの最後の式が戻り値。</strong>セミコロンを付けると値を返さなくなる。</li>
+    <li>依存は <code>cargo add</code>。昔は別ツールが必要だったが、今は標準。</li>
+  </ul>
+</div>

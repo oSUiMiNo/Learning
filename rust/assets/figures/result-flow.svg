@@ -1,0 +1,49 @@
+<svg viewBox="0 0 720 330" role="img" aria-label="例外による巻き戻しと、Result と ? 演算子による伝播の比較。どちらも呼び出し元へ戻るが、Rust では戻り値の型に現れる。">
+  <rect x="1" y="1" width="718" height="328" rx="14" class="d-box-plain"/>
+
+  <!-- 左: 例外 -->
+  <rect x="20" y="20" width="330" height="234" rx="10" class="d-cs"/>
+  <text x="185" y="44" text-anchor="middle" class="d-head-cs">C# — 例外は型に出てこない</text>
+
+  <rect x="46" y="58" width="278" height="30" rx="7" class="d-box"/>
+  <text x="185" y="78" text-anchor="middle" class="d-code">int Parse(string s)</text>
+  <text x="185" y="104" text-anchor="middle" class="d-mute">署名からは失敗しうると読み取れない</text>
+
+  <rect x="46" y="116" width="278" height="30" rx="7" class="d-warn"/>
+  <text x="185" y="136" text-anchor="middle" class="d-code">throw new FormatException()</text>
+
+  <path d="M185 146 L185 176" class="d-flow-warn"/>
+  <path d="M185 176 l-5 -9 h10 z" class="d-arrowhead-warn"/>
+  <text x="196" y="166" class="d-mute">巻き戻る</text>
+
+  <rect x="46" y="184" width="278" height="30" rx="7" class="d-box"/>
+  <text x="185" y="204" text-anchor="middle" class="d-code">try / catch で捕まえる</text>
+  <text x="185" y="234" text-anchor="middle" class="d-head-warn">捕まえ忘れると落ちる</text>
+
+  <!-- 右: Result -->
+  <rect x="370" y="20" width="330" height="234" rx="10" class="d-accent"/>
+  <text x="535" y="44" text-anchor="middle" class="d-head-accent">Rust — 失敗が戻り値に書いてある</text>
+
+  <rect x="396" y="58" width="278" height="30" rx="7" class="d-box"/>
+  <text x="535" y="78" text-anchor="middle" class="d-code">fn parse(s: &amp;str) -&gt; Result&lt;i32, E&gt;</text>
+  <text x="535" y="104" text-anchor="middle" class="d-mute">署名を見れば失敗しうると分かる</text>
+
+  <rect x="396" y="116" width="132" height="30" rx="7" class="d-tip"/>
+  <text x="462" y="136" text-anchor="middle" class="d-code">Ok(42)</text>
+  <rect x="542" y="116" width="132" height="30" rx="7" class="d-warn"/>
+  <text x="608" y="136" text-anchor="middle" class="d-code">Err(e)</text>
+
+  <path d="M462 146 L462 176" class="d-flow"/>
+  <path d="M462 176 l-5 -9 h10 z" class="d-arrowhead"/>
+  <path d="M608 146 L608 176" class="d-flow-warn"/>
+  <path d="M608 176 l-5 -9 h10 z" class="d-arrowhead-warn"/>
+
+  <rect x="396" y="184" width="278" height="30" rx="7" class="d-box"/>
+  <text x="535" y="204" text-anchor="middle" class="d-code">match / ? で処理する</text>
+  <text x="535" y="234" text-anchor="middle" class="d-head-accent">無視すると警告が出る</text>
+
+  <!-- 下: ? の意味 -->
+  <rect x="20" y="268" width="680" height="48" rx="10" class="d-dash"/>
+  <text x="40" y="290" class="d-head-accent">? はこれの省略記法</text>
+  <text x="40" y="308" class="d-code">let n = parse(s)?;   →   match parse(s) { Ok(v) =&gt; v, Err(e) =&gt; return Err(e.into()) }</text>
+</svg>

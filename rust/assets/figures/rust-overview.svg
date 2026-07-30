@@ -1,0 +1,35 @@
+<svg viewBox="0 0 720 270" role="img" aria-label="Rust の立ち位置。実行時に検査するか、書く人が気をつけるか、コンパイル時に検査するかという 3 つの方針の比較。">
+  <rect x="1" y="1" width="718" height="268" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">「安全」をいつ確かめるか、という設計の違い</text>
+
+  <!-- 3 columns -->
+  <rect x="24" y="46" width="216" height="146" rx="9" class="d-cs"/>
+  <text x="132" y="70" text-anchor="middle" class="d-title">C# / Java</text>
+  <text x="132" y="92" text-anchor="middle" class="d-mute">実行時に面倒を見る</text>
+  <text x="132" y="116" text-anchor="middle" class="d-code">GC + 例外</text>
+  <text x="132" y="142" text-anchor="middle" class="d-head-tip">安全</text>
+  <text x="132" y="164" text-anchor="middle" class="d-head-warn">実行時のコストがある</text>
+  <text x="132" y="182" text-anchor="middle" class="d-mute">停止時間、メモリ消費</text>
+
+  <rect x="252" y="46" width="216" height="146" rx="9" class="d-warn"/>
+  <text x="360" y="70" text-anchor="middle" class="d-title">C / C++</text>
+  <text x="360" y="92" text-anchor="middle" class="d-mute">書く人が気をつける</text>
+  <text x="360" y="116" text-anchor="middle" class="d-code">手動の確保と解放</text>
+  <text x="360" y="142" text-anchor="middle" class="d-head-tip">速い</text>
+  <text x="360" y="164" text-anchor="middle" class="d-head-warn">間違いが実行時に出る</text>
+  <text x="360" y="182" text-anchor="middle" class="d-mute">二重解放、解放後の参照</text>
+
+  <rect x="480" y="46" width="216" height="146" rx="9" class="d-accent"/>
+  <text x="588" y="70" text-anchor="middle" class="d-title">Rust</text>
+  <text x="588" y="92" text-anchor="middle" class="d-mute">コンパイル時に確かめる</text>
+  <text x="588" y="116" text-anchor="middle" class="d-code">所有権と借用の規則</text>
+  <text x="588" y="142" text-anchor="middle" class="d-head-tip">安全でかつ速い</text>
+  <text x="588" y="164" text-anchor="middle" class="d-head-warn">最初の学習コストが高い</text>
+  <text x="588" y="182" text-anchor="middle" class="d-mute">この教材が引き受ける部分</text>
+
+  <!-- 下 -->
+  <rect x="24" y="206" width="672" height="48" rx="9" class="d-dash"/>
+  <text x="44" y="228" class="d-head-accent">つまり「難しい」の正体</text>
+  <text x="44" y="246" class="d-mute">実行してから分かっていた不具合が、コンパイル時に前倒しで出てくる。総量は減るが、最初に全部来るので重く感じる。</text>
+</svg>

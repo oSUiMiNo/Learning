@@ -1,0 +1,278 @@
+<p>
+テストは言語に組み込まれています。
+NUnit や xUnit のような外部のフレームワークを入れる必要はありません。
+</p>
+
+<p>
+そして Rust には C# に無い仕組みが 1 つあります。
+<strong>ドキュメントに書いたコード例が、テストとして実行されます。</strong>
+「ドキュメントの例が古くなって動かない」が構造的に起きません。
+この教材自身も、同じ考え方で作られています。
+</p>
+
+<h2>書き方</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C# (xUnit)">
+public class TaxTests {
+    [Fact]
+    public void 税込み金額を計算できる() {
+        Assert.Equal(110, Tax.WithTax(100, 0.10));
+    }
+}
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust">
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn 税込み金額を計算できる() {
+        assert_eq!(with_tax(100, 0.10), 110);
+    }
+}
+  </div>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">対応表</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C# (xUnit)</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>[Fact]</code></td><td><code>#[test]</code></td></tr>
+      <tr><td><code>[Theory]</code> + <code>[InlineData]</code></td><td>ループを書く、または <code>rstest</code> クレート</td></tr>
+      <tr><td><code>Assert.Equal(a, b)</code></td><td><code>assert_eq!(a, b)</code></td></tr>
+      <tr><td><code>Assert.NotEqual</code></td><td><code>assert_ne!</code></td></tr>
+      <tr><td><code>Assert.True</code></td><td><code>assert!</code></td></tr>
+      <tr><td><code>Assert.Throws&lt;T&gt;</code></td><td><code>#[should_panic]</code></td></tr>
+      <tr><td><code>[Skip]</code></td><td><code>#[ignore]</code></td></tr>
+      <tr><td><code>dotnet test</code></td><td><code>cargo test</code></td></tr>
+      <tr><td>テストは別プロジェクト</td><td><strong>同じファイルに書くのが慣習</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    最後の行が大きな違いです。
+    Rust では<strong>テストを実装と同じファイルに置きます</strong>。
+    <code>#[cfg(test)]</code> が付いているので、通常のビルドには含まれません。
+    製品のバイナリにテストコードが混ざる心配はありません。
+  </p>
+  <p>
+    同じファイルにあるので、<strong>非公開の関数もテストできます</strong>。
+    C# で <code>InternalsVisibleTo</code> を書く必要があった場面が、そのまま解決します。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">テスト関数の名前は日本語でよい</span>
+  <p>
+    Rust の識別子は Unicode を許すので、テスト名に日本語が使えます。
+    出力にもそのまま出るので、読みやすさのために使う価値があります。
+  </p>
+  <p>
+    ふつうの関数名に日本語を使うと警告が出ますが（<code>non_snake_case</code>）、
+    テストでは実害がないので使われることがあります。
+  </p>
+</div>
+
+<h2>ドキュメントテスト</h2>
+
+<p>
+これが Rust 独自の仕組みです。
+<code>///</code> のドキュメントコメントの中に <code>```</code> でコードを書くと、
+<strong>それが実際にコンパイルされ、実行されます</strong>。
+</p>
+
+<!--code: 17-testing/src/lib.rs-->
+
+<p>
+実行するとこうなります。
+</p>
+
+<!--term: cargo-test | cargo test の出力。単体テスト 7 件（1 件は ignored）、結合テスト 2 件、そしてドキュメントテスト 4 件が、まとめて走っている。ドキュメントの例が本当にテストされていることが分かる。 -->
+
+<div class="note">
+  <span class="note-title">3 種類のテストが一度に走る</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>種類</th><th>置く場所</th><th>見えるもの</th></tr></thead>
+    <tbody>
+      <tr><td>単体テスト</td><td>実装と同じファイルの <code>#[cfg(test)] mod tests</code></td><td><strong>非公開のものも見える</strong></td></tr>
+      <tr><td>結合テスト</td><td><code>tests/*.rs</code></td><td>公開している API だけ</td></tr>
+      <tr><td>ドキュメントテスト</td><td><code>///</code> の中の <code>```</code></td><td>公開している API だけ</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    結合テストは<strong>別のクレートとしてコンパイルされます</strong>。
+    だから「公開している API だけで目的を果たせるか」の検証になります。
+    C# で別プロジェクトからテストするのと同じ位置づけです。
+  </p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">なぜドキュメントテストが効くのか</span>
+  <p>
+    C# の XML ドキュメントコメントに書いた <code>&lt;example&gt;</code> は、
+    ただのテキストです。API を変えても誰も気づきません。
+  </p>
+  <p>
+    Rust では、それがコンパイルエラーになります。
+    <strong>「使い方の例」と「実際の API」が食い違えないのです。</strong>
+  </p>
+  <p>
+    docs.rs で公開されているクレートのドキュメントに載っているコードは、
+    すべてこの検証を通っています。
+    だから<strong>公式ドキュメントのサンプルは、写せば動きます</strong>。
+    これは Rust のエコシステム全体の信頼性を支えている仕組みです。
+  </p>
+</div>
+
+<h2>特別な書き方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>#[should_panic]</code></td><td>panic することを期待する</td></tr>
+    <tr><td><code>#[should_panic(expected = "文字列")]</code></td><td>メッセージに指定の文字列が含まれること</td></tr>
+    <tr><td><code>#[ignore = "理由"]</code></td><td>ふだんは走らせない。<code>cargo test -- --ignored</code> で走る</td></tr>
+    <tr><td><code>fn t() -&gt; Result&lt;(), E&gt;</code></td><td>テストの中で <code>?</code> が使える</td></tr>
+    <tr><td>```should_panic</td><td>ドキュメントテストで panic を期待する</td></tr>
+    <tr><td>```no_run</td><td>コンパイルはするが実行しない</td></tr>
+    <tr><td>```ignore</td><td>コンパイルもしない（ただの飾り）</td></tr>
+    <tr><td>```compile_fail</td><td><strong>コンパイルが失敗することを期待する</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">Result を返すテスト</span>
+  <p>
+    テストの中で <code>?</code> を使いたいなら、<code>Result</code> を返すようにします。
+    前準備が短くなります。
+  </p>
+  <div class="src" data-lang="rust">
+#[test]
+fn 結果型を返すテスト() -&gt; Result&lt;(), String&gt; {
+    let value = divide(10, 2)?;
+    assert_eq!(value, 5);
+    Ok(())
+}
+  </div>
+</div>
+
+<h2>走らせ方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コマンド</th><th>やること</th></tr></thead>
+  <tbody>
+    <tr><td><code>cargo test</code></td><td>全部走らせる</td></tr>
+    <tr><td><code>cargo test 税込み</code></td><td>名前に含むものだけ</td></tr>
+    <tr><td><code>cargo test -- --nocapture</code></td><td><strong><code>println!</code> の出力を見せる</strong></td></tr>
+    <tr><td><code>cargo test -- --ignored</code></td><td><code>#[ignore]</code> のものだけ</td></tr>
+    <tr><td><code>cargo test -- --test-threads=1</code></td><td>1 つずつ順番に走らせる</td></tr>
+    <tr><td><code>cargo test --lib</code></td><td>単体テストだけ</td></tr>
+    <tr><td><code>cargo test --doc</code></td><td>ドキュメントテストだけ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">println! が出ないのは既定の動作</span>
+  <p>
+    テストが通っている間、<code>println!</code> の出力は隠されます。
+    デバッグのために見たいときは <code>-- --nocapture</code> を付けてください。
+  </p>
+  <p>
+    <code>--</code> の前が cargo への引数、後がテストランナーへの引数です。
+    この区切りを忘れると <code>cargo</code> が知らない引数だと怒ります。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">テストは並列に走る</span>
+  <p>
+    既定では複数のスレッドで同時に走ります。C# の xUnit と同じです。
+    <strong>同じファイルを読み書きするテストは、そのままだと衝突します。</strong>
+  </p>
+  <p>
+    対処は 3 つあります。
+  </p>
+  <ul>
+    <li>テストごとに違う一時ディレクトリを使う（<code>tempfile</code> クレート）</li>
+    <li><code>--test-threads=1</code> で直列にする</li>
+    <li>そもそもファイルに触らない設計にする（依存を引数で渡す）</li>
+  </ul>
+</div>
+
+<h2>ドキュメントを生成する</h2>
+
+<div class="src" data-lang="bash" data-file="PowerShell">
+cargo doc --open
+</div>
+
+<p>
+自分のコードと、依存しているすべてのクレートのドキュメントが生成され、
+ブラウザで開きます。
+</p>
+
+<div class="note">
+  <span class="note-title">ドキュメントコメントの書き方</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>記法</th><th>説明する対象</th></tr></thead>
+    <tbody>
+      <tr><td><code>///</code></td><td><strong>次に来る項目</strong>（関数・構造体など）</td></tr>
+      <tr><td><code>//!</code></td><td><strong>そのファイル自身</strong>（モジュール・クレート）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    中身は Markdown です。慣習的な見出しがあります。
+  </p>
+  <div class="src" data-lang="rust">
+/// 1 行の要約。
+///
+/// もう少し詳しい説明。
+///
+/// # 例
+///
+/// ```
+/// assert_eq!(my_crate::add(1, 2), 3);
+/// ```
+///
+/// # パニック
+///
+/// 引数が負のとき panic します。
+///
+/// # エラー
+///
+/// ファイルが無いとき `Err` を返します。
+  </div>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/17-testing</code> で <code>cargo test</code> を走らせてください。</li>
+    <li><code>with_tax</code> のドキュメントの <code>assert_eq!(with_tax(100, 0.10), 110);</code> を <code>111</code> に変えて、<strong>ドキュメントテストが落ちる</strong>ことを確認してください。これがこの章の要点です。</li>
+    <li><code>cargo test -- --ignored</code> で、<code>#[ignore]</code> のテストが走ることを確認してください。</li>
+    <li><code>cargo test 日本語</code> のように名前で絞り込んでください。</li>
+    <li><code>cargo doc --open</code> でドキュメントを生成し、書いた <code># 例</code> がどう表示されるか見てください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>テスト機構は言語に組み込み。<code>#[test]</code> と <code>cargo test</code> だけ。</li>
+    <li>テストは<strong>実装と同じファイル</strong>に <code>#[cfg(test)] mod tests</code> で書く。非公開のものもテストできる。</li>
+    <li><code>tests/</code> の結合テストは別クレート。公開 API だけを使う検証になる。</li>
+    <li><strong>ドキュメントの <code>```</code> の中のコードがテストとして走る。</strong>これが Rust 独自の強み。</li>
+    <li><code>println!</code> を見たいときは <code>cargo test -- --nocapture</code>。</li>
+    <li>テストは並列に走る。ファイルを触るテストは注意。</li>
+  </ul>
+</div>

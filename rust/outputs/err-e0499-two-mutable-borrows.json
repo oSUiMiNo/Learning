@@ -1,0 +1,15 @@
+{
+  "name": "err-e0499-two-mutable-borrows",
+  "title": "Windows PowerShell",
+  "note": "e0499-two-mutable-borrows.rs のコンパイルエラー",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc e0499-two-mutable-borrows.rs",
+      "output": "\u001b[1m\u001b[91merror[E0499]\u001b[0m\u001b[1m: cannot borrow `count` as mutable more than once at a time\u001b[0m\r\n  \u001b[1m\u001b[94m--> \u001b[0me0499-two-mutable-borrows.rs:13:13\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m12\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let a = &mut count;\r\n   \u001b[1m\u001b[94m|\u001b[0m             \u001b[1m\u001b[94m----------\u001b[0m \u001b[1m\u001b[94mfirst mutable borrow occurs here\u001b[0m\r\n\u001b[1m\u001b[94m13\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let b = &mut count; // 2 本目は作れない\r\n   \u001b[1m\u001b[94m|\u001b[0m             \u001b[1m\u001b[91m^^^^^^^^^^\u001b[0m \u001b[1m\u001b[91msecond mutable borrow occurs here\u001b[0m\r\n\u001b[1m\u001b[94m14\u001b[0m \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m15\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     *a += 1;\r\n   \u001b[1m\u001b[94m|\u001b[0m     \u001b[1m\u001b[94m-------\u001b[0m \u001b[1m\u001b[94mfirst borrow later used here\u001b[0m\r\n\r\n\u001b[1m\u001b[91merror\u001b[0m\u001b[1m: aborting due to 1 previous error\u001b[0m\r\n\r\n\u001b[1mFor more information about this error, try `rustc --explain E0499`.\u001b[0m\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

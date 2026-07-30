@@ -1,0 +1,15 @@
+{
+  "name": "run-guessing",
+  "title": "Windows PowerShell",
+  "note": "examples/99-guessing の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\99-guessing>",
+      "command": "cargo run --quiet",
+      "output": "1 から 100 の数を当ててください\r\n1 回目: 50 → small（もっと大きい）\r\n2 回目: 75 → big（もっと小さい）\r\n3 回目: 62 → big（もっと小さい）\r\n4 回目: 56 → big（もっと小さい）\r\n5 回目: 53 → big（もっと小さい）\r\n6 回目: 51 → small（もっと大きい）\r\n7 回目: 52 → 正解\r\n\r\n7 回で当てました（答えは 52）\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

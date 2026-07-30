@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第4章 変数と型 — 既定が不変であること | Rust 入門</title>
+<meta name="description" content="C# との最大の違いは、変数が既定で書き換えられないことです。`var` と `let` は似て見えて、態度がまるで違います。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li class="is-current"><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 4 章<span class="dot">·</span>読了目安 14 分</p>
+        <h1>第4章 変数と型 — 既定が不変であること</h1>
+        <p class="lede">C# との最大の違いは、変数が既定で書き換えられないことです。`var` と `let` は似て見えて、態度がまるで違います。</p>
+      </header>
+      <div class="prose">
+<p>
+この章は C# の知識でほとんど読み飛ばせます。
+違うところだけ拾っていきましょう。
+</p>
+
+<p>
+いちばん大きな違いは 1 つです。<strong>Rust の変数は、既定で書き換えられません。</strong>
+C# の <code>var</code> と Rust の <code>let</code> は見た目が似ていますが、態度が正反対です。
+</p>
+
+<figure class="code-block" data-lang="rust" data-src="04-variables/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! 変数と型のふるまい。C# との差だけを速く確認するためのサンプル。</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 既定は不変 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">fixed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  fixed = {fixed}（書き換えようとすると E0384）&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">changeable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  changeable = {changeable}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">changeable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  書き換えたら {changeable}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. シャドーイング ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 同じ名前で「別の変数」を作り直せる。型を変えてもよい。</span></span><span class="cl"><span class="w">    </span><span class="c1">// C# ではスコープ内の再宣言はエラーなので、ここは Rust 独自。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;42&quot;</span><span class="p">;</span><span class="w"> </span><span class="c1">// &amp;str</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span><span class="w"> </span><span class="c1">// i32 に化ける</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  文字列から数値にして倍にした = {value}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. 型は明示もできる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">9_000_000_000</span><span class="p">;</span><span class="w"> </span><span class="c1">// 桁区切りに _ が使える</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">c</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">d</span><span class="p">:</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">&#39;猫&#39;</span><span class="p">;</span><span class="w"> </span><span class="c1">// char は Unicode スカラ値 1 つ ＝ 4 バイト</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  i64  = {a}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  f64  = {b}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  bool = {c}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  char = {d}（{} バイト）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">mem</span><span class="p">::</span><span class="n">size_of</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. 暗黙の型変換はない ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">small</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">big</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">small</span><span class="p">.</span><span class="n">into</span><span class="p">();</span><span class="w"> </span><span class="c1">// 明示的に変換する</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">back</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">big</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">i32</span><span class="p">;</span><span class="w"> </span><span class="c1">// as は「切り詰めてよい」という宣言</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  i32 → i64 は into() で {big}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  i64 → i32 は as で {back}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. あふれたときの挙動 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">i32</span><span class="p">::</span><span class="n">MAX</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="c1">// checked_add はあふれたら None を返す。黙って壊れない。</span></span><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">max</span><span class="p">.</span><span class="n">checked_add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="nb">Some</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  足せた: {n}&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="nb">None</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  i32::MAX に 1 を足すとあふれるので None が返った&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  wrapping_add なら回り込む: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">.</span><span class="n">wrapping_add</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  デバッグビルドでは max + 1 はその場で panic する&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. タプルと配列 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">pair</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;一&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  タプル = {:?} / 1 番目 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pair</span><span class="p">,</span><span class="w"> </span><span class="n">pair</span><span class="p">.</span><span class="mi">1</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">fixed_array</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="kt">i32</span><span class="p">;</span><span class="w"> </span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">];</span><span class="w"> </span><span class="c1">// 長さが型に含まれる</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  配列  = {fixed_array:?}（長さ {}）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">fixed_array</span><span class="p">.</span><span class="n">len</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span><span class="w"> </span><span class="c1">// 分解して受け取れる</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  分解代入 = x:{x} y:{y}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. 定数 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// const はコンパイル時に決まる値。型の明記が必須。</span></span><span class="cl"><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LIMIT</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  LIMIT = {LIMIT}&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<h2 id="既定が不変であること">既定が不変であること</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span><span class="w">      </span><span class="c1">// 通る</span></span></code></pre><figcaption class="code-cap">既定で書き換えられる。禁じたいときに readonly を足す</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span><span class="w">      </span><span class="c1">// E0384</span></span></code></pre><figcaption class="code-cap">既定で書き換えられない。許したいときに mut を足す</figcaption></figure>
+</div>
+
+<p>実際にコンパイルすると、こうなります。</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0384-reassign-immutable.rs</span>
+<span class="a-b a-91">error[E0384]</span><span class="a-b">: cannot assign twice to immutable variable `total`</span>
+  <span class="a-b a-94">--&gt; </span>e0384-reassign-immutable.rs:12:5
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 9</span> <span class="a-b a-94">|</span>     let total = 10;
+   <span class="a-b a-94">|</span>         <span class="a-b a-94">-----</span> <span class="a-b a-94">first assignment to `total`</span>
+<span class="a-b a-94">...</span>
+<span class="a-b a-94">12</span> <span class="a-b a-94">|</span>     total = 20; // mut がないので書き換えられない
+   <span class="a-b a-94">|</span>     <span class="a-b a-91">^^^^^^^^^^</span> <span class="a-b a-91">cannot assign twice to immutable variable</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-96">help</span>: consider making this binding mutable
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 9</span> <span class="a-b a-94">| </span>    let <span class="a-92">mut </span>total = 10;
+   <span class="a-b a-94">|</span>         <span class="a-92">+++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0384`.</span></code></pre></div><figcaption>mut を付けていない変数に再代入した場合。「help: consider making this binding mutable」と、直し方まで出ている。</figcaption></figure>
+
+<p>
+書き換えたいときは <code>mut</code> を付けます。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span><span class="w">      </span><span class="c1">// 通る</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">なぜ既定が不変なのか</span>
+  <p>
+    C# でも「できるだけ <code>readonly</code> にする」のは良い習慣とされています。
+    Rust はそれを既定にしただけ、と考えると納得しやすいはずです。
+  </p>
+  <p>
+    実務上の効き方はもう少し強くて、
+    <strong><code>mut</code> が付いている変数を探せば「書き換わる場所」が全部分かる</strong>という
+    読みやすさの利益があります。
+    さらに第 7 章の借用規則と組み合わさって、並行処理の安全性まで導きます。
+  </p>
+</div>
+
+<h2 id="シャドーイング--C-には無い書き方">シャドーイング — C# には無い書き方</h2>
+
+<p>
+Rust では<strong>同じ名前で変数を作り直せます</strong>。
+これは再代入ではなく「新しい変数を作って、前のものを隠す」動作です。
+型を変えても構いません。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;42&quot;</span><span class="p">;</span><span class="w">                       </span><span class="c1">// &amp;str</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="n">parse</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span><span class="w">  </span><span class="c1">// i32 になる</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w">                  </span><span class="c1">// 84</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">C# だとこう書くしかない</span>
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">valueText</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;42&quot;</span><span class="p">;</span></span><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">valueNumber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">int</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">valueText</span><span class="p">);</span></span><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">valueDoubled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">valueNumber</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span></span></code></pre></figure>
+  <p>
+    C# はスコープ内の再宣言がエラーなので、名前を変えるしかありません。
+    <code>valueText</code> / <code>valueNumber</code> のように
+    苦しい名前が増えるのは、誰でも経験があると思います。
+  </p>
+  <p>
+    Rust のシャドーイングは、この
+    <strong>「同じものを段階的に変換していく」場面のためにあります</strong>。
+    <code>mut</code> と違って、各段階の値は不変のままです。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">シャドーイングと mut を混同しないこと</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th><code>mut</code></th><th>シャドーイング</th></tr></thead>
+    <tbody>
+      <tr><td>書き方</td><td><code>let mut x = 1; x = 2;</code></td><td><code>let x = 1; let x = 2;</code></td></tr>
+      <tr><td>型を変えられるか</td><td><strong>変えられない</strong></td><td>変えられる</td></tr>
+      <tr><td>実体</td><td>同じ変数を書き換える</td><td>別の変数を作る</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2 id="型--対応表で済む部分">型 — 対応表で済む部分</h2>
+
+<div class="note csharp">
+  <span class="note-title">基本型の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td><code>int</code></td><td><code>i32</code></td><td>既定の整数はどちらも 32 ビット</td></tr>
+      <tr><td><code>long</code></td><td><code>i64</code></td><td></td></tr>
+      <tr><td><code>uint</code> / <code>ulong</code></td><td><code>u32</code> / <code>u64</code></td><td></td></tr>
+      <tr><td><code>byte</code></td><td><code>u8</code></td><td></td></tr>
+      <tr><td><code>nint</code></td><td><code>isize</code> / <code>usize</code></td><td>添字は <code>usize</code></td></tr>
+      <tr><td><code>double</code></td><td><code>f64</code></td><td>既定の小数</td></tr>
+      <tr><td><code>float</code></td><td><code>f32</code></td><td></td></tr>
+      <tr><td><code>decimal</code></td><td><strong>無い</strong></td><td><code>rust_decimal</code> クレートを使う</td></tr>
+      <tr><td><code>bool</code></td><td><code>bool</code></td><td></td></tr>
+      <tr><td><code>char</code></td><td><code>char</code></td><td><strong>C# は 2 バイト、Rust は 4 バイト</strong></td></tr>
+      <tr><td><code>string</code></td><td><code>String</code> / <code>&amp;str</code></td><td>第 8 章で扱う</td></tr>
+      <tr><td><code>object</code></td><td><strong>無い</strong></td><td>すべての型の親、という概念が無い</td></tr>
+      <tr><td><code>void</code></td><td><code>()</code></td><td>ユニット型</td></tr>
+      <tr><td><code>(int, string)</code></td><td><code>(i32, &amp;str)</code></td><td>タプルは同じ</td></tr>
+      <tr><td><code>int[]</code></td><td><code>[i32; 3]</code> / <code>Vec&lt;i32&gt;</code></td><td>長さ固定か可変か</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>char</code> の違いに注意してください。
+    Rust の <code>char</code> は Unicode スカラ値 1 つで <strong>4 バイト</strong>あるので、
+    <code>'🦀'</code> がそのまま 1 つの <code>char</code> に収まります。
+    C# の <code>char</code> は 2 バイトなので収まりません（第 8 章）。
+  </p>
+</div>
+
+<h2 id="暗黙の型変換が無い">暗黙の型変換が無い</h2>
+
+<p>
+C# は <code>int</code> から <code>long</code> へ黙って広げてくれますが、Rust はしません。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0308-mismatched-types.rs</span>
+<span class="a-b a-91">error[E0308]</span><span class="a-b">: mismatched types</span>
+  <span class="a-b a-94">--&gt; </span>e0308-mismatched-types.rs:10:20
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">10</span> <span class="a-b a-94">|</span>     let big: i64 = small; // i32 は i64 に自動では入らない
+   <span class="a-b a-94">|</span>              <span class="a-b a-94">---</span>   <span class="a-b a-91">^^^^^</span> <span class="a-b a-91">expected `i64`, found `i32`</span>
+   <span class="a-b a-94">|</span>              <span class="a-b a-94">|</span>
+   <span class="a-b a-94">|</span>              <span class="a-b a-94">expected due to this</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-96">help</span>: you can convert an `i32` to an `i64`
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">10</span> <span class="a-b a-94">| </span>    let big: i64 = small<span class="a-92">.into()</span>; // i32 は i64 に自動では入らない
+   <span class="a-b a-94">|</span>                         <span class="a-92">+++++++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0308`.</span></code></pre></div><figcaption>i32 を i64 の変数に入れようとした場合。「help: you can convert an `i32` to an `i64`」と、.into() を使えという提案が出る。</figcaption></figure>
+
+<p>
+明示的に変換します。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th><th>使う場面</th></tr></thead>
+  <tbody>
+    <tr><td><code>small.into()</code></td><td>情報が失われない変換</td><td><strong>基本はこれ</strong></td></tr>
+    <tr><td><code>i64::from(small)</code></td><td>同じ。型を前に出して読みやすくしたもの</td><td>型が推論できないとき</td></tr>
+    <tr><td><code>big as i32</code></td><td>切り詰めてよい変換</td><td>あふれを承知のうえで</td></tr>
+    <tr><td><code>big.try_into()</code></td><td>失敗しうる変換。<code>Result</code> を返す</td><td>入りきるか分からないとき</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">as は黙って値を壊す</span>
+  <p>
+    <code>as</code> は C# の <code>unchecked((int)x)</code> に近い動作です。
+    入りきらなければ<strong>上位ビットを捨てます</strong>。警告も出ません。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">big</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">300</span><span class="p">;</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">small</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">big</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u8</span><span class="p">;</span><span class="w">   </span><span class="c1">// 300 は u8 に入らない → 44 になる</span></span></code></pre></figure>
+  <p>
+    <code>as</code> は「そうしてよいと分かっている」ときだけ使い、
+    ふだんは <code>into()</code> か <code>try_into()</code> を選んでください。
+  </p>
+</div>
+
+<h2 id="あふれたときの挙動">あふれたときの挙動</h2>
+
+<div class="note csharp">
+  <span class="note-title">C# より安全側に倒れている</span>
+  <p>
+    C# の <code>int.MaxValue + 1</code> は既定で回り込んで負の数になります
+    （<code>checked</code> を書かないかぎり）。
+    Rust は<strong>デバッグビルドではその場で panic します</strong>。
+  </p>
+  <p>
+    リリースビルドでは速度のため回り込みますが、
+    どちらの挙動が欲しいかを明示するメソッドが用意されています。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>メソッド</th><th>あふれたとき</th></tr></thead>
+    <tbody>
+      <tr><td><code>checked_add</code></td><td><code>None</code> を返す</td></tr>
+      <tr><td><code>saturating_add</code></td><td>上限で止まる</td></tr>
+      <tr><td><code>wrapping_add</code></td><td>回り込む</td></tr>
+      <tr><td><code>overflowing_add</code></td><td>結果と「あふれたか」の組を返す</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    金額や個数の計算では <code>checked_*</code> を使う習慣を付けると、
+    「気づかないうちに数字が壊れる」種類の不具合が消えます。
+  </p>
+</div>
+
+<h2 id="定数">定数</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">const</span><span class="w"> </span><span class="n">LIMIT</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span><span class="w">          </span><span class="c1">// コンパイル時に決まる。型の明記が必須</span></span><span class="cl"><span class="k">static</span><span class="w"> </span><span class="n">NAME</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;教材&quot;</span><span class="p">;</span><span class="w">       </span><span class="c1">// 固定の場所に置かれる値</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">const と static</span>
+  <p>
+    <code>const</code> は C# の <code>const</code> と同じで、使う場所に埋め込まれます。
+    <code>static</code> は C# の <code>static readonly</code> に近く、
+    メモリ上に 1 か所だけ置かれます。
+    ふだんは <code>const</code> を使えば十分です。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/04-variables</code> を <code>cargo run</code> して、出力を上のコードと見比べてください。</li>
+    <li><code>let fixed = 10;</code> の下に <code>fixed = 20;</code> を書いて、E0384 が出ることを確認してください。</li>
+    <li><code>let n: u8 = 300;</code> と書くとどうなるか試してください。<strong>コンパイル時に</strong>「<code>u8</code> に入らない」と怒られます。C# では実行時まで分からない種類の間違いです。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><strong>既定は不変。</strong>書き換えるなら <code>mut</code> を付ける。</li>
+    <li>シャドーイング（<code>let</code> の再宣言）は C# に無い書き方。型を変えながら段階的に変換できる。</li>
+    <li>暗黙の型変換は無い。<code>into()</code> が基本、<code>as</code> は値を壊すので慎重に。</li>
+    <li>あふれはデバッグビルドで panic する。<code>checked_*</code> で明示的に扱える。</li>
+    <li><code>char</code> は 4 バイト。C# の 2 バイトとは別物。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../03-cargo/"><span class="pager-dir">← 前の章</span><span class="pager-title">Cargo と最初の一本</span></a>
+<a class="pager-link pager-next" href="../05-control-flow/"><span class="pager-dir">次の章 →</span><span class="pager-title">関数と制御フロー</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

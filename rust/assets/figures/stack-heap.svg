@@ -1,0 +1,39 @@
+<svg viewBox="0 0 720 280" role="img" aria-label="スタックとヒープの違い。固定サイズの値はスタックに、大きさが変わる値はヒープに置かれ、スタック側はそこを指すハンドルを持つ。">
+  <rect x="1" y="1" width="718" height="278" rx="14" class="d-box-plain"/>
+
+  <!-- スタック -->
+  <rect x="28" y="24" width="300" height="220" rx="10" class="d-box"/>
+  <text x="178" y="48" text-anchor="middle" class="d-title">スタック</text>
+  <text x="178" y="66" text-anchor="middle" class="d-mute">速い / 大きさが決まっているものだけ</text>
+
+  <rect x="48" y="80" width="260" height="34" rx="7" class="d-accent"/>
+  <text x="62" y="102" class="d-code">let n: i32 = 42</text>
+  <text x="262" y="102" text-anchor="end" class="d-mute">4 バイト</text>
+
+  <rect x="48" y="122" width="260" height="34" rx="7" class="d-accent"/>
+  <text x="62" y="144" class="d-code">let f: f64 = 0.5</text>
+  <text x="262" y="144" text-anchor="end" class="d-mute">8 バイト</text>
+
+  <rect x="48" y="164" width="260" height="52" rx="7" class="d-tip"/>
+  <text x="62" y="184" class="d-code">let s: String</text>
+  <text x="62" y="204" class="d-mute">ptr + len + cap = 24 バイト</text>
+
+  <text x="178" y="236" text-anchor="middle" class="d-mute">関数を抜けると、まとめて捨てられる</text>
+
+  <!-- ヒープ -->
+  <rect x="392" y="24" width="300" height="220" rx="10" class="d-box"/>
+  <text x="542" y="48" text-anchor="middle" class="d-title">ヒープ</text>
+  <text x="542" y="66" text-anchor="middle" class="d-mute">実行中に大きさが決まるもの</text>
+
+  <rect x="412" y="86" width="260" height="66" rx="7" class="d-tip"/>
+  <text x="542" y="112" text-anchor="middle" class="d-code">"こんにちは" の中身</text>
+  <text x="542" y="134" text-anchor="middle" class="d-mute">15 バイト（伸ばせる）</text>
+
+  <rect x="412" y="166" width="260" height="50" rx="7" class="d-dash"/>
+  <text x="542" y="188" text-anchor="middle" class="d-head-accent">誰が片付けるのか？</text>
+  <text x="542" y="206" text-anchor="middle" class="d-mute">C# は GC。Rust は「所有者」が消えた瞬間</text>
+
+  <path d="M308 190 L412 190 L412 152" class="d-flow"/>
+  <path d="M412 152 l-5 9 h10 z" class="d-arrowhead"/>
+  <text x="352" y="182" text-anchor="middle" class="d-mark">ptr</text>
+</svg>

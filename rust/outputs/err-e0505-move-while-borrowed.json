@@ -1,0 +1,15 @@
+{
+  "name": "err-e0505-move-while-borrowed",
+  "title": "Windows PowerShell",
+  "note": "e0505-move-while-borrowed.rs のコンパイルエラー",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc e0505-move-while-borrowed.rs",
+      "output": "\u001b[1m\u001b[91merror[E0505]\u001b[0m\u001b[1m: cannot move out of `text` because it is borrowed\u001b[0m\r\n  \u001b[1m\u001b[94m--> \u001b[0me0505-move-while-borrowed.rs:12:17\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m 9\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let text = String::from(\"貸出中\");\r\n   \u001b[1m\u001b[94m|\u001b[0m         \u001b[1m\u001b[94m----\u001b[0m \u001b[1m\u001b[94mbinding `text` declared here\u001b[0m\r\n\u001b[1m\u001b[94m10\u001b[0m \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m11\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let borrowed = &text; // text を借りている\r\n   \u001b[1m\u001b[94m|\u001b[0m                    \u001b[1m\u001b[94m-----\u001b[0m \u001b[1m\u001b[94mborrow of `text` occurs here\u001b[0m\r\n\u001b[1m\u001b[94m12\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let moved = text; // 借用が生きているのに引っ越そうとしている\r\n   \u001b[1m\u001b[94m|\u001b[0m                 \u001b[1m\u001b[91m^^^^\u001b[0m \u001b[1m\u001b[91mmove out of `text` occurs here\u001b[0m\r\n\u001b[1m\u001b[94m13\u001b[0m \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m14\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     println!(\"{borrowed} / {moved}\");\r\n   \u001b[1m\u001b[94m|\u001b[0m                \u001b[1m\u001b[94m--------\u001b[0m \u001b[1m\u001b[94mborrow later used here\u001b[0m\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[96mhelp\u001b[0m: consider cloning the value if the performance cost is acceptable\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m11\u001b[0m \u001b[1m\u001b[94m| \u001b[0m    let borrowed = &text\u001b[92m.clone()\u001b[0m; // text を借りている\r\n   \u001b[1m\u001b[94m|\u001b[0m                         \u001b[92m++++++++\u001b[0m\r\n\r\n\u001b[1m\u001b[91merror\u001b[0m\u001b[1m: aborting due to 1 previous error\u001b[0m\r\n\r\n\u001b[1mFor more information about this error, try `rustc --explain E0505`.\u001b[0m\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第20章 async / await — C# の Task と何が違うか | Rust 入門</title>
+<meta name="description" content="見た目はそっくりですが、動き方が根本的に違います。Rust の Future は、誰かが await するまで 1 行も走りません。ここは必ず読んでください。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li class="is-current"><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 20 章<span class="dot">·</span>読了目安 18 分</p>
+        <h1>第20章 async / await — C# の Task と何が違うか</h1>
+        <p class="lede">見た目はそっくりですが、動き方が根本的に違います。Rust の Future は、誰かが await するまで 1 行も走りません。ここは必ず読んでください。</p>
+      </header>
+      <div class="prose">
+<p>
+この章は必ず読んでください。
+<strong>C# の <code>async</code> の知識が、そのままでは通じません。</strong>
+</p>
+
+<p>
+見た目はそっくりです。<code>async fn</code> と書き、<code>.await</code> と書きます。
+けれど動き方が根本的に違います。1 行で言えばこうです。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">いちばん大事な違い</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>動き始めるタイミング</th></tr></thead>
+    <tbody>
+      <tr><td><strong>C#</strong></td><td>async メソッドを<strong>呼んだ時点</strong>で、もう走っている</td></tr>
+      <tr><td><strong>Rust</strong></td><td><code>.await</code> されるまで、<strong>1 行も走らない</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# の <code>Task</code> は「ホット」、Rust の <code>Future</code> は「レイジー」と呼ばれます。
+  </p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 720 340" role="img" aria-label="C# の Task と Rust の Future の違い。Task はメソッドを呼んだ時点で走り始めるが、Future は await されるまで何も起きない。">
+  <rect x="1" y="1" width="718" height="338" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-warn">見た目はそっくりだが、走り始める瞬間が違う</text>
+
+  <!-- C# 側 -->
+  <rect x="28" y="44" width="664" height="122" rx="10" class="d-cs"/>
+  <text x="48" y="68" class="d-head-cs">C# — 呼んだ時点で走り出す（ホットな Task）</text>
+
+  <rect x="48" y="80" width="150" height="34" rx="8" class="d-box"/>
+  <text x="123" y="102" text-anchor="middle" class="d-code">var t = FetchAsync();</text>
+
+  <path d="M198 97 L268 97" class="d-flow-deep"/>
+  <path d="M268 97 l-10 -5 v10 z" class="d-arrowhead-deep"/>
+
+  <rect x="268" y="80" width="200" height="34" rx="8" class="d-tip"/>
+  <text x="368" y="102" text-anchor="middle" class="d-code">もう動いている</text>
+
+  <path d="M468 97 L538 97" class="d-flow-deep"/>
+  <path d="M538 97 l-10 -5 v10 z" class="d-arrowhead-deep"/>
+
+  <rect x="538" y="80" width="134" height="34" rx="8" class="d-box"/>
+  <text x="605" y="102" text-anchor="middle" class="d-code">await t;</text>
+
+  <text x="48" y="136" class="d-mute">await は「終わるのを待つ」だけ。await しなくても処理は進む。</text>
+  <text x="48" y="154" class="d-mute">だから await 忘れは「投げっぱなし」になり、例外が消えることもある。</text>
+
+  <!-- Rust 側 -->
+  <rect x="28" y="180" width="664" height="122" rx="10" class="d-accent"/>
+  <text x="48" y="204" class="d-head-accent">Rust — await されるまで 1 行も走らない（レイジーな Future）</text>
+
+  <rect x="48" y="216" width="150" height="34" rx="8" class="d-box"/>
+  <text x="123" y="238" text-anchor="middle" class="d-code">let f = fetch();</text>
+
+  <path d="M198 233 L268 233" class="d-flow-mute"/>
+  <path d="M268 233 l-10 -5 v10 z" class="d-arrowhead-mute"/>
+
+  <rect x="268" y="216" width="200" height="34" rx="8" class="d-dead"/>
+  <text x="368" y="238" text-anchor="middle" class="d-dead-text">まだ何も起きていない</text>
+
+  <path d="M468 233 L538 233" class="d-flow"/>
+  <path d="M538 233 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="538" y="216" width="134" height="34" rx="8" class="d-fill-accent"/>
+  <text x="605" y="238" text-anchor="middle" class="d-code" fill="#fff">f.await</text>
+  <text x="605" y="266" text-anchor="middle" class="d-head-accent">ここで初めて動く</text>
+
+  <text x="48" y="290" class="d-mute">await 忘れは「未着手」なので、コンパイラが警告してくれる。</text>
+
+  <!-- 下 -->
+  <rect x="28" y="314" width="664" height="1" class="d-line"/>
+  <text x="28" y="332" class="d-mute">なお tokio::spawn に渡した場合だけは、ランタイムが引き取るので C# と同じく即座に走り始める。</text>
+</svg>
+<figcaption>C# では FetchAsync() を呼んだ瞬間に処理が始まり、await は「終わるのを待つ」だけ。Rust では fetch() を呼んでも Future が作られるだけで何も起きず、.await した時点で初めて動き出す。</figcaption></figure>
+
+<h2 id="実際に確かめる">実際に確かめる</h2>
+
+<p>
+200 ミリ秒かかる関数を呼んで、すぐに時間を測ってみます。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">started</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instant</span><span class="p">::</span><span class="n">now</span><span class="p">();</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">future</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;走らせていない仕事&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">);</span><span class="w">   </span><span class="c1">// まだ何も起きていない</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">started</span><span class="p">.</span><span class="n">elapsed</span><span class="p">());</span><span class="w">            </span><span class="c1">// ほぼ 0 秒</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">future</span><span class="p">.</span><span class="k">await</span><span class="p">;</span><span class="w">                       </span><span class="c1">// ここで初めて走る</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">started</span><span class="p">.</span><span class="n">elapsed</span><span class="p">());</span><span class="w">            </span><span class="c1">// 200ms 経過</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\20-async&gt;</span> cargo run --quiet</span>
+── 1. Future は呼んだだけでは走らない ──
+  呼んだ直後の経過時間 = 59ns
+  ← 200ms 待つ関数を呼んだのに、ほぼ 0 秒
+  await した後 = 200.725352ms
+  結果 = 走らせていない仕事（200ms）
+
+── 2. 直列に await すると足し算になる ──
+  A（100ms） と B（100ms）
+  かかった時間 = 203.602495ms（100 + 100）
+
+── 3. join! なら同時に走る ──
+  A（100ms） と B（100ms）
+  かかった時間 = 101.779222ms（並行に進んだ）
+
+── 4. spawn すると即座に走り始める ──
+  60ms 経過。spawn した仕事は裏で進んでいる
+  spawn した仕事（120ms） / 合計 121.30517ms
+
+── 5. 先に終わったほうを採る ──
+  勝ち: 速いほう（30ms）
+
+── 6. タイムアウト ──
+  50ms で打ち切った
+
+── 7. Result と組み合わせる ──
+  42 → 42
+  よんじゅうに → 失敗（invalid digit found in string）
+
+── 8. まとめ ──
+  ・async fn を呼ぶ = Future を作るだけ。まだ走らない
+  ・await するか spawn するまで進まない
+  ・ランタイム（tokio など）は自分で入れる
+  ・「await を忘れた」は警告として出る。C# の投げっぱなしより気づきやすい</code></pre></div><figcaption>実行結果。1 番目の項目で、200ms かかる関数を呼んだ直後の経過時間がマイクロ秒単位であることに注目。await するまで本当に何も起きていない。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">この違いが引き起こすこと</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>場面</th><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>await</code> を書き忘れた</td>
+        <td><strong>処理は走る</strong>が結果を待たない。例外が消えることも（投げっぱなし）</td>
+        <td><strong>処理が走らない</strong>。<code>unused_must_use</code> 警告が出る</td>
+      </tr>
+      <tr>
+        <td>2 つを同時に走らせたい</td>
+        <td>呼んでおいて、後で両方 <code>await</code></td>
+        <td><strong>それでは直列になる。</strong><code>join!</code> が必要</td>
+      </tr>
+      <tr>
+        <td>結果を捨てたい</td>
+        <td><code>_ = FooAsync();</code> で走る</td>
+        <td>走らない。<code>spawn</code> が必要</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    2 行目が実務でいちばん危険です。
+    C# の癖で書くと、<strong>並行になっているつもりで直列になります。</strong>
+  </p>
+</div>
+
+<h2 id="直列と並行">直列と並行</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">✗ 直列（200ms かかる）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">).</span><span class="k">await</span><span class="p">;</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">).</span><span class="k">await</span><span class="p">;</span></span></code></pre><figcaption class="code-cap">A が終わってから B が始まる</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">○ 並行（100ms で済む）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tokio</span><span class="p">::</span><span class="n">join</span><span class="o">!</span><span class="p">(</span></span><span class="cl"><span class="w">    </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span></span><span class="cl"><span class="p">);</span></span></code></pre><figcaption class="code-cap">同時に進む</figcaption></figure>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">Task.WhenAll との対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust (tokio)</th></tr></thead>
+    <tbody>
+      <tr><td><code>await Task.WhenAll(a, b)</code></td><td><code>tokio::join!(a, b)</code></td></tr>
+      <tr><td><code>await Task.WhenAny(a, b)</code></td><td><code>tokio::select! { .. }</code></td></tr>
+      <tr><td><code>Task.Run(...)</code></td><td><code>tokio::spawn(...)</code></td></tr>
+      <tr><td><code>await Task.Delay(100)</code></td><td><code>tokio::time::sleep(..).await</code></td></tr>
+      <tr><td><code>cts.CancelAfter(50)</code></td><td><code>tokio::time::timeout(.., fut).await</code></td></tr>
+      <tr><td>結果が全部 <code>Result</code> なら</td><td><code>try_join!</code> で最初の失敗で打ち切れる</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>join!</code> と <code>WhenAll</code> の違いに注意してください。
+    <code>WhenAll</code> は「すでに走っているものを待つ」、
+    <code>join!</code> は「<strong>これから同時に走らせる</strong>」です。
+  </p>
+</div>
+
+<h2 id="ランタイムを自分で選ぶ">ランタイムを自分で選ぶ</h2>
+
+<p>
+Rust の標準ライブラリには、非同期処理を動かす仕組みが入っていません。
+<strong><code>async</code> は構文だけで、実行する人がいないのです。</strong>
+</p>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">cargo<span class="w"> </span>add<span class="w"> </span>tokio<span class="w"> </span>--features<span class="w"> </span>full</span></code></pre></figure>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="cp">#[tokio::main]</span></span><span class="cl"><span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="c1">// ここでランタイムの上で動いている</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">.NET ランタイムが無いということ</span>
+  <p>
+    C# では <code>async</code> を書けば、.NET のスレッドプールが勝手に面倒を見てくれます。
+    考える必要がありません。
+  </p>
+  <p>
+    Rust では<strong>ランタイムを選んで入れます</strong>。
+    面倒ですが、代わりに「組み込み機器向けの軽いもの」
+    「1 スレッドで動かすもの」など、用途に合わせて選べます。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>ランタイム</th><th>特徴</th></tr></thead>
+    <tbody>
+      <tr><td><strong><code>tokio</code></strong></td><td>事実上の標準。ネットワーク周りが充実。<strong>迷ったらこれ</strong></td></tr>
+      <tr><td><code>async-std</code></td><td>標準ライブラリに似た API</td></tr>
+      <tr><td><code>smol</code></td><td>小さい。組み込み向け</td></tr>
+      <tr><td><code>embassy</code></td><td>組み込み専用</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">ランタイムを混ぜられない</span>
+  <p>
+    <code>tokio</code> を前提に書かれたクレートは、
+    <code>async-std</code> の上では動かないことがあります。
+    <strong>「どのランタイム向けか」がクレート選びの条件になります。</strong>
+  </p>
+  <p>
+    実質 <code>tokio</code> が標準なので、
+    <strong>特別な理由がなければ <code>tokio</code> を選んでおけば困りません。</strong>
+  </p>
+</div>
+
+<h2 id="spawn-だけは-C-と同じ">spawn だけは C# と同じ</h2>
+
+<p>
+<code>tokio::spawn</code> に渡したものは、ランタイムが引き取るので<strong>即座に走り始めます</strong>。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tokio</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;裏で走る仕事&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">120</span><span class="p">));</span></span><span class="cl"><span class="n">sleep</span><span class="p">(</span><span class="n">Duration</span><span class="p">::</span><span class="n">from_millis</span><span class="p">(</span><span class="mi">60</span><span class="p">)).</span><span class="k">await</span><span class="p">;</span><span class="w">   </span><span class="c1">// その間に別のことをする</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">handle</span><span class="p">.</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span></span></code></pre></figure>
+
+<div class="note">
+  <span class="note-title">使い分け</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やりたいこと</th><th>書き方</th></tr></thead>
+    <tbody>
+      <tr><td>1 つ待つ</td><td><code>fut.await</code></td></tr>
+      <tr><td>複数を同時に待つ</td><td><code>join!(a, b)</code></td></tr>
+      <tr><td>先に終わったほうを採る</td><td><code>select! { .. }</code></td></tr>
+      <tr><td>投げて後で回収する</td><td><code>tokio::spawn(fut)</code></td></tr>
+      <tr><td>数が動的に決まる</td><td><code>spawn</code> して <code>Vec&lt;JoinHandle&gt;</code> に集める</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2 id="async-のつらいところ">async のつらいところ</h2>
+
+<div class="note pitfall">
+  <span class="note-title">async は「別の色の関数」になる</span>
+  <p>
+    <code>async fn</code> は、ふつうの関数から直接呼べません。
+    <code>.await</code> は <code>async</code> の中だけで使えるからです。
+  </p>
+  <p>
+    そのため<strong>一度 async にすると、呼び出し側も全部 async にする必要があります</strong>。
+    これは C# でも同じ現象（"async all the way"）ですが、
+    Rust ではトレイトのメソッドにも波及するので、より厄介です。
+  </p>
+  <p>
+    対処としては、<strong>そもそも async が必要か考える</strong>のがいちばんです。
+    「同時に何千も待つ」のでなければ、スレッド（第 19 章）で十分なことが多いです。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">await をまたいでロックを持たない</span>
+  <p>
+    <code>Mutex</code> をロックしたまま <code>.await</code> すると、
+    他のタスクが同じロックを待って<strong>デッドロックすることがあります</strong>。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span></span><span class="cl"><span class="n">some_async_work</span><span class="p">().</span><span class="k">await</span><span class="p">;</span><span class="w">      </span><span class="c1">// 危険</span></span><span class="cl"><span class="n">data</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span></span></code></pre><figcaption class="code-cap">✗ ロックを持ったまま待っている</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">some_async_work</span><span class="p">().</span><span class="k">await</span><span class="p">;</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span></span><span class="cl"><span class="n">data</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">value</span><span class="p">);</span></span></code></pre><figcaption class="code-cap">○ 先に await して、そのあとロックする</figcaption></figure>
+  <p>
+    どうしてもまたぎたい場合は <code>tokio::sync::Mutex</code> を使います
+    （こちらは <code>.await</code> でロックを取ります）。
+    ただし遅いので、<strong>まず設計で避けるのが正解</strong>です。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">Future の正体</span>
+  <p>
+    <code>Future</code> は「<code>poll()</code> されると、
+    <code>Ready(値)</code> か <code>Pending</code> を返すもの」というだけのトレイトです。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">trait</span><span class="w"> </span><span class="n">Future</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">type</span><span class="w"> </span><span class="nc">Output</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span><span class="w"> </span><span class="nc">Pin</span><span class="o">&lt;&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">Self</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">cx</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">Context</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Poll</span><span class="o">&lt;</span><span class="bp">Self</span><span class="p">::</span><span class="n">Output</span><span class="o">&gt;</span><span class="p">;</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <p>
+    ランタイムがこれを繰り返し呼び、<code>Pending</code> が返る間は他のタスクに切り替えます。
+    <strong>誰も <code>poll()</code> しなければ何も起きない</strong> ──
+    これが「await されるまで走らない」の正体です。
+  </p>
+  <p>
+    C# のステートマシン変換と発想は同じですが、
+    C# は変換した時点でスレッドプールに投入され、Rust は投入されません。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="20-async/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! async / await。C# の Task との違いを、実際の動きで確かめます。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! いちばん大事な違いは 1 行で言えます。</span></span><span class="cl"><span class="sd">//!   C#   … async メソッドを呼んだ時点で、もう走り始めている</span></span><span class="cl"><span class="sd">//!   Rust … await されるまで、1 行も走らない</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! この違いがあるので、Rust には「呼んだけど await していない」状態が</span></span><span class="cl"><span class="sd">//! 意味を持ちます。C# ならそれは「投げっぱなし」ですが、Rust では「未着手」です。</span></span><span class="cl"></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">time</span><span class="p">::{</span><span class="n">Duration</span><span class="p">,</span><span class="w"> </span><span class="n">Instant</span><span class="p">};</span></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">tokio</span><span class="p">::</span><span class="n">time</span><span class="p">::</span><span class="n">sleep</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="sd">/// async fn は「Future を返す関数」の書き方。</span></span><span class="cl"><span class="sd">/// 戻り値の型は見た目には String だが、実際は impl Future&lt;Output = String&gt;。</span></span><span class="cl"><span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">fetch</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">,</span><span class="w"> </span><span class="n">millis</span><span class="p">:</span><span class="w"> </span><span class="kt">u64</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">sleep</span><span class="p">(</span><span class="n">Duration</span><span class="p">::</span><span class="n">from_millis</span><span class="p">(</span><span class="n">millis</span><span class="p">)).</span><span class="k">await</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{name}（{millis}ms）&quot;</span><span class="p">)</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 失敗しうる非同期処理。Result との組み合わせも普通にできる。</span></span><span class="cl"><span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">parse_after_delay</span><span class="p">(</span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">num</span><span class="p">::</span><span class="n">ParseIntError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">sleep</span><span class="p">(</span><span class="n">Duration</span><span class="p">::</span><span class="n">from_millis</span><span class="p">(</span><span class="mi">10</span><span class="p">)).</span><span class="k">await</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="n">text</span><span class="p">.</span><span class="n">parse</span><span class="p">()</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="c1">// #[tokio::main] は「この main を非同期ランタイムの上で走らせる」印。</span></span><span class="cl"><span class="c1">// Rust の標準ライブラリにはランタイムが入っていないので、</span></span><span class="cl"><span class="c1">// tokio のような外部クレートを自分で選んで入れる必要がある。</span></span><span class="cl"><span class="c1">// C# は .NET ランタイムが最初から面倒を見てくれるので、ここが大きな差。</span></span><span class="cl"><span class="cp">#[tokio::main]</span></span><span class="cl"><span class="k">async</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. Future は呼んだだけでは走らない ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">started</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instant</span><span class="p">::</span><span class="n">now</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">future</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;走らせていない仕事&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">);</span><span class="w"> </span><span class="c1">// まだ何も起きていない</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  呼んだ直後の経過時間 = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">started</span><span class="p">.</span><span class="n">elapsed</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ← 200ms 待つ関数を呼んだのに、ほぼ 0 秒&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">future</span><span class="p">.</span><span class="k">await</span><span class="p">;</span><span class="w"> </span><span class="c1">// ここで初めて走る</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  await した後 = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">started</span><span class="p">.</span><span class="n">elapsed</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  結果 = {result}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 直列に await すると足し算になる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">started</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instant</span><span class="p">::</span><span class="n">now</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">).</span><span class="k">await</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">).</span><span class="k">await</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {a} と {b}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  かかった時間 = {:?}（100 + 100）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">started</span><span class="p">.</span><span class="n">elapsed</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. join! なら同時に走る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">started</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instant</span><span class="p">::</span><span class="n">now</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="c1">// 2 つの Future を同時に進める。C# の Task.WhenAll に相当。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tokio</span><span class="p">::</span><span class="n">join</span><span class="o">!</span><span class="p">(</span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">),</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {a} と {b}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  かかった時間 = {:?}（並行に進んだ）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">started</span><span class="p">.</span><span class="n">elapsed</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. spawn すると即座に走り始める ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// spawn に渡したものはランタイムが引き取るので、</span></span><span class="cl"><span class="w">    </span><span class="c1">// ここだけは C# の Task と同じく「呼んだら走る」になる。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">started</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instant</span><span class="p">::</span><span class="n">now</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tokio</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;spawn した仕事&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">120</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="n">sleep</span><span class="p">(</span><span class="n">Duration</span><span class="p">::</span><span class="n">from_millis</span><span class="p">(</span><span class="mi">60</span><span class="p">)).</span><span class="k">await</span><span class="p">;</span><span class="w"> </span><span class="c1">// その間に別のことをする</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  60ms 経過。spawn した仕事は裏で進んでいる&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">handle</span><span class="p">.</span><span class="k">await</span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {result} / 合計 {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">started</span><span class="p">.</span><span class="n">elapsed</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. 先に終わったほうを採る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// select! は「どちらか片方が終わったら残りは捨てる」。</span></span><span class="cl"><span class="w">    </span><span class="n">tokio</span><span class="p">::</span><span class="n">select</span><span class="o">!</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">fast</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;速いほう&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  勝ち: {fast}&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="n">slow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;遅いほう&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  勝ち: {slow}&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. タイムアウト ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">tokio</span><span class="p">::</span><span class="n">time</span><span class="p">::</span><span class="n">timeout</span><span class="p">(</span><span class="n">Duration</span><span class="p">::</span><span class="n">from_millis</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w"> </span><span class="n">fetch</span><span class="p">(</span><span class="s">&quot;間に合わない&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">500</span><span class="p">)).</span><span class="k">await</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  間に合った: {v}&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  50ms で打ち切った&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. Result と組み合わせる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;42&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;よんじゅうに&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="n">parse_after_delay</span><span class="p">(</span><span class="n">text</span><span class="p">).</span><span class="k">await</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="nb">Ok</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {text} → {n}&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">            </span><span class="nb">Err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {text} → 失敗（{e}）&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 8. まとめ ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ・async fn を呼ぶ = Future を作るだけ。まだ走らない&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ・await するか spawn するまで進まない&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ・ランタイム（tokio など）は自分で入れる&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ・「await を忘れた」は警告として出る。C# の投げっぱなしより気づきやすい&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/20-async</code> を動かして、経過時間を確認してください。<strong>2 番目（直列）と 3 番目（並行）の差が要点です。</strong></li>
+    <li><code>tokio::join!</code> の 2 つを、それぞれ別々に <code>.await</code> する形に書き換えて、時間が倍になることを確認してください。</li>
+    <li><code>let future = fetch(...)</code> の <code>.await</code> を消して、<strong>警告が出る</strong>ことを確認してください。C# なら黙って走ってしまう場面です。</li>
+    <li><code>#[tokio::main]</code> を消して、どんなエラーになるか見てください。</li>
+    <li><code>timeout</code> の 50ms を 600ms に変えて、間に合うようになることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><strong>Rust の <code>Future</code> は <code>.await</code> されるまで走らない。</strong>C# の <code>Task</code> は呼んだ時点で走る。</li>
+    <li>だから「呼んでおいて後で await」では並行にならない。<code>join!</code> を使う。</li>
+    <li><code>await</code> 忘れは C# では投げっぱなし、Rust では<strong>未着手</strong>。警告で気づける。</li>
+    <li>ランタイムは標準に無い。<strong>実質 <code>tokio</code> を入れる</strong>。</li>
+    <li><code>tokio::spawn</code> に渡したものだけは即座に走る。</li>
+    <li><code>.await</code> をまたいで <code>Mutex</code> を持たない。</li>
+    <li>同時に何千も待つのでなければ、スレッド（第 19 章）で足りることが多い。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../19-concurrency/"><span class="pager-dir">← 前の章</span><span class="pager-title">並行処理</span></a>
+<a class="pager-link pager-next" href="../21-cli-app/"><span class="pager-dir">次の章 →</span><span class="pager-title">実践: CLI ツール</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

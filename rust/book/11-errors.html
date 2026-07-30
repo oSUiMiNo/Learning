@@ -1,0 +1,298 @@
+<p>
+Rust に例外はありません。失敗は<strong>戻り値で返します</strong>。
+</p>
+
+<p>
+最初は面倒に思えますが、道具は 2 つだけです。
+<code>Result&lt;T, E&gt;</code> という型と、<code>?</code> という演算子。
+これで <code>try-catch</code> と同じくらい短く書けます。
+</p>
+
+<h2>例外との違い</h2>
+
+<!--figure: result-flow | C# の例外は署名に現れないため「この関数は失敗しうるか」が読み取れず、捕まえ忘れると落ちる。Rust は Result が戻り値の型に書いてあるので、失敗しうることが必ず見える。? は match の省略記法。 -->
+
+<div class="src" data-lang="rust">
+enum Result&lt;T, E&gt; {
+    Ok(T),
+    Err(E),
+}
+</div>
+
+<p>
+<code>Option</code> と同じく、ただの列挙型です。
+<code>None</code> のかわりに「なぜ失敗したか」を <code>Err</code> に入れられる、という違いだけです。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">例外と Result の比較</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C# の例外</th><th>Rust の <code>Result</code></th></tr></thead>
+    <tbody>
+      <tr><td>署名に出るか</td><td><strong>出ない</strong></td><td><strong>出る</strong></td></tr>
+      <tr><td>無視できるか</td><td>できる（<code>catch {}</code> で握り潰せる）</td><td><code>#[must_use]</code> なので警告が出る</td></tr>
+      <tr><td>伝播のしかた</td><td>自動（何も書かなくても上へ飛ぶ）</td><td><code>?</code> を書く</td></tr>
+      <tr><td>コスト</td><td>投げると重い（スタックの巻き戻し）</td><td>ただの値。ゼロコスト</td></tr>
+      <tr><td>捕まえ忘れ</td><td>実行時に落ちる</td><td>コンパイル時に気づく</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    一番の実利は 1 行目です。<strong>関数の署名を見れば失敗しうるか分かります。</strong>
+    C# では、ドキュメントを読むか実装を追うしかありません。
+  </p>
+  <p>
+    逆に一番の手間は 3 行目です。伝播を自分で書く必要があります。
+    それが <code>?</code> です。
+  </p>
+</div>
+
+<h2>? 演算子</h2>
+
+<p>
+<code>?</code> は「成功なら中身を取り出す、失敗ならその場で <code>return</code>」の省略記法です。
+</p>
+
+<div class="compare">
+  <div class="src" data-lang="rust" data-file="? を使わない" data-cap="やっていることはこれ">
+let value = match parse(s) {
+    Ok(v) =&gt; v,
+    Err(e) =&gt; return Err(e.into()),
+};
+  </div>
+  <div class="src" data-lang="rust" data-file="? を使う" data-cap="同じ意味">
+let value = parse(s)?;
+  </div>
+</div>
+
+<p>
+だから <code>?</code> を並べるだけで、失敗はそのまま上へ伝わります。
+</p>
+
+<div class="src" data-lang="rust">
+fn load(settings: &amp;[(&amp;str, &amp;str)]) -&gt; Result&lt;String, ConfigError&gt; {
+    let http = read_port(settings, "http_port")?;
+    let https = read_port(settings, "https_port")?;
+    Ok(format!("http:{http} / https:{https}"))
+}
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">? は Result を返す関数の中でしか使えない</span>
+  <p>
+    <code>?</code> は失敗時に <code>return Err(..)</code> するので、
+    その関数自身が <code>Result</code> を返していなければなりません。
+  </p>
+  <p>
+    <code>main</code> で使いたいときは、<code>main</code> の戻り値を変えます。
+    <strong>これは Rust 1.26 から可能になった書き方です。</strong>
+  </p>
+  <div class="src" data-lang="rust">
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let text = std::fs::read_to_string("config.toml")?;
+    println!("{text}");
+    Ok(())          // 最後に Ok(()) を忘れないこと
+}
+  </div>
+  <p>
+    <code>Option</code> を返す関数の中でも <code>?</code> が使えます
+    （<code>None</code> なら <code>return None</code>）。
+    ただし <code>Result</code> と <code>Option</code> は混ぜられません。
+  </p>
+</div>
+
+<h2>自分のエラー型を作る</h2>
+
+<p>
+エラーの種類を列挙型で表すのが定石です。
+</p>
+
+<div class="src" data-lang="rust">
+#[derive(Debug)]
+enum ConfigError {
+    Missing(String),
+    NotANumber { key: String, source: ParseIntError },
+    OutOfRange { key: String, value: i64 },
+}
+</div>
+
+<p>
+これに 2 つのトレイトを実装すると、「まともなエラー型」になります。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>トレイト</th><th>役目</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>Debug</code></td><td>開発者向けの表示（<code>{:?}</code>）</td><td>—</td></tr>
+    <tr><td><code>Display</code></td><td><strong>人間向けの文言</strong>（<code>{}</code>）</td><td><code>Exception.Message</code></td></tr>
+    <tr><td><code>std::error::Error</code></td><td>標準のエラーとして扱えるようにする。<code>source()</code> で原因を辿れる</td><td><code>Exception.InnerException</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">例外クラスとの対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>class MyException : Exception</code></td><td><code>enum MyError</code> ＋ トレイト実装</td></tr>
+      <tr><td><code>Message</code></td><td><code>impl Display</code></td></tr>
+      <tr><td><code>InnerException</code></td><td><code>fn source()</code></td></tr>
+      <tr><td>継承階層で分類</td><td><strong>列挙型の選択肢で分類</strong></td></tr>
+      <tr><td><code>catch (SpecificException e)</code></td><td><code>match err { MyError::Specific(..) =&gt; .. }</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    継承ではなく列挙型なので、<strong>ここでも網羅性が効きます。</strong>
+    エラーの種類を足したら、対応し忘れた <code>match</code> が全部エラーになります。
+  </p>
+</div>
+
+<h2>実際に動かす</h2>
+
+<!--code: 11-errors/src/main.rs-->
+
+<!--term: run-errors | 実行結果。4 つの入力に対して、成功と 3 種類の失敗が並ぶ。2 番目のブロックでは原因の連鎖（source）を辿っている。 -->
+
+<h2>手で書くのは大変なので、クレートを使う</h2>
+
+<p>
+上のコードは <code>Display</code> と <code>Error</code> を手で実装しています。
+説明のためにそうしましたが、<strong>実務ではクレートに任せます。</strong>
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>クレート</th><th>用途</th><th>使う場面</th></tr></thead>
+  <tbody>
+    <tr><td><code>thiserror</code></td><td>エラー型の定義を楽にする</td><td><strong>ライブラリを書くとき</strong></td></tr>
+    <tr><td><code>anyhow</code></td><td>種類を気にせず「何かエラー」として扱う</td><td><strong>アプリを書くとき</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="compare">
+  <div class="src" data-lang="rust" data-file="thiserror を使う" data-cap="Display も Error も自動で実装される">
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+enum ConfigError {
+    #[error("設定 {0} がありません")]
+    Missing(String),
+
+    #[error("設定 {key} が数値として読めません")]
+    NotANumber {
+        key: String,
+        #[source]
+        source: std::num::ParseIntError,
+    },
+}
+  </div>
+  <div class="src" data-lang="rust" data-file="anyhow を使う" data-cap="型を定義せずに済む。文脈を足せる">
+use anyhow::{Context, Result};
+
+fn load(path: &amp;str) -&gt; Result&lt;String&gt; {
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("{path} を読めませんでした"))?;
+    Ok(text)
+}
+  </div>
+</div>
+
+<div class="note">
+  <span class="note-title">使い分けの目安</span>
+  <ul>
+    <li><strong>アプリ（実行ファイル）を書くなら <code>anyhow</code></strong> ─
+        呼び出し側は「失敗した」ことと理由の文言が分かれば十分なことが多い。</li>
+    <li><strong>ライブラリを書くなら <code>thiserror</code></strong> ─
+        使う側がエラーの種類で分岐できるように、型を公開すべき。</li>
+  </ul>
+  <p>
+    <code>anyhow</code> の <code>with_context</code> は特に便利です。
+    「どのファイルを読もうとして失敗したか」といった文脈を、
+    エラーを上に投げながら積み上げられます。
+  </p>
+</div>
+
+<h2>panic! はいつ使うのか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th><code>Result</code> を返す</th><th><code>panic!</code> する</th></tr></thead>
+  <tbody>
+    <tr><td>意味</td><td>「起こりうる失敗」</td><td>「起こってはならないこと」</td></tr>
+    <tr><td>例</td><td>ファイルが無い、入力が数値でない、通信が切れた</td><td>配列の範囲外、ゼロ除算、内部の不整合</td></tr>
+    <tr><td>C# なら</td><td>想定される例外</td><td><code>InvalidOperationException</code> / <code>Debug.Assert</code></td></tr>
+    <tr><td>呼び出し側</td><td>対処できる</td><td>対処できない。プログラムを直すべき</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">panic はライブラリでは避ける</span>
+  <p>
+    <code>panic!</code> は既定でスレッドを終了させます。
+    ライブラリの中で panic すると、<strong>使う側に対処の余地がありません</strong>。
+  </p>
+  <p>
+    「入力が不正なら panic」ではなく「不正なら <code>Err</code> を返す」にしてください。
+    <code>unwrap()</code> をライブラリのコードに残さない、というのは同じことを言っています。
+  </p>
+</div>
+
+<h2>覚えておくと便利なメソッド</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>result?</code></td><td>失敗なら return。<strong>基本はこれ</strong></td></tr>
+    <tr><td><code>result.unwrap_or(既定値)</code></td><td>失敗なら既定値</td></tr>
+    <tr><td><code>result.unwrap_or_else(|e| ..)</code></td><td>失敗なら計算して既定値</td></tr>
+    <tr><td><code>result.map_err(|e| ..)</code></td><td><strong>エラーの型を変える</strong></td></tr>
+    <tr><td><code>result.ok()</code></td><td><code>Option</code> にする（エラーを捨てる）</td></tr>
+    <tr><td><code>option.ok_or(err)</code></td><td><code>Option</code> を <code>Result</code> にする</td></tr>
+    <tr><td><code>option.ok_or_else(|| err)</code></td><td>同じ。エラーの生成を遅らせる</td></tr>
+    <tr><td><code>result.is_ok()</code> / <code>is_err()</code></td><td>成否だけ調べる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note deep">
+  <span class="note-title">map_err と ? の関係</span>
+  <p>
+    <code>?</code> は自動で <code>From</code> による型変換を試みます。
+    つまり <code>impl From&lt;ParseIntError&gt; for MyError</code> を書いておけば、
+    <code>s.parse()?</code> がそのまま <code>MyError</code> に変換されます。
+  </p>
+  <p>
+    <code>thiserror</code> の <code>#[from]</code> はこれを自動生成するものです。
+    変換を都度書きたい場合は <code>map_err</code> を使います。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/11-errors</code> を動かして、4 つの入力の結果を確認してください。</li>
+    <li><code>load()</code> の <code>?</code> を 1 つ消して、どんなエラーになるか見てください。</li>
+    <li><code>fn main()</code> を <code>fn main() -&gt; Result&lt;(), ConfigError&gt;</code> に変え、<code>load(cases[1])?</code> と書いてみてください。<strong>プログラムが 0 以外で終了し、エラーが表示されます。</strong></li>
+    <li><code>"42".parse::&lt;i32&gt;()</code> の結果を <code>let _ = ...;</code> と書かずに放置して、警告が出ることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>例外は無い。失敗は <code>Result&lt;T, E&gt;</code> で<strong>戻り値として返す</strong>。</li>
+    <li><code>?</code> は「成功なら取り出す、失敗なら return」の省略記法。</li>
+    <li><code>?</code> を使う関数自身が <code>Result</code> を返す必要がある。<code>main</code> も <code>Result</code> を返せる。</li>
+    <li>エラー型は列挙型 ＋ <code>Display</code> ＋ <code>Error</code>。手で書くなら <code>thiserror</code>、アプリなら <code>anyhow</code>。</li>
+    <li><code>panic!</code> は「起こってはならないこと」だけ。ライブラリでは避ける。</li>
+    <li>署名を見れば失敗しうるか分かる。これが例外との最大の違い。</li>
+  </ul>
+</div>

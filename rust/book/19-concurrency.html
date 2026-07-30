@@ -1,0 +1,325 @@
+<p>
+Rust の売り文句のひとつが「恐れなき並行性（fearless concurrency）」です。
+</p>
+
+<p>
+中身を見ると、新しい仕組みはほとんどありません。
+<strong>所有権と借用の規則を、そのままスレッドに適用しただけ</strong>です。
+第 6 章と第 7 章が分かっていれば、この章は驚くほど素直に読めます。
+</p>
+
+<h2>何が守られているのか</h2>
+
+<!--figure: send-sync | Send は「別のスレッドへ移してよい型」、Sync は「複数のスレッドから同時に参照してよい型」。Arc は両方を満たすのでスレッドに渡せるが、Rc は満たさないので渡そうとするとコンパイルエラーになる。データ競合が型の不一致として現れる。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>トレイト</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>Send</code></td><td>その型の値を、別のスレッドへ<strong>移して</strong>よい</td></tr>
+    <tr><td><code>Sync</code></td><td>その型への参照を、複数のスレッドから<strong>同時に持って</strong>よい</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">C# との決定的な違い</span>
+  <p>
+    C# には「この型はスレッド安全か」を表す型がありません。
+    ドキュメントに「このクラスはスレッドセーフではありません」と書いてあるだけで、
+    <strong>破ってもコンパイルは通ります</strong>。
+  </p>
+  <div class="src" data-lang="csharp" data-file="C#" data-cap="コンパイルは通る。実行時に壊れる">
+var list = new List&lt;int&gt;();
+Parallel.For(0, 1000, i =&gt; list.Add(i));   // データ競合
+  </div>
+  <p>
+    Rust で同じことを書こうとすると、コンパイルエラーになります。
+    <code>Vec</code> への <code>&amp;mut</code> を複数のスレッドに渡せないからです。
+  </p>
+  <p>
+    <strong>データ競合が、実行時のバグではなく型の不一致として現れる</strong>
+    ── これが「恐れなき並行性」の意味です。
+  </p>
+</div>
+
+<h2>スレッドを起こす</h2>
+
+<div class="src" data-lang="rust">
+let handle = thread::spawn(move || {
+    // 別のスレッドで動く
+    format!("完了")
+});
+let result = handle.join().unwrap();   // 終わるのを待って戻り値を受け取る
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">move が必要な理由</span>
+  <p>
+    <code>thread::spawn</code> に渡すクロージャには、たいてい <code>move</code> が必要です。
+  </p>
+  <p>
+    新しいスレッドは、この関数より長く生きるかもしれません。
+    そのとき借用していた値がもう無いと困るので、
+    <strong>所有権をもらう（<code>move</code>）ことが要求されます</strong>。
+  </p>
+  <p>
+    <code>closure may outlive the current function</code> と言われたら
+    <code>move</code> を足してください。
+  </p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">Task との対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>new Thread(...)</code> / <code>Task.Run(...)</code></td><td><code>thread::spawn(...)</code></td></tr>
+      <tr><td><code>task.Wait()</code> / <code>task.Result</code></td><td><code>handle.join().unwrap()</code></td></tr>
+      <tr><td><code>Task.WhenAll(tasks)</code></td><td>各 handle を順に <code>join()</code></td></tr>
+      <tr><td><code>lock (obj) { }</code></td><td><code>mutex.lock().unwrap()</code></td></tr>
+      <tr><td><code>Interlocked.Increment</code></td><td><code>atomic.fetch_add(1, ..)</code></td></tr>
+      <tr><td><code>BlockingCollection&lt;T&gt;</code></td><td><code>mpsc::channel()</code></td></tr>
+      <tr><td><code>ConcurrentDictionary</code></td><td><code>Mutex&lt;HashMap&gt;</code> か <code>dashmap</code> クレート</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>thread::spawn</code> は OS のスレッドを直接起こします。
+    C# の <code>Task.Run</code> のようなスレッドプールは標準にありません。
+    軽い並行処理をたくさん回したいときは、第 20 章の <code>async</code> を使います。
+  </p>
+</div>
+
+<h2>チャネルで値を渡す</h2>
+
+<div class="src" data-lang="rust">
+let (tx, rx) = mpsc::channel();
+for id in 1..=3 {
+    let tx = tx.clone();               // 送信側は複製できる
+    thread::spawn(move || {
+        tx.send(format!("仕事 {id} の結果")).unwrap();
+    });
+}
+drop(tx);                              // 元の送信側を落とす
+let received: Vec&lt;String&gt; = rx.iter().collect();
+</div>
+
+<div class="note">
+  <span class="note-title">mpsc = multi producer, single consumer</span>
+  <p>
+    送る側は何個でも作れて（<code>clone</code>）、受ける側は 1 つだけです。
+    <code>send</code> すると<strong>値の所有権も一緒に移ります</strong>。
+    だから「送ったのに元のスレッドでも触ってしまう」ことが起きません。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">drop(tx) を忘れると止まらない</span>
+  <p>
+    <code>rx.iter()</code> は「送信側が全部消えるまで」待ちます。
+    元の <code>tx</code> を落とさないと、それが永遠に生きているので
+    <strong>プログラムが終わりません</strong>。
+  </p>
+  <p>
+    複製した <code>tx</code> をスレッドに渡したら、元の <code>tx</code> は
+    <code>drop(tx)</code> で明示的に落としてください。
+  </p>
+</div>
+
+<h2>Mutex — 共有して書き換える</h2>
+
+<div class="src" data-lang="rust">
+let counter = Arc::new(Mutex::new(0));
+for _ in 0..8 {
+    let counter = Arc::clone(&amp;counter);
+    handles.push(thread::spawn(move || {
+        for _ in 0..1000 {
+            let mut value = counter.lock().unwrap();
+            *value += 1;
+        }   // ここでロックが自動的に外れる
+    }));
+}
+</div>
+
+<div class="note csharp">
+  <span class="note-title">lock 文より安全</span>
+  <p>
+    C# の <code>lock (obj) { }</code> は、
+    <strong>どのオブジェクトが何を守っているのかコードから読めません</strong>。
+    <code>lock</code> し忘れてもコンパイルは通ります。
+  </p>
+  <p>
+    Rust の <code>Mutex&lt;T&gt;</code> は<strong>守る対象を内側に持ちます</strong>。
+    中身に触るには <code>lock()</code> を通るしかないので、
+    <strong>ロックし忘れが起こりえません</strong>。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C# の <code>lock</code></th><th>Rust の <code>Mutex&lt;T&gt;</code></th></tr></thead>
+    <tbody>
+      <tr><td>守る対象</td><td>慣習で決める</td><td><strong>型に含まれる</strong></td></tr>
+      <tr><td>ロック忘れ</td><td>起こりうる</td><td><strong>起こりえない</strong></td></tr>
+      <tr><td>解放忘れ</td><td><code>lock</code> 文なら起きない</td><td>起きない（<code>Drop</code>）</td></tr>
+      <tr><td>読み書きの区別</td><td>無い（<code>ReaderWriterLock</code> は別物）</td><td><code>RwLock</code> がある</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="note">
+  <span class="note-title">lock() が Result を返す理由</span>
+  <p>
+    ロックを持っていたスレッドが panic すると、
+    そのロックは「毒された（poisoned）」状態になります。
+    守っていたデータが中途半端な状態かもしれないからです。
+  </p>
+  <p>
+    学習中は <code>.unwrap()</code> で構いません。
+    「他のスレッドが落ちたならこちらも落ちてよい」という判断です。
+  </p>
+</div>
+
+<h2>数を数えるだけなら Atomic</h2>
+
+<div class="src" data-lang="rust">
+let hits = Arc::new(AtomicUsize::new(0));
+hits.fetch_add(1, Ordering::Relaxed);
+</div>
+
+<p>
+<code>Mutex</code> よりずっと軽いので、カウンタやフラグにはこちらを使います。
+C# の <code>Interlocked</code> に相当します。
+</p>
+
+<div class="note deep">
+  <span class="note-title">Ordering は何を指定しているのか</span>
+  <p>
+    メモリの読み書きが、他のスレッドから見てどの順番に見えるかを指定します。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>指定</th><th>使う場面</th></tr></thead>
+    <tbody>
+      <tr><td><code>Relaxed</code></td><td>単に数えるだけ。<strong>ふだんはこれ</strong></td></tr>
+      <tr><td><code>SeqCst</code></td><td>いちばん厳しい。迷ったらこれで安全</td></tr>
+      <tr><td><code>Acquire</code> / <code>Release</code></td><td>他のデータとの前後関係を保証したいとき</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# の <code>Interlocked</code> は常に最も厳しい順序になります。
+    Rust は選べるので速くできますが、
+    <strong>分からないうちは <code>SeqCst</code> にしておけば間違いません</strong>。
+  </p>
+</div>
+
+<h2>スコープ付きスレッド — 借用できる</h2>
+
+<p>
+<code>thread::scope</code> の中のスレッドは、
+<strong>抜ける前に必ず終わることが保証されます</strong>。
+だから外側の値を <code>Arc</code> に包まずに借用できます。
+</p>
+
+<div class="src" data-lang="rust">
+let data = [1, 2, 3, 4, 5, 6];
+let (left, right) = data.split_at(3);
+let total = thread::scope(|s| {
+    let a = s.spawn(|| left.iter().sum::&lt;i32&gt;());
+    let b = s.spawn(|| right.iter().sum::&lt;i32&gt;());
+    a.join().unwrap() + b.join().unwrap()
+});
+</div>
+
+<div class="note">
+  <span class="note-title">scope は比較的新しい</span>
+  <p>
+    <code>thread::scope</code> が標準に入ったのは Rust 1.63（2022 年）です。
+    それより前は <code>crossbeam</code> クレートを使う必要がありました。
+  </p>
+  <p>
+    古い記事で「スレッドに借用を渡すには crossbeam が必要」と書かれていたら、
+    <strong>いまは標準で足りる</strong>と読み替えてください。
+  </p>
+</div>
+
+<h2>Rc は渡せない</h2>
+
+<div class="note pitfall">
+  <span class="note-title">Rc をスレッドに渡すとコンパイルエラー</span>
+  <p>
+    <code>Rc</code> はカウントの増減をアトミックに行わないので、
+    複数のスレッドから触ると壊れます。
+    そのため <code>Rc</code> は <code>Send</code> でも <code>Sync</code> でもありません。
+  </p>
+  <p>
+    渡そうとすると <code>`Rc&lt;...&gt;` cannot be sent between threads safely</code>
+    と言われます。<strong><code>Arc</code> に置き換えれば直ります。</strong>
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>単一スレッド</th><th>複数スレッド</th></tr></thead>
+    <tbody>
+      <tr><td><code>Rc&lt;T&gt;</code></td><td><code>Arc&lt;T&gt;</code></td></tr>
+      <tr><td><code>RefCell&lt;T&gt;</code></td><td><code>Mutex&lt;T&gt;</code> / <code>RwLock&lt;T&gt;</code></td></tr>
+      <tr><td><code>Rc&lt;RefCell&lt;T&gt;&gt;</code></td><td><code>Arc&lt;Mutex&lt;T&gt;&gt;</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>Arc</code> のほうが少し遅いので、
+    <strong>スレッドをまたがないなら <code>Rc</code> を選ぶ</strong>のが正しい判断です。
+    「とりあえず Arc」ではなく、必要に応じて選びます。
+  </p>
+</div>
+
+<h2>並列処理を楽にするクレート</h2>
+
+<div class="note">
+  <span class="note-title">rayon</span>
+  <p>
+    データ並列処理をしたいなら <code>rayon</code> が定番です。
+    <strong>イテレータの <code>iter()</code> を <code>par_iter()</code> に変えるだけ</strong>で並列になります。
+  </p>
+  <div class="src" data-lang="rust">
+use rayon::prelude::*;
+
+let total: u64 = numbers.par_iter().map(|n| heavy(*n)).sum();
+  </div>
+  <p>
+    C# の <code>AsParallel()</code>（PLINQ）とまったく同じ発想です。
+    しかも所有権の規則があるので、
+    <strong>並列にして安全でないコードはコンパイルが通りません</strong>。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 19-concurrency/src/main.rs-->
+
+<!--term: run-concurrency | 実行結果。8 スレッド × 1000 回のカウントがぴったり 8000 になっている。データ競合が起きていれば、この数字は必ず足りなくなる。 -->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/19-concurrency</code> を動かして、カウントが 8000 になることを確認してください。</li>
+    <li><code>Arc::new(Mutex::new(0))</code> を <code>Rc::new(RefCell::new(0))</code> に変えて、コンパイルエラーになることを確認してください。<strong>これがこの章の要点です。</strong></li>
+    <li><code>thread::spawn(move || ...)</code> の <code>move</code> を消して、どんなエラーになるか見てください。</li>
+    <li><code>drop(tx)</code> を消して実行し、<strong>プログラムが終わらなくなる</strong>ことを確認してください（<code>Ctrl</code> + <code>C</code> で止めてください）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>並行処理に新しい規則は無い。<strong>所有権と借用をスレッドに適用しただけ</strong>。</li>
+    <li><code>Send</code>（移せる）と <code>Sync</code>（共有できる）が型として表されている。</li>
+    <li><code>Rc</code> はスレッドに渡せない。<code>Arc</code> に置き換える。</li>
+    <li><code>Mutex&lt;T&gt;</code> は守る対象を内側に持つので、<strong>ロック忘れが起こりえない</strong>。</li>
+    <li>スレッドに渡すクロージャには <code>move</code> が必要。</li>
+    <li>カウンタは <code>Atomic</code>、データ並列は <code>rayon</code>（＝PLINQ）。</li>
+    <li><code>thread::scope</code> なら借用をスレッドに渡せる（Rust 1.63 以降）。</li>
+  </ul>
+</div>

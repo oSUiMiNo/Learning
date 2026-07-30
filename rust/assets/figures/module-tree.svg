@@ -1,0 +1,37 @@
+<svg viewBox="0 0 720 280" role="img" aria-label="クレートとモジュールの木構造。ファイル構成とモジュールパスの対応、および pub の有無による見え方を示す。">
+  <rect x="1" y="1" width="718" height="278" rx="14" class="d-box-plain"/>
+
+  <!-- 左: ファイル -->
+  <rect x="24" y="24" width="316" height="230" rx="10" class="d-box"/>
+  <text x="182" y="48" text-anchor="middle" class="d-title">ファイル構成</text>
+  <g class="d-code">
+    <text x="44" y="78">src/</text>
+    <text x="60" y="100">main.rs</text>
+    <text x="60" y="122">geometry.rs</text>
+    <text x="76" y="144">geometry/</text>
+    <text x="92" y="166">area.rs</text>
+  </g>
+  <text x="44" y="196" class="d-mute">mod geometry;      ← main.rs に書く</text>
+  <text x="44" y="216" class="d-mute">pub mod area;      ← geometry.rs に書く</text>
+  <text x="44" y="240" class="d-head-accent">mod は「ここに取り込む」宣言</text>
+
+  <path d="M340 140 L380 140" class="d-flow"/>
+  <path d="M380 140 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <!-- 右: パス -->
+  <rect x="380" y="24" width="316" height="230" rx="10" class="d-accent"/>
+  <text x="538" y="48" text-anchor="middle" class="d-title">モジュールパス</text>
+
+  <rect x="400" y="62" width="276" height="28" rx="6" class="d-box"/>
+  <text x="414" y="81" class="d-code">crate</text>
+  <rect x="418" y="98" width="258" height="28" rx="6" class="d-box"/>
+  <text x="432" y="117" class="d-code">crate::geometry</text>
+  <rect x="436" y="134" width="240" height="28" rx="6" class="d-box"/>
+  <text x="450" y="153" class="d-code">crate::geometry::area</text>
+
+  <text x="400" y="184" class="d-mute">use で短い名前を付けられる（C# の using）</text>
+  <text x="400" y="204" class="d-code">use crate::geometry::area::circle;</text>
+
+  <text x="400" y="230" class="d-head-warn">既定は非公開</text>
+  <text x="400" y="246" class="d-mute">pub / pub(crate) を書いたものだけ外へ出る</text>
+</svg>

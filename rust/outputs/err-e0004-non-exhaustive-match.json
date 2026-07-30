@@ -1,0 +1,15 @@
+{
+  "name": "err-e0004-non-exhaustive-match",
+  "title": "Windows PowerShell",
+  "note": "e0004-non-exhaustive-match.rs のコンパイルエラー",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc e0004-non-exhaustive-match.rs",
+      "output": "\u001b[1m\u001b[91merror[E0004]\u001b[0m\u001b[1m: non-exhaustive patterns: `Signal::Yellow` not covered\u001b[0m\r\n  \u001b[1m\u001b[94m--> \u001b[0me0004-non-exhaustive-match.rs:16:11\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m16\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     match signal {\r\n   \u001b[1m\u001b[94m|\u001b[0m           \u001b[1m\u001b[91m^^^^^^\u001b[0m \u001b[1m\u001b[91mpattern `Signal::Yellow` not covered\u001b[0m\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[92mnote\u001b[0m: `Signal` defined here\r\n  \u001b[1m\u001b[94m--> \u001b[0me0004-non-exhaustive-match.rs:9:6\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m 9\u001b[0m \u001b[1m\u001b[94m|\u001b[0m enum Signal {\r\n   \u001b[1m\u001b[94m|\u001b[0m      \u001b[1m\u001b[92m^^^^^^\u001b[0m\r\n\u001b[1m\u001b[94m10\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     Red,\r\n\u001b[1m\u001b[94m11\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     Yellow,\r\n   \u001b[1m\u001b[94m|\u001b[0m     \u001b[1m\u001b[94m------\u001b[0m \u001b[1m\u001b[94mnot covered\u001b[0m\r\n   \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: the matched value is of type `Signal`\r\n\u001b[1m\u001b[96mhelp\u001b[0m: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m18\u001b[0m \u001b[92m~ \u001b[0m        Signal::Green => \"進む\"\u001b[92m,\u001b[0m\r\n\u001b[1m\u001b[94m19\u001b[0m \u001b[92m~         Signal::Yellow => todo!()\u001b[0m,\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\r\n\u001b[1m\u001b[91merror\u001b[0m\u001b[1m: aborting due to 1 previous error\u001b[0m\r\n\r\n\u001b[1mFor more information about this error, try `rustc --explain E0004`.\u001b[0m\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>付録 C++ でやるなら — 何がそのままで、何が違うか | Qt6 Widgets 入門</title>
+<meta name="description" content="「Python で書いたところを、そのまま C++ で書けばいいの？」への答え。結論から言えば大部分はそのままですが、質的に違うものが 5 つあります。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li><a href="../03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="../04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="../05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li><a href="../06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="../07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="../08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li><a href="../09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="../10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="../11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="../12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="../13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+<li class="is-current"><a href="../14-cpp/"><span class="nav-num">第14章</span><span class="nav-label">付録: C++ の場合</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 14 章<span class="dot">·</span>読了目安 14 分</p>
+        <h1>付録 C++ でやるなら — 何がそのままで、何が違うか</h1>
+        <p class="lede">「Python で書いたところを、そのまま C++ で書けばいいの？」への答え。結論から言えば大部分はそのままですが、質的に違うものが 5 つあります。</p>
+      </header>
+      <div class="prose">
+<h2 id="結論-だいたいそのままただし-5-つだけ質が違う">結論: だいたいそのまま。ただし 5 つだけ質が違う</h2>
+
+<p>
+先に答えを書きます。<strong>Qt の使い方そのものは、Python でも C++ でもまったく同じです。</strong>
+クラス名も、メソッド名も、シグナル名も、引数の順番も変わりません。
+この教材で学んだ知識は、9 割方そのまま持っていけます。
+</p>
+
+<p>
+Qt はもともと C++ のライブラリで、PySide6 はそれを Python から呼べるようにしただけのものです。
+つまり<strong>あなたが学んできたのは、最初から C++ の Qt だった</strong>とも言えます。
+</p>
+
+<p>
+ただし、「そのまま書き写せばいい」とまでは言えません。
+言語が変わることで<strong>質的に違ってくるものが 5 つ</strong>あります。
+それを順に見ていきます。
+</p>
+
+<h2 id="まず並べて見てみる">まず、並べて見てみる</h2>
+
+<p>
+第 2 章で作った最初のウィンドウを、Python と C++ で並べます。
+</p>
+
+<figure class="code-block" data-lang="python" data-src="ch02_window.py"><div class="code-head"><span class="code-file">ch02_window.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;ウィンドウらしいウィンドウを作る — タイトル・サイズ・中身を持たせる。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch02_window.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QVBoxLayout</span><span class="p">,</span> <span class="n">QWidget</span></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># 「入れ物」となるウィジェット。これがウィンドウ本体になる。</span></span><span class="cl"><span class="n">window</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;はじめての Qt ウィンドウ&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">420</span><span class="p">,</span> <span class="mi">180</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c1"># 中身を縦に並べるためのレイアウト。</span></span><span class="cl"><span class="c1"># QVBoxLayout(window) のように親を渡すと、その場で window に適用される。</span></span><span class="cl"><span class="n">layout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">window</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;ようこそ、Qt Widgets の世界へ。&quot;</span><span class="p">))</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;このウィンドウは 20 行足らずで出来ています。&quot;</span><span class="p">))</span></span><span class="cl"></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="code-block" data-lang="cpp" data-src="cpp/ch02_window.cpp"><div class="code-head"><span class="code-file">cpp/ch02_window.cpp</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1">// ch02_window.py と同じ画面を C++ で書いたもの。</span></span><span class="cl"><span class="c1">//</span></span><span class="cl"><span class="c1">// Python 版と見比べてください。呼んでいるクラスもメソッドも、まったく同じです。</span></span><span class="cl"><span class="c1">// 違うのは「言語としての書き方」だけです。</span></span><span class="cl"></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QApplication&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QLabel&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QVBoxLayout&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QWidget&gt;</span></span><span class="cl"></span><span class="cl"><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">QApplication</span><span class="w"> </span><span class="n">app</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// Python: window = QWidget()</span></span><span class="cl"><span class="w">    </span><span class="c1">// C++ では、この場所（スタック）に置くだけで作られる。new は要らない。</span></span><span class="cl"><span class="w">    </span><span class="n">QWidget</span><span class="w"> </span><span class="n">window</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="n">window</span><span class="p">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s">&quot;はじめての Qt ウィンドウ&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">window</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">420</span><span class="p">,</span><span class="w"> </span><span class="mi">180</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// Python: layout = QVBoxLayout(window)</span></span><span class="cl"><span class="w">    </span><span class="c1">// ここは new で作る。理由は、レイアウトの寿命を window に任せるため。</span></span><span class="cl"><span class="w">    </span><span class="n">QVBoxLayout</span><span class="w"> </span><span class="o">*</span><span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="o">&amp;</span><span class="n">window</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">layout</span><span class="o">-&gt;</span><span class="n">addWidget</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">QLabel</span><span class="p">(</span><span class="s">&quot;ようこそ、Qt Widgets の世界へ。&quot;</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="n">layout</span><span class="o">-&gt;</span><span class="n">addWidget</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">QLabel</span><span class="p">(</span><span class="s">&quot;このウィンドウは 20 行足らずで出来ています。&quot;</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="n">window</span><span class="p">.</span><span class="n">show</span><span class="p">();</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// Python: sys.exit(app.exec())</span></span><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+行の並びも、呼んでいるものも、ほぼ 1 対 1 で対応しているのが分かるはずです。
+そして実際に、出来上がる画面も同じです。
+</p>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">はじめての Qt ウィンドウ</span></div><img src="../img/ch02-window.webp" alt="Python 版（PySide6）を実行した画面" width="420" height="180" loading="lazy" decoding="async"></div><figcaption>Python 版（PySide6）を実行した画面</figcaption></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">はじめての Qt ウィンドウ</span></div><img src="../img/cpp-ch02-window.webp" alt="C++ 版をコンパイルして実行した画面。上とまったく同じものが出る。" width="420" height="180" loading="lazy" decoding="async"></div><figcaption>C++ 版をコンパイルして実行した画面。上とまったく同じものが出る。</figcaption></figure>
+
+<div class="note">
+  <span class="note-title">この 2 枚について</span>
+  <p>
+    どちらも実際に動かして撮ったものです。
+    Python 版はページ上部のバッジのバージョン、
+    C++ 版は環境の都合で Qt 6.4 でビルドしています。
+    <strong>バージョンが違っても同じ結果になる</strong>こと自体が、
+    ここで言いたいことの証明にもなっています。
+    この範囲の API は Qt6 を通してずっと変わっていません。
+  </p>
+</div>
+
+<h2 id="違い-①-ビルドの壁--ここがいちばん大きい">違い ① ビルドの壁 — ここがいちばん大きい</h2>
+
+<p>
+実のところ、コードの書き方よりもこちらのほうが障壁になります。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>Python (PySide6)</th><th>C++</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>準備</td>
+      <td><code>pip install pyside6</code> の 1 行</td>
+      <td>Qt 本体のインストール＋コンパイラ＋CMake</td>
+    </tr>
+    <tr>
+      <td>実行するまで</td>
+      <td><code>python app.py</code></td>
+      <td>configure → build → 実行</td>
+    </tr>
+    <tr>
+      <td>1 文字直したあと</td>
+      <td>そのまま実行し直すだけ</td>
+      <td>ビルドし直す（数秒〜数分）</td>
+    </tr>
+    <tr>
+      <td>実行速度</td>
+      <td>起動がやや遅い</td>
+      <td>速い</td>
+    </tr>
+    <tr>
+      <td>配布</td>
+      <td>PyInstaller で数十〜百 MB</td>
+      <td>実行ファイル＋Qt のライブラリ</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+Qt 本体は <a href="https://www.qt.io/download-qt-installer">Qt Online Installer</a> から入れるのが標準です。
+アカウント登録が必要で、ダウンロードは数 GB になります。
+Linux ならディストリビューションのパッケージ（<code>qt6-base-dev</code> など）でも構いません。
+</p>
+
+<p>
+そして、Python には無かった<strong>ビルド設定ファイル</strong>を書くことになります。
+</p>
+
+<figure class="code-block" data-lang="cmake" data-src="cpp/CMakeLists.txt"><div class="code-head"><span class="code-file">cpp/CMakeLists.txt</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c"># C++ 版サンプルのビルド設定。</span></span><span class="cl"><span class="c">#</span></span><span class="cl"><span class="c">#   cmake -S . -B build</span></span><span class="cl"><span class="c">#   cmake --build build</span></span><span class="cl"><span class="c">#   ./build/ch02_window</span></span><span class="cl"><span class="c">#</span></span><span class="cl"><span class="c"># Python 版で言えば「pip install pyside6 して python xxx.py する」にあたる部分が、</span></span><span class="cl"><span class="c"># C++ ではこのファイルになります。</span></span><span class="cl"></span><span class="cl"><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span><span class="w"> </span><span class="s">3.16</span><span class="p">)</span></span><span class="cl"><span class="nb">project</span><span class="p">(</span><span class="s">qt6_widgets_examples</span><span class="w"> </span><span class="s">LANGUAGES</span><span class="w"> </span><span class="s">CXX</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="nb">set</span><span class="p">(</span><span class="s">CMAKE_CXX_STANDARD</span><span class="w"> </span><span class="s">17</span><span class="p">)</span></span><span class="cl"><span class="nb">set</span><span class="p">(</span><span class="s">CMAKE_CXX_STANDARD_REQUIRED</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="c"># Q_OBJECT を書いたクラスを moc に通す作業を自動化する。</span></span><span class="cl"><span class="c"># これを ON にしておかないと「vtable への未定義参照」でリンクに失敗する。</span></span><span class="cl"><span class="nb">set</span><span class="p">(</span><span class="s">CMAKE_AUTOMOC</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span></span><span class="cl"><span class="nb">set</span><span class="p">(</span><span class="s">CMAKE_AUTOUIC</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span><span class="w">   </span><span class="c"># .ui を ui_*.h に変換する（pyside6-uic に相当）</span></span><span class="cl"><span class="nb">set</span><span class="p">(</span><span class="s">CMAKE_AUTORCC</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="nb">find_package</span><span class="p">(</span><span class="s">Qt6</span><span class="w"> </span><span class="s">REQUIRED</span><span class="w"> </span><span class="s">COMPONENTS</span><span class="w"> </span><span class="s">Widgets</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="nb">foreach</span><span class="p">(</span><span class="s">sample</span><span class="w"> </span><span class="s">ch02_window</span><span class="w"> </span><span class="s">ch03_signals</span><span class="w"> </span><span class="s">ch03_custom_signal</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="nb">add_executable</span><span class="p">(</span><span class="o">${</span><span class="nv">sample</span><span class="o">}</span><span class="w"> </span><span class="o">${</span><span class="nv">sample</span><span class="o">}</span><span class="s">.cpp</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="nb">target_link_libraries</span><span class="p">(</span><span class="o">${</span><span class="nv">sample</span><span class="o">}</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">Qt6::Widgets</span><span class="p">)</span></span><span class="cl"><span class="nb">endforeach</span><span class="p">()</span></span></code></pre></figure>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">cmake<span class="w"> </span>-S<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build</span><span class="cl">cmake<span class="w"> </span>--build<span class="w"> </span>build</span><span class="cl">./build/ch02_window</span></code></pre></figure>
+
+<div class="note pitfall">
+  <span class="note-title">最初に必ず出会うエラー: vtable への未定義参照</span>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">リンクエラー</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">undefined<span class="w"> </span>reference<span class="w"> </span>to<span class="w"> </span><span class="sb">`</span>vtable<span class="w"> </span><span class="k">for</span><span class="w"> </span>MyWidget<span class="err">&#39;</span></span></code></pre></figure>
+  <p>
+    <code>Q_OBJECT</code> を書いたクラスが moc（後述）に通っていないときのエラーです。
+    CMakeLists.txt に <code>set(CMAKE_AUTOMOC ON)</code> があるか確認してください。
+    C++ 側の Qt でいちばん有名なつまずきポイントです。
+  </p>
+</div>
+
+<h2 id="違い-②-メモリ管理--第-7-章の話が逆になる">違い ② メモリ管理 — 第 7 章の話が逆になる</h2>
+
+<p>
+第 7 章で「Python 側で参照を残さないとウィンドウが消える」という話をしました。
+C++ ではこの悩みがありません。かわりに<strong>「誰がいつ消すのか」を自分で決める</strong>必要があります。
+</p>
+
+<h3 id="2-つの作り方">2 つの作り方</h3>
+
+<figure class="code-block" data-lang="cpp"><div class="code-head"><span class="code-file code-file--plain">C++</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">QWidget</span><span class="w"> </span><span class="n">window</span><span class="p">;</span><span class="w">                              </span><span class="c1">// ① スタックに置く</span></span><span class="cl"><span class="w">                                             </span><span class="c1">//    main を抜けるときに自動で消える</span></span><span class="cl"><span class="n">QLabel</span><span class="w"> </span><span class="o">*</span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QLabel</span><span class="p">(</span><span class="s">&quot;文字&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">window</span><span class="p">);</span><span class="w"> </span><span class="c1">// ② new で作り、親を渡す</span></span><span class="cl"><span class="w">                                             </span><span class="c1">//    親（window）が消えるとき一緒に消える</span></span></code></pre></figure>
+
+<p>
+Qt Widgets では、<strong>トップレベルのウィンドウは ①、その中身は ②</strong>というのが定石です。
+② で親を渡しておけば <code>delete</code> は不要です。親が責任を持って片付けてくれます。
+</p>
+
+<div class="note">
+  <span class="note-title">実は Python でも同じ仕組みが働いていた</span>
+  <p>
+    第 7 章で説明した「親が子を破棄する」というオブジェクトツリーは、
+    もともと C++ のこの仕組みそのものです。
+    PySide6 はそこに Python のガベージコレクションが重なっているため、話が少しややこしくなっていました。
+    <strong>C++ のほうが、むしろ素直です。</strong>
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">レイアウトは new で作る</span>
+  <p>
+    上のサンプルで <code>QVBoxLayout</code> だけ <code>new</code> しているのを不思議に思ったかもしれません。
+    レイアウトは、貼り付けた先のウィジェットに所有権が移ります。
+    スタックに置くと、ウィジェットが片付けようとした先がすでに無くなっていて壊れます。
+    <strong>レイアウトとウィジェットの子は <code>new</code>、と覚えてください。</strong>
+  </p>
+</div>
+
+<h2 id="違い-③-Q_OBJECT-と-moc--自作シグナルのときだけ">違い ③ Q_OBJECT と moc — 自作シグナルのときだけ</h2>
+
+<p>
+Python では、シグナルを 1 行書くだけで作れました。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">NameForm</span><span class="p">(</span><span class="n">QWidget</span><span class="p">):</span></span><span class="cl">    <span class="n">submitted</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span></span></code></pre></figure>
+
+<p>C++ では、クラスに 2 つの決まりごとが増えます。</p>
+
+<ol>
+  <li>クラスの先頭に <code>Q_OBJECT</code> マクロを書く</li>
+  <li>そのクラスを <strong>moc</strong>（メタオブジェクトコンパイラ）に通す</li>
+</ol>
+
+<figure class="code-block" data-lang="cpp" data-src="cpp/ch03_custom_signal.cpp"><div class="code-head"><span class="code-file">cpp/ch03_custom_signal.cpp</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1">// ch03_custom_signal.py と同じことを C++ で書いたもの。</span></span><span class="cl"><span class="c1">//</span></span><span class="cl"><span class="c1">// 自分でシグナルを作るときだけ、C++ には Python にない手続きが要ります。</span></span><span class="cl"><span class="c1">//   ・クラスに Q_OBJECT マクロを書く</span></span><span class="cl"><span class="c1">//   ・そのクラスを moc（メタオブジェクトコンパイラ）に通す</span></span><span class="cl"><span class="c1">//</span></span><span class="cl"><span class="c1">// moc の実行は CMake の CMAKE_AUTOMOC が自動でやってくれるので、</span></span><span class="cl"><span class="c1">// 実際に自分で意識するのは Q_OBJECT を書き忘れないことだけです。</span></span><span class="cl"></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QApplication&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QLabel&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QLineEdit&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QPushButton&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QVBoxLayout&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QWidget&gt;</span></span><span class="cl"></span><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">NameForm</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">QWidget</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Q_OBJECT</span><span class="w">   </span><span class="c1">// ★ これを書き忘れると、シグナルもスロットも動かない</span></span><span class="cl"></span><span class="cl"><span class="k">public</span><span class="o">:</span></span><span class="cl"><span class="w">    </span><span class="n">NameForm</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s">&quot;自作シグナル（C++）&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">resize</span><span class="p">(</span><span class="mi">380</span><span class="p">,</span><span class="w"> </span><span class="mi">170</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">        </span><span class="n">m_edit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QLineEdit</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="n">m_edit</span><span class="o">-&gt;</span><span class="n">setPlaceholderText</span><span class="p">(</span><span class="s">&quot;名前を入れて［あいさつ］を押す&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">        </span><span class="n">QPushButton</span><span class="w"> </span><span class="o">*</span><span class="n">button</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QPushButton</span><span class="p">(</span><span class="s">&quot;あいさつ&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">m_result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QLabel</span><span class="p">(</span><span class="s">&quot;―&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">        </span><span class="n">QVBoxLayout</span><span class="w"> </span><span class="o">*</span><span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="k">this</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">layout</span><span class="o">-&gt;</span><span class="n">addWidget</span><span class="p">(</span><span class="n">m_edit</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">layout</span><span class="o">-&gt;</span><span class="n">addWidget</span><span class="p">(</span><span class="n">button</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">layout</span><span class="o">-&gt;</span><span class="n">addWidget</span><span class="p">(</span><span class="n">m_result</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">        </span><span class="n">connect</span><span class="p">(</span><span class="n">button</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">QPushButton</span><span class="o">::</span><span class="n">clicked</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NameForm</span><span class="o">::</span><span class="n">emitSubmitted</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">connect</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NameForm</span><span class="o">::</span><span class="n">submitted</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">NameForm</span><span class="o">::</span><span class="n">greet</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="nl">signals</span><span class="p">:</span></span><span class="cl"><span class="w">    </span><span class="c1">// Python: submitted = Signal(str)</span></span><span class="cl"><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">submitted</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">QString</span><span class="w"> </span><span class="o">&amp;</span><span class="n">name</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="k">private</span><span class="w"> </span><span class="n">slots</span><span class="o">:</span></span><span class="cl"><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">emitSubmitted</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">emit</span><span class="w"> </span><span class="nf">submitted</span><span class="p">(</span><span class="n">m_edit</span><span class="o">-&gt;</span><span class="n">text</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// Python: @Slot(str) def greet(self, name)</span></span><span class="cl"><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">greet</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">QString</span><span class="w"> </span><span class="o">&amp;</span><span class="n">name</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">m_result</span><span class="o">-&gt;</span><span class="n">setText</span><span class="p">(</span><span class="n">QString</span><span class="p">(</span><span class="s">&quot;こんにちは、%1 さん！&quot;</span><span class="p">)</span></span><span class="cl"><span class="w">                              </span><span class="p">.</span><span class="n">arg</span><span class="p">(</span><span class="n">name</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">QString</span><span class="p">(</span><span class="s">&quot;ななし&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">name</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">private</span><span class="o">:</span></span><span class="cl"><span class="w">    </span><span class="n">QLineEdit</span><span class="w"> </span><span class="o">*</span><span class="n">m_edit</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="n">QLabel</span><span class="w"> </span><span class="o">*</span><span class="n">m_result</span><span class="p">;</span></span><span class="cl"><span class="p">};</span></span><span class="cl"></span><span class="cl"><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">QApplication</span><span class="w"> </span><span class="n">app</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="n">NameForm</span><span class="w"> </span><span class="n">form</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="n">form</span><span class="p">.</span><span class="n">show</span><span class="p">();</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="c1">// 1 ファイルにクラスを書いた場合は、moc の生成結果をここで取り込む。</span></span><span class="cl"><span class="c1">// ヘッダとソースを分けるふつうの書き方なら、この行は要りません。</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;ch03_custom_signal.moc&quot;</span></span></code></pre></figure>
+
+<p>
+moc は「Q_OBJECT が書かれたクラスを読んで、シグナル／スロットの配線に必要なコードを
+自動生成する」道具です。Python では実行時にできることを、C++ ではコンパイル前に用意しておく、
+というだけの違いです。
+</p>
+
+<p>
+そして <strong>moc の実行は CMake が自動でやってくれます</strong>（<code>CMAKE_AUTOMOC ON</code>）。
+自分で意識するのは <code>Q_OBJECT</code> を書き忘れないことだけです。
+</p>
+
+<div class="note">
+  <span class="note-title">シグナルを自作しないなら、ここは丸ごと不要</span>
+  <p>
+    既存のシグナルにつなぐだけなら、<code>Q_OBJECT</code> もクラスも要りません。
+    ラムダを使えば済みます。次の例がそれです。
+  </p>
+</div>
+
+<h2 id="違い-④-connect-の書き方">違い ④ connect の書き方</h2>
+
+<figure class="code-block" data-lang="cpp" data-src="cpp/ch03_signals.cpp"><div class="code-head"><span class="code-file">cpp/ch03_signals.cpp</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1">// ch03_signals.py と同じ「押した回数を数える」を C++ で書いたもの。</span></span><span class="cl"><span class="c1">//</span></span><span class="cl"><span class="c1">// 注目してほしいのは connect の書き方です。</span></span><span class="cl"><span class="c1">// Python:  button.clicked.connect(on_clicked)</span></span><span class="cl"><span class="c1">// C++:     QObject::connect(button, &amp;QPushButton::clicked, ラムダ);</span></span><span class="cl"><span class="c1">//</span></span><span class="cl"><span class="c1">// つなぐ相手をラムダにすれば、クラスを作らずに済みます。</span></span><span class="cl"><span class="c1">// （自分でシグナルを作りたくなったら Q_OBJECT が必要になります。次の例を参照）</span></span><span class="cl"></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QApplication&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QLabel&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QPushButton&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QVBoxLayout&gt;</span></span><span class="cl"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;QWidget&gt;</span></span><span class="cl"></span><span class="cl"><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">QApplication</span><span class="w"> </span><span class="n">app</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="n">QWidget</span><span class="w"> </span><span class="n">window</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="n">window</span><span class="p">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s">&quot;シグナルとスロット（C++）&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">window</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="mi">150</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="n">QLabel</span><span class="w"> </span><span class="o">*</span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QLabel</span><span class="p">(</span><span class="s">&quot;まだ押されていません&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">QPushButton</span><span class="w"> </span><span class="o">*</span><span class="n">button</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QPushButton</span><span class="p">(</span><span class="s">&quot;押してください&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="n">QVBoxLayout</span><span class="w"> </span><span class="o">*</span><span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="o">&amp;</span><span class="n">window</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">layout</span><span class="o">-&gt;</span><span class="n">addWidget</span><span class="p">(</span><span class="n">label</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">layout</span><span class="o">-&gt;</span><span class="n">addWidget</span><span class="p">(</span><span class="n">button</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 第3引数の &amp;window は「受け手」。これを渡しておくと、</span></span><span class="cl"><span class="w">    </span><span class="c1">// window が消えたときに接続も自動で切れる（Python では気にしなくてよい部分）。</span></span><span class="cl"><span class="w">    </span><span class="n">QObject</span><span class="o">::</span><span class="n">connect</span><span class="p">(</span><span class="n">button</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">QPushButton</span><span class="o">::</span><span class="n">clicked</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">window</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="o">&amp;</span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="n">label</span><span class="p">]()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="n">label</span><span class="o">-&gt;</span><span class="n">setText</span><span class="p">(</span><span class="n">QString</span><span class="p">(</span><span class="s">&quot;%1 回押されました&quot;</span><span class="p">).</span><span class="n">arg</span><span class="p">(</span><span class="n">count</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="p">});</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="n">window</span><span class="p">.</span><span class="n">show</span><span class="p">();</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">exec</span><span class="p">();</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">シグナルとスロット（C++）</span></div><img src="../img/cpp-ch03-signals.webp" alt="C++ 版を実行した画面。Python 版（第3章）と同じものが動く。" width="360" height="150" loading="lazy" decoding="async"></div><figcaption>C++ 版を実行した画面。Python 版（第3章）と同じものが動く。</figcaption></figure>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>書き方</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Python</td>
+      <td><code>button.clicked.connect(on_clicked)</code></td>
+    </tr>
+    <tr>
+      <td>C++</td>
+      <td><code>connect(button, &amp;QPushButton::clicked, this, &amp;MyClass::onClicked);</code></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+長く見えますが、<strong>「誰の・どのシグナルを・誰の・どのスロットに」</strong>を
+そのまま並べているだけです。Python 版は前半 2 つが <code>button.clicked</code> に
+まとまっている、という違いにすぎません。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">古い C++ の記事に出てくる SIGNAL / SLOT マクロ</span>
+  <div class="compare">
+    <figure class="code-block" data-lang="cpp"><div class="code-head"><span class="code-file">Qt4 時代の書き方</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">connect</span><span class="p">(</span><span class="n">button</span><span class="p">,</span><span class="w"> </span><span class="n">SIGNAL</span><span class="p">(</span><span class="n">clicked</span><span class="p">()),</span></span><span class="cl"><span class="w">        </span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="n">SLOT</span><span class="p">(</span><span class="n">onClicked</span><span class="p">()));</span></span></code></pre><figcaption class="code-cap">動くが、間違いが実行時まで分からない</figcaption></figure>
+    <figure class="code-block" data-lang="cpp"><div class="code-head"><span class="code-file">Qt5 以降の書き方</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">connect</span><span class="p">(</span><span class="n">button</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">QPushButton</span><span class="o">::</span><span class="n">clicked</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">MyClass</span><span class="o">::</span><span class="n">onClicked</span><span class="p">);</span></span></code></pre><figcaption class="code-cap">コンパイル時に間違いが分かる</figcaption></figure>
+  </div>
+  <p>
+    <code>SIGNAL()</code> / <code>SLOT()</code> は名前を文字列として扱う古い書き方です。
+    綴りを間違えても<strong>コンパイルは通ってしまい</strong>、実行時に
+    「そんなスロットはない」と警告が出るだけで、静かに動かなくなります。
+  </p>
+  <p>
+    C++ の Qt の記事は Python 以上に古いものが多いので、
+    <strong><code>SIGNAL(</code> という文字を見かけたら Qt4 時代の記事</strong>だと判断してください。
+    Python の <code>exec_()</code> と同じ役割の目印になります。
+  </p>
+</div>
+
+<h2 id="違い-⑤-型--静的型と-QVariant">違い ⑤ 型 — 静的型と QVariant</h2>
+
+<p>
+いちばん地味ですが、書く量にいちばん効いてくる違いです。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>用途</th><th>Python</th><th>C++</th></tr></thead>
+  <tbody>
+    <tr><td>文字列</td><td><code>str</code></td><td><code>QString</code></td></tr>
+    <tr><td>文字列の組み立て</td><td><code>f"{n} 回"</code></td><td><code>QString("%1 回").arg(n)</code></td></tr>
+    <tr><td>リスト</td><td><code>list</code></td><td><code>QList&lt;T&gt;</code> / <code>std::vector&lt;T&gt;</code></td></tr>
+    <tr><td>辞書</td><td><code>dict</code></td><td><code>QHash&lt;K, V&gt;</code> / <code>QMap&lt;K, V&gt;</code></td></tr>
+    <tr><td>「何でも入る値」</td><td>そのまま返せる</td><td><strong><code>QVariant</code> で包む</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">第 10 章のモデルは、C++ では QVariant が必須になる</span>
+  <p>
+    Python では <code>data()</code> から文字列でも色でもそのまま返せました。
+    C++ の <code>data()</code> は戻り値の型が <code>QVariant</code> と決まっているので、包む必要があります。
+    「関係ない role には何も返さない」は、C++ では<strong>空の <code>QVariant</code> を返す</strong>ことになります。
+  </p>
+  <div class="compare">
+    <figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file">Python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">role</span><span class="p">):</span></span><span class="cl">    <span class="k">if</span> <span class="n">role</span> <span class="o">==</span> <span class="n">Qt</span><span class="o">.</span><span class="n">ItemDataRole</span><span class="o">.</span><span class="n">DisplayRole</span><span class="p">:</span></span><span class="cl">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rows</span><span class="p">[</span><span class="n">index</span><span class="o">.</span><span class="n">row</span><span class="p">()]</span></span><span class="cl">    <span class="k">return</span> <span class="kc">None</span></span></code></pre></figure>
+    <figure class="code-block" data-lang="cpp"><div class="code-head"><span class="code-file">C++</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">QVariant</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">QModelIndex</span><span class="w"> </span><span class="o">&amp;</span><span class="n">index</span><span class="p">,</span></span><span class="cl"><span class="w">              </span><span class="kt">int</span><span class="w"> </span><span class="n">role</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">override</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">role</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">Qt</span><span class="o">::</span><span class="n">DisplayRole</span><span class="p">)</span></span><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">m_rows</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="n">index</span><span class="p">.</span><span class="n">row</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">QVariant</span><span class="p">();</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  </div>
+</div>
+
+<h2 id="書き換え早見表">書き換え早見表</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Python (PySide6)</th><th>C++</th></tr></thead>
+  <tbody>
+    <tr><td><code>app = QApplication(sys.argv)</code></td><td><code>QApplication app(argc, argv);</code></td></tr>
+    <tr><td><code>sys.exit(app.exec())</code></td><td><code>return app.exec();</code></td></tr>
+    <tr><td><code>w = QWidget()</code></td><td><code>QWidget w;</code>（または <code>new QWidget(親)</code>）</td></tr>
+    <tr><td><code>w.setWindowTitle("題")</code></td><td><code>w.setWindowTitle("題");</code></td></tr>
+    <tr><td><code>layout.addWidget(b)</code></td><td><code>layout-&gt;addWidget(b);</code>（ポインタは <code>-&gt;</code>）</td></tr>
+    <tr><td><code>Qt.AlignmentFlag.AlignCenter</code></td><td><code>Qt::AlignCenter</code></td></tr>
+    <tr><td><code>QMessageBox.StandardButton.Yes</code></td><td><code>QMessageBox::Yes</code></td></tr>
+    <tr><td><code>sig.connect(slot)</code></td><td><code>connect(送り手, &amp;型::sig, 受け手, &amp;型::slot);</code></td></tr>
+    <tr><td><code>x = Signal(str)</code></td><td><code>signals: void x(const QString &amp;);</code> ＋ <code>Q_OBJECT</code></td></tr>
+    <tr><td><code>self.x.emit(v)</code></td><td><code>emit x(v);</code></td></tr>
+    <tr><td><code>@Slot()</code></td><td><code>private slots:</code>（または普通のメソッド）</td></tr>
+    <tr><td><code>super().__init__()</code></td><td><code>: QWidget(parent)</code>（初期化リスト）</td></tr>
+    <tr><td><code>pyside6-uic form.ui -o ui_form.py</code></td><td><code>set(CMAKE_AUTOUIC ON)</code> が自動でやる</td></tr>
+    <tr><td><code>from PySide6.QtGui import QAction</code></td><td><code>#include &lt;QAction&gt;</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">名前空間の区切りが <code>.</code> から <code>::</code> に変わるだけ</span>
+  <p>
+    <code>Qt.AlignmentFlag.AlignCenter</code> が <code>Qt::AlignCenter</code> になるように、
+    C++ では区切りが <code>::</code> です。
+    そして C++ の Qt では、列挙型を <code>Qt::AlignmentFlag::AlignCenter</code> と
+    最後まで書く必要はありません（<code>Qt::AlignCenter</code> で通ります）。
+    この点は Python 版より短く書けます。
+  </p>
+</div>
+
+<h2 id="この教材の各章はC-ではどう変わるか">この教材の各章は、C++ ではどう変わるか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>章</th><th>C++ での違い</th></tr></thead>
+  <tbody>
+    <tr><td>第2章 最初のウィンドウ</td><td>ほぼ同じ。<code>sys.exit()</code> が <code>return</code> になるだけ</td></tr>
+    <tr><td>第3章 シグナルとスロット</td><td><strong>connect の書き方が変わる。</strong>自作シグナルには <code>Q_OBJECT</code> が要る</td></tr>
+    <tr><td>第4章 レイアウト</td><td><strong>まったく同じ。</strong><code>new</code> で作る点だけ違う</td></tr>
+    <tr><td>第5章 ウィジェット図鑑</td><td><strong>まったく同じ。</strong>クラス名もメソッド名も変わらない</td></tr>
+    <tr><td>第6章 QMainWindow</td><td>ほぼ同じ</td></tr>
+    <tr><td>第7章 親子関係とメモリ</td><td><strong>話が変わる。</strong>GC がないぶん、むしろ単純になる</td></tr>
+    <tr><td>第8章 ダイアログ</td><td>ほぼ同じ。戻り値がタプルではなく参照渡しになるものがある</td></tr>
+    <tr><td>第9章 Qt Designer</td><td>同じツール。変換は CMake が自動でやる</td></tr>
+    <tr><td>第10章 モデル / ビュー</td><td><strong>戻り値を <code>QVariant</code> で包む。</strong>考え方は同じ</td></tr>
+    <tr><td>第11章 見た目を整える</td><td><strong>まったく同じ。</strong>スタイルシートの文法も同一</td></tr>
+    <tr><td>第13章 配布</td><td>PyInstaller ではなく <code>windeployqt</code> / <code>macdeployqt</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="結局どちらを選ぶべきか">結局、どちらを選ぶべきか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>こういう場合</th><th>おすすめ</th></tr></thead>
+  <tbody>
+    <tr><td>自分用の道具をさっと作りたい</td><td>Python</td></tr>
+    <tr><td>すでにある Python の処理に画面を付けたい</td><td>Python</td></tr>
+    <tr><td>機械学習やデータ処理と組み合わせる</td><td>Python</td></tr>
+    <tr><td>試行錯誤しながら画面を詰めたい</td><td>Python（ビルド待ちがない）</td></tr>
+    <tr><td>起動速度・動作速度が要件になる</td><td>C++</td></tr>
+    <tr><td>組み込み機器で動かす</td><td>C++</td></tr>
+    <tr><td>ソースを隠して配布したい</td><td>C++</td></tr>
+    <tr><td>既存の C++ 資産と組み合わせる</td><td>C++</td></tr>
+    <tr><td>チームがすでに C++ で書いている</td><td>C++</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">両方使う、という選択肢もある</span>
+  <p>
+    重い処理だけ C++ で書いて、画面と組み立ては Python から、という構成も取れます。
+    Qt にはそのための仕組み（Shiboken）がありますが、
+    最初から狙うものではありません。
+    <strong>まず片方で 1 本作り切ってから考えるので十分です。</strong>
+  </p>
+</div>
+
+<h2 id="移るときの第一歩">移るときの第一歩</h2>
+
+<p>
+C++ に移ると決めたら、順番はこうするのが安全です。
+</p>
+
+<ol>
+  <li>
+    <strong>Qt をインストールして、空のウィンドウを 1 つ出すところまでやる。</strong>
+    ここが最大の関門なので、先に片付けます。この章の <code>cpp/ch02_window.cpp</code> と
+    <code>CMakeLists.txt</code> をそのまま使えます
+  </li>
+  <li>
+    <strong>この教材の第 4 章（レイアウト）のサンプルを C++ で書き直してみる。</strong>
+    レイアウトはほぼ同じなので、C++ の書き方に慣れる練習になります
+  </li>
+  <li>
+    <strong>第 3 章のシグナルとスロットを C++ で書き直す。</strong>
+    ここで <code>Q_OBJECT</code> と moc に一度ぶつかっておきます
+  </li>
+  <li>
+    <strong>第 12 章の ToDo アプリを移植する。</strong>
+    ここまで来れば、あとは調べながら進められます
+  </li>
+</ol>
+
+<p>
+公式ドキュメントは、第 13 章で書いたとおり
+<a href="https://doc.qt.io/qt-6/">C++ 版のリファレンス</a>を読むのが正解です。
+C++ に移る人にとっては、<strong>読み替えの手間すらなくなります</strong>。
+</p>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>
+    Qt をインストールしたら、この章の 3 本のサンプルをビルドしてみてください。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">ターミナル</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="nb">cd</span><span class="w"> </span>qt6-widgets/examples/cpp</span><span class="cl">cmake<span class="w"> </span>-S<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build</span><span class="cl">cmake<span class="w"> </span>--build<span class="w"> </span>build</span><span class="cl">./build/ch02_window</span></code></pre></figure>
+  <p>
+    3 本とも動いたら、C++ 側の環境構築は完了しています。
+    次は <code>ch03_signals.cpp</code> のラムダの中身を書き換えて、
+    ビルドし直す往復に慣れてください。
+  </p>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>Qt の API は Python でも C++ でも同一。<strong>学んだことの 9 割はそのまま使える。</strong></li>
+    <li>本当の壁はコードではなく<strong>ビルド環境</strong>。ここを先に片付ける。</li>
+    <li>メモリは「トップレベルはスタック、中身は <code>new</code> ＋親」。GC がないぶん単純。</li>
+    <li>自作シグナルのときだけ <code>Q_OBJECT</code> と moc が要る（CMake が自動化してくれる）。</li>
+    <li><code>connect</code> は <code>&amp;クラス::シグナル</code> の形。<code>SIGNAL(</code> を見たら Qt4 時代の記事。</li>
+    <li>モデル / ビューでは戻り値を <code>QVariant</code> で包む。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../13-pitfalls/"><span class="pager-dir">← 前の章</span><span class="pager-title">つまずき集と次の一歩</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-30 時点）
+  </p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

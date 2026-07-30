@@ -3,239 +3,266 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</title>
-<meta name="description" content="PySide6 6.11 と Qt 6.11 で学ぶ、Qt Widgets の初心者向け入門書。掲載コードはすべて実際に実行して動作確認され、スクリーンショットもそのコードを動かして撮影しています。">
+<title>Learning — 技術を学ぶための教材集</title>
+<meta name="description" content="初心者向けの技術入門書を置いている場所です。載っているコードは実際に動かして確認したものだけを使い、古い情報でつまずかないことを最優先にしています。">
 <meta name="color-scheme" content="light dark">
-<link rel="stylesheet" href="./assets/style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
-<script>
-// テーマのちらつき防止のため、CSS より先に実行する。
-(function () {
-  try {
-    var saved = localStorage.getItem('qt6book-theme');
-    if (saved) document.documentElement.dataset.theme = saved;
-  } catch (e) {}
-})();
-</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128218;</text></svg>">
+<style>
+:root {
+  --bg: #fbfaf7; --bg-sunken: #f3f1ec; --surface: #ffffff;
+  --text: #1e2227; --text-soft: #4a525c; --text-mute: #6f7883;
+  --border: #e4e0d8; --border-strong: #d2ccc0;
+  --accent: #17803d; --accent-hover: #0f6330;
+  --shadow-sm: 0 1px 2px rgb(28 25 20 / 6%), 0 2px 6px rgb(28 25 20 / 5%);
+  --shadow-md: 0 4px 12px rgb(28 25 20 / 8%), 0 12px 28px rgb(28 25 20 / 7%);
+  --radius: 14px;
+  --font-jp: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium",
+             "Yu Gothic", "Noto Sans JP", "Noto Sans CJK JP", Meiryo, system-ui, sans-serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, var(--font-jp);
+  --font-mono: "SFMono-Regular", "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171b; --bg-sunken: #101317; --surface: #1a1e23;
+    --text: #e7eaee; --text-soft: #b9c1cb; --text-mute: #8d97a3;
+    --border: #2b3138; --border-strong: #3a424b;
+    --accent: #5fd873; --accent-hover: #85e694;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%), 0 2px 6px rgb(0 0 0 / 30%);
+    --shadow-md: 0 6px 16px rgb(0 0 0 / 45%), 0 16px 40px rgb(0 0 0 / 35%);
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(70rem 32rem at 82% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  line-height: 1.9;
+  font-feature-settings: "palt" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: var(--accent); text-underline-offset: .18em; }
+a:hover { color: var(--accent-hover); }
+:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.wrap { max-width: 54rem; margin: 0 auto; padding: 4.5rem 1.5rem 5rem; }
+
+.masthead { margin-bottom: 3.5rem; }
+.eyebrow {
+  margin: 0 0 .5rem;
+  color: var(--text-mute);
+  font-size: .76rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0 0 .7rem;
+  font-size: clamp(1.9rem, 5vw, 2.7rem);
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+.tagline { margin: 0; max-width: 40rem; color: var(--text-soft); }
+
+h2 {
+  margin: 0 0 1.5rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.12rem;
+  letter-spacing: .01em;
+}
+
+/* --- 教材カード --------------------------------------------------------- */
+.books { display: grid; gap: 1.25rem; margin: 0 0 3.5rem; padding: 0; list-style: none; }
+
+.book {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.book:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: var(--shadow-md);
+}
+
+.book > a {
+  display: grid;
+  grid-template-columns: 3.4rem 1fr;
+  gap: 0 1.15rem;
+  padding: 1.5rem 1.6rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.book-body { min-width: 0; }
+.book-title { display: block; font-size: 1.22rem; font-weight: 700; line-height: 1.5; }
+.book-sub { display: block; margin-top: .1rem; color: var(--text-mute); font-size: .89rem; }
+.book-lede { margin: .7rem 0 0; color: var(--text-soft); font-size: .95rem; line-height: 1.85; }
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.meta li {
+  padding: .18rem .6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  letter-spacing: .02em;
+}
+.meta li.is-accent {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 11%, var(--surface));
+  color: var(--accent);
+}
+
+.go { display: block; margin-top: 1rem; color: var(--accent); font-size: .9rem; font-weight: 700; }
+.book:hover .go { color: var(--accent-hover); }
+
+/* --- 約束 --------------------------------------------------------------- */
+.promise { margin: 0 0 3rem; padding: 0; list-style: none; display: grid; gap: 1.1rem; }
+.promise li {
+  padding-left: 1.9rem;
+  position: relative;
+  color: var(--text-soft);
+  font-size: .95rem;
+}
+.promise li::before {
+  content: "";
+  position: absolute;
+  left: .35rem; top: .72rem;
+  width: .5rem; height: .5rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.promise strong { display: block; color: var(--text); font-size: 1rem; }
+
+footer {
+  margin-top: 1rem;
+  padding-top: 1.7rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-mute);
+  font-size: .82rem;
+}
+footer p { margin: .2rem 0; }
+code { font-family: var(--font-mono); font-size: .88em; }
+
+@media (max-width: 34rem) {
+  body { font-size: 16px; }
+  .wrap { padding: 3rem 1.15rem 3.5rem; }
+  .book > a { grid-template-columns: 1fr; gap: .9rem; }
+  .mark { width: 2.8rem; height: 2.8rem; font-size: 1rem; }
+}
+</style>
 </head>
-<body class="is-cover">
-<a class="skip-link" href="#main">本文へスキップ</a>
-<div class="reading-progress"><span id="reading-bar"></span></div>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Learning</p>
+    <h1>技術を学ぶための教材集</h1>
+    <p class="tagline">初心者向けの技術入門書を置いている場所です。載っているコードは実際に動かして確認したものだけを使い、古い情報でつまずかないことを最優先にしています。</p>
+  </header>
 
-<header class="topbar">
-  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-  </button>
-  <a class="brand" href="./">
-    <span class="brand-mark" aria-hidden="true">Qt</span>
-    <span class="brand-text">Qt6 Widgets 入門</span>
-  </a>
-  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
-    Qt 6.11.1 / PySide6 6.11.1
-  </span>
-  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
-    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
-    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
-  </button>
-</header>
+  <main>
+    <h2>教材一覧</h2>
+    <ul class="books">
+      <li class="book">
+        <a href="rust/">
+          <span class="mark" aria-hidden="true">Rs</span>
+          <span class="book-body">
+            <span class="book-title">Rust 入門</span>
+            <span class="book-sub">C# が書ける人のための、所有権から async まで</span>
+            <span class="book-lede">Windows 11 と最新の stable Rust で学ぶ入門書。掲載コードは実際にビルドして動作確認し、「コンパイルが通らない例」もすべて実際に rustc に通してエラーコードまで確かめています。</span>
+            <ul class="meta">
+              <li>全 23 章</li>
+              <li>通読 約 5 時間 47 分</li>
+              <li class="is-accent">rustc 1.97.1</li>
+              <li class="is-accent">edition 2024</li>
+              <li>2026-07-30 検証</li>
+            </ul>
+            <span class="go">読みはじめる →</span>
+          </span>
+        </a>
+      </li>
+      <li class="book">
+        <a href="qt6-widgets/">
+          <span class="mark" aria-hidden="true">Qt</span>
+          <span class="book-body">
+            <span class="book-title">Qt6 Widgets 入門</span>
+            <span class="book-sub">Python (PySide6) ではじめるデスクトップ GUI</span>
+            <span class="book-lede">ボタンやレイアウトから ToDo アプリの完成まで。本文のコードは実行可能な実ファイルそのもので、画面写真もそのコードを動かして撮影しています。</span>
+            <ul class="meta">
+              <li>全 15 章</li>
+              <li>通読 約 3 時間 8 分</li>
+              <li class="is-accent">Qt 6.11.1</li>
+              <li class="is-accent">PySide6 6.11.1</li>
+              <li>2026-07-30 検証</li>
+            </ul>
+            <span class="go">読みはじめる →</span>
+          </span>
+        </a>
+      </li>
+    </ul>
 
-<div class="shell">
-  <nav class="sidebar" id="sidebar" aria-label="目次">
-    <p class="sidebar-title">目次</p>
-    <ol class="nav-list">
-<li><a href="00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
-<li><a href="01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
-<li><a href="02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
-<li><a href="03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
-<li><a href="04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
-<li><a href="05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
-<li><a href="06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
-<li><a href="07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
-<li><a href="08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
-<li><a href="09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
-<li><a href="10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
-<li><a href="11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
-<li><a href="12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
-<li><a href="13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
-<li><a href="14-cpp/"><span class="nav-num">第14章</span><span class="nav-label">付録: C++ の場合</span></a></li>
-    </ol>
-  </nav>
-  <div class="sidebar-scrim" hidden></div>
-
-  <main id="main">
-    <article class="cover">
-      <header class="cover-head">
-        <p class="eyebrow">Python ではじめる デスクトップ GUI</p>
-        <h1>Qt6 Widgets 入門</h1>
-        <p class="cover-sub">Python (PySide6) ではじめるデスクトップ GUI</p>
-        <p class="cover-lede">PySide6 6.11 と Qt 6.11 で学ぶ、Qt Widgets の初心者向け入門書。掲載コードはすべて実際に実行して動作確認され、スクリーンショットもそのコードを動かして撮影しています。</p>
-        <p class="cover-actions">
-          <a class="btn btn-primary" href="00-intro/">読みはじめる</a>
-          <a class="btn" href="01-setup/">環境構築から始める</a>
-        </p>
-      </header>
-
-      <section class="promise">
-        <h2>この教材の約束</h2>
-        <ul class="promise-list">
-          <li>
-            <strong>載っているコードは、すべて実際に動かして確認済み</strong>
-            本文のコードは <code>examples/</code> にある実ファイルをそのまま読み込んで表示しています。
-            書き写す途中で壊れる、ということが起きません。
-          </li>
-          <li>
-            <strong>画面写真は、その同じコードを動かして撮ったもの</strong>
-            イラストでも作図でもなく、Qt 6.11.1 が実際に描画した画面です。
-          </li>
-          <li>
-            <strong>「昔はこう書いた」を毎回はっきり書く</strong>
-            Qt5 時代の記事をそのまま真似すると動かない箇所は、
-            ⚠️ つまずきポイントとして本文中で名指しします。
-          </li>
-        </ul>
-        <p class="verline">
-          検証環境: <strong>Qt 6.11.1</strong> ／
-          <strong>PySide6 6.11.1</strong> ／
-          <strong>Python 3.11.15</strong>（2026-07-29 時点の最新）
-        </p>
-      </section>
-
-      <section class="toc-section">
-        <h2>目次<span class="toc-total">全 15 章 · 通読 約 188 分</span></h2>
-        <ol class="toc-cards">
-      <li class="toc-card">
-        <a href="00-intro/">
-          <span class="toc-num">はじめに</span>
-          <span class="toc-title">はじめに</span>
-          <span class="toc-lede">Qt とは何か、なぜ PySide6 と Qt Widgets なのか、そして「ネットの記事どおりに書いたのに動かない」がなぜ起きるのかを先に片付けます。</span>
-          <span class="toc-time">7 分</span>
-        </a>
+    <h2>どの教材にも共通していること</h2>
+    <ul class="promise">
+      <li>
+        <strong>載っているコードは、実際に動かして確認したものだけ</strong>
+        本文のコードは実行可能な実ファイルをそのまま読み込んで表示しています。
+        書き写す途中で壊れる、ということが起きません。
       </li>
-      <li class="toc-card">
-        <a href="01-setup/">
-          <span class="toc-num">第 1 章</span>
-          <span class="toc-title">環境構築</span>
-          <span class="toc-lede">Python さえ入っていれば、Qt の準備は pip コマンド 1 行で終わります。つまずきやすい仮想環境の話も含めて確実に通します。</span>
-          <span class="toc-time">8 分</span>
-        </a>
+      <li>
+        <strong>画面や出力は、そのコードを動かして得たもの</strong>
+        イラストや作図ではなく、実際に走らせた結果を載せています。
+        再現でしか示せないものは、そうと明記します。
       </li>
-      <li class="toc-card">
-        <a href="02-first-window/">
-          <span class="toc-num">第 2 章</span>
-          <span class="toc-title">最初のウィンドウ</span>
-          <span class="toc-lede">たった 6 行のコードを題材に、Qt アプリが動き続ける仕組み「イベントループ」を最初に押さえます。ここが分かると後が全部楽になります。</span>
-          <span class="toc-time">10 分</span>
-        </a>
+      <li>
+        <strong>「古い記事どおりに書いたのに動かない」を先に片付ける</strong>
+        入門でいちばん多い挫折はここです。バージョンによって変わった箇所は
+        本文中で名指しし、いま何が正しいかを実測に基づいて書いています。
       </li>
-      <li class="toc-card">
-        <a href="03-signals/">
-          <span class="toc-num">第 3 章</span>
-          <span class="toc-title">シグナルとスロット</span>
-          <span class="toc-lede">「ボタンが押されたら何かする」を Qt はどう表現するのか。Qt のいちばんの発明であり、Qt6 で書き方が変わった部分でもあります。</span>
-          <span class="toc-time">12 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="04-layouts/">
-          <span class="toc-num">第 4 章</span>
-          <span class="toc-title">レイアウト</span>
-          <span class="toc-lede">この教材でいちばん大事な章です。座標を指定しないのが Qt 流。縦・横・格子・フォームの 4 つと「伸び縮みの配分」を覚えれば大半の画面は作れます。</span>
-          <span class="toc-time">18 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="05-widgets/">
-          <span class="toc-num">第 5 章</span>
-          <span class="toc-title">ウィジェット図鑑</span>
-          <span class="toc-lede">ボタン・入力欄・選択肢・表示・まとめ役。実際の画面写真つきで「やりたいことに対してどれを使うか」が引けるカタログです。</span>
-          <span class="toc-time">14 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="06-mainwindow/">
-          <span class="toc-num">第 6 章</span>
-          <span class="toc-title">ウィンドウの骨格</span>
-          <span class="toc-lede">メニューバー、ツールバー、ステータスバー、ドック。「アプリらしいアプリ」の枠組みは QMainWindow が用意してくれています。</span>
-          <span class="toc-time">12 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="07-object-tree/">
-          <span class="toc-num">第 7 章</span>
-          <span class="toc-title">親子関係とメモリ</span>
-          <span class="toc-lede">「ウィンドウを出したのに一瞬で消える」「なぜか落ちる」。Python と Qt でオブジェクトの寿命の考え方が違うことが原因です。</span>
-          <span class="toc-time">10 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="08-dialogs/">
-          <span class="toc-num">第 8 章</span>
-          <span class="toc-title">ダイアログ</span>
-          <span class="toc-lede">メッセージボックスとファイル選択は 1 行で呼べます。自作ダイアログと、モーダル／モードレスの違いまで押さえます。</span>
-          <span class="toc-time">12 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="09-designer/">
-          <span class="toc-num">第 9 章</span>
-          <span class="toc-title">Qt Designer</span>
-          <span class="toc-lede">コードを書かずに画面を組み立てるツールが標準で付いてきます。作った .ui ファイルを Python から使う 2 つの方法を比べます。</span>
-          <span class="toc-time">12 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="10-model-view/">
-          <span class="toc-num">第 10 章</span>
-          <span class="toc-title">モデル / ビュー</span>
-          <span class="toc-lede">Qt 入門者が最初にぶつかる壁。「データ」と「見せ方」を分けるという考え方さえ掴めれば、実は素直な仕組みです。</span>
-          <span class="toc-time">16 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="11-styling/">
-          <span class="toc-num">第 11 章</span>
-          <span class="toc-title">見た目を整える</span>
-          <span class="toc-lede">Qt は CSS によく似た記法で見た目を変えられます。ダークテーマ、アイコン、高解像度ディスプレイ対応まで。</span>
-          <span class="toc-time">13 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="12-todo-app/">
-          <span class="toc-num">第 12 章</span>
-          <span class="toc-title">実践: ToDo アプリ</span>
-          <span class="toc-lede">ここまでの全部入り。保存機能つきの ToDo アプリを、設計の考え方から順に組み上げて完成させます。</span>
-          <span class="toc-time">20 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="13-pitfalls/">
-          <span class="toc-num">第 13 章</span>
-          <span class="toc-title">つまずき集と次の一歩</span>
-          <span class="toc-lede">Qt5 時代の記事との差分早見表、PyQt6 との違い、配布方法、そして公式ドキュメントの歩き方。ここから先は自力で進めます。</span>
-          <span class="toc-time">10 分</span>
-        </a>
-      </li>
-      <li class="toc-card">
-        <a href="14-cpp/">
-          <span class="toc-num">第 14 章</span>
-          <span class="toc-title">付録: C++ の場合</span>
-          <span class="toc-lede">「Python で書いたところを、そのまま C++ で書けばいいの？」への答え。結論から言えば大部分はそのままですが、質的に違うものが 5 つあります。</span>
-          <span class="toc-time">14 分</span>
-        </a>
-      </li>
-        </ol>
-      </section>
-    </article>
+    </ul>
   </main>
+
+  <footer>
+    <p>ソースは <a href="https://github.com/oSUiMiNo/Learning">github.com/oSUiMiNo/Learning</a></p>
+    <p>2026-07-30 更新</p>
+  </footer>
 </div>
-
-<footer class="site-footer">
-  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
-  <p class="footer-meta">
-    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-29 時点）
-  </p>
-</footer>
-
-<script src="./assets/book.js" defer></script>
 </body>
 </html>

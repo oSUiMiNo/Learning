@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第6章 ウィンドウの骨格 — QMainWindow | Qt6 Widgets 入門</title>
+<meta name="description" content="メニューバー、ツールバー、ステータスバー、ドック。「アプリらしいアプリ」の枠組みは QMainWindow が用意してくれています。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li><a href="../03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="../04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="../05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li class="is-current"><a href="../06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="../07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="../08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li><a href="../09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="../10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="../11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="../12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="../13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+<li><a href="../14-cpp/"><span class="nav-num">第14章</span><span class="nav-label">付録: C++ の場合</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 6 章<span class="dot">·</span>読了目安 12 分</p>
+        <h1>第6章 ウィンドウの骨格 — QMainWindow</h1>
+        <p class="lede">メニューバー、ツールバー、ステータスバー、ドック。「アプリらしいアプリ」の枠組みは QMainWindow が用意してくれています。</p>
+      </header>
+      <div class="prose">
+<p>
+ここまでは <code>QWidget</code> をそのままウィンドウとして使ってきました。
+それで困らない小さな道具もありますが、
+メニューやツールバーが要るアプリでは <code>QMainWindow</code> を使います。
+</p>
+
+<h2 id="QMainWindow-は置き場所が決まっている">QMainWindow は「置き場所」が決まっている</h2>
+
+<p>
+<code>QWidget</code> との違いは単純で、
+<strong>メニューバー・ツールバー・ステータスバー・ドックの置き場所が最初から用意されている</strong>ことです。
+自分でレイアウトを組む必要はありません。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 400" role="img" aria-label="QMainWindow の領域。メニューバー、ツールバー、ドック、中央ウィジェット、ステータスバーの配置。">
+  <rect x="1" y="1" width="718" height="398" rx="14" class="d-box-plain"/>
+
+  <text x="30" y="32" class="d-head-accent">QMainWindow は、置き場所があらかじめ決まっている</text>
+
+  <rect x="30" y="48" width="660" height="326" rx="10" class="d-box"/>
+
+  <!-- menu bar -->
+  <rect x="42" y="60" width="636" height="34" rx="5" class="d-accent"/>
+  <text x="56" y="82" class="d-code">menuBar()</text>
+  <text x="360" y="82" text-anchor="middle" class="d-mute">メニューバー — 一番上、常に横いっぱい</text>
+
+  <!-- tool bar -->
+  <rect x="42" y="100" width="636" height="34" rx="5" class="d-tip"/>
+  <text x="56" y="122" class="d-code">addToolBar()</text>
+  <text x="360" y="122" text-anchor="middle" class="d-mute">ツールバー — 上下左右どこにでも置ける</text>
+
+  <!-- dock left -->
+  <rect x="42" y="140" width="150" height="182" rx="5" class="d-deep"/>
+  <text x="117" y="222" text-anchor="middle" class="d-code">addDockWidget()</text>
+  <text x="117" y="244" text-anchor="middle" class="d-mute">ドック</text>
+  <text x="117" y="262" text-anchor="middle" class="d-mute">切り離せる脇のパネル</text>
+
+  <!-- central -->
+  <rect x="200" y="140" width="352" height="182" rx="5" class="d-accent"/>
+  <text x="376" y="212" text-anchor="middle" class="d-title">setCentralWidget()</text>
+  <text x="376" y="238" text-anchor="middle" class="d-mute">中央ウィジェット（主役）</text>
+  <text x="376" y="258" text-anchor="middle" class="d-mute">ここだけは必ず 1 つ。残り全部を占める</text>
+
+  <!-- dock right -->
+  <rect x="560" y="140" width="118" height="182" rx="5" class="d-deep"/>
+  <text x="619" y="228" text-anchor="middle" class="d-mute">ドック</text>
+  <text x="619" y="246" text-anchor="middle" class="d-mute">（右）</text>
+
+  <!-- status bar -->
+  <rect x="42" y="328" width="636" height="34" rx="5" class="d-tip"/>
+  <text x="56" y="350" class="d-code">statusBar()</text>
+  <text x="360" y="350" text-anchor="middle" class="d-mute">ステータスバー — 一番下、状況の表示に使う</text>
+</svg>
+<figcaption>QMainWindow の各領域。中央だけは自分で用意したウィジェットを setCentralWidget() で置く。</figcaption></figure>
+
+<div class="note pitfall">
+  <span class="note-title">QMainWindow にレイアウトを直接設定してはいけない</span>
+  <p>
+    <code>QMainWindow</code> は自分でレイアウトを管理しているので、
+    <code>QVBoxLayout(main_window)</code> のように直接レイアウトを付けると警告が出て、うまく動きません。
+    <strong>中身は必ず <code>setCentralWidget()</code> で 1 つのウィジェットとして渡します。</strong>
+    複数並べたいときは、まず <code>QWidget</code> を作ってそこにレイアウトを組み、
+    それを中央ウィジェットにします。
+  </p>
+  <figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">central</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span></span><span class="cl"><span class="n">layout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">central</span><span class="p">)</span></span><span class="cl"><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="o">...</span><span class="p">)</span></span><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">setCentralWidget</span><span class="p">(</span><span class="n">central</span><span class="p">)</span>   <span class="c1"># ○ この形にする</span></span></code></pre></figure>
+</div>
+
+<h2 id="QAction--動作をひとつの物として扱う">QAction — 「動作」をひとつの物として扱う</h2>
+
+<p>
+「ファイルを開く」という動作は、メニューにもツールバーにも、
+右クリックメニューにも置きたいことがあります。
+毎回コピーするのではなく、<strong>動作そのものをひとつのオブジェクトにする</strong>のが Qt のやり方です。
+それが <code>QAction</code> です。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">open_action</span> <span class="o">=</span> <span class="n">QAction</span><span class="p">(</span><span class="s2">&quot;開く&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></span><span class="cl"><span class="n">open_action</span><span class="o">.</span><span class="n">setShortcut</span><span class="p">(</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Open</span><span class="p">)</span>   <span class="c1"># Ctrl+O / ⌘O</span></span><span class="cl"><span class="n">open_action</span><span class="o">.</span><span class="n">setStatusTip</span><span class="p">(</span><span class="s2">&quot;ファイルを開きます&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">open_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_open</span><span class="p">)</span></span><span class="cl"></span><span class="cl"><span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">open_action</span><span class="p">)</span>   <span class="c1"># メニューにも</span></span><span class="cl"><span class="n">toolbar</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">open_action</span><span class="p">)</span>     <span class="c1"># ツールバーにも、同じものを置ける</span></span></code></pre></figure>
+
+<p>
+こうしておけば、<code>open_action.setEnabled(False)</code> の 1 行で
+メニュー項目もツールバーのボタンも同時に灰色になります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">Qt6 で QAction の置き場所が変わった</span>
+  <div class="compare">
+    <figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file">Qt5 まで（動かない）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QAction</span></span></code></pre><figcaption class="code-cap">QtWidgets から import していた</figcaption></figure>
+    <figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file">Qt6（正しい）</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtGui</span><span class="w"> </span><span class="kn">import</span> <span class="n">QAction</span></span></code></pre><figcaption class="code-cap">QtGui に移動した</figcaption></figure>
+  </div>
+  <p>
+    <code>ImportError: cannot import name 'QAction' from 'PySide6.QtWidgets'</code>
+    というエラーが出たら、これが原因です。
+    <code>QShortcut</code> も同じく <code>QtGui</code> に移動しています。
+  </p>
+</div>
+
+<h2 id="全部入りの例">全部入りの例</h2>
+
+<figure class="code-block" data-lang="python" data-src="ch06_mainwindow.py"><div class="code-head"><span class="code-file">ch06_mainwindow.py</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">&quot;&quot;&quot;QMainWindow — メニュー・ツールバー・ステータスバーを備えた本格的な窓。</span></span><span class="cl"></span><span class="cl"><span class="sd">QWidget との違いは「あらかじめ場所が用意されている」こと。</span></span><span class="cl"><span class="sd">中央には setCentralWidget() で好きなウィジェットを置く。</span></span><span class="cl"></span><span class="cl"><span class="sd">実行:  python ch06_mainwindow.py</span></span><span class="cl"><span class="sd">&quot;&quot;&quot;</span></span><span class="cl"></span><span class="cl"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span></span><span class="cl"></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtCore</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qt</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtGui</span><span class="w"> </span><span class="kn">import</span> <span class="n">QAction</span><span class="p">,</span> <span class="n">QKeySequence</span>  <span class="c1"># ★ Qt6 では QAction は QtGui にある</span></span><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">QApplication</span><span class="p">,</span> <span class="n">QDockWidget</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QListWidget</span><span class="p">,</span></span><span class="cl">                               <span class="n">QMainWindow</span><span class="p">,</span> <span class="n">QPlainTextEdit</span><span class="p">,</span> <span class="n">QToolBar</span><span class="p">)</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">Editor</span><span class="p">(</span><span class="n">QMainWindow</span><span class="p">):</span></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></span><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;メモ帳もどき — QMainWindow の全体像&quot;</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">620</span><span class="p">,</span> <span class="mi">380</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="c1"># --- 中央: 主役になるウィジェットをひとつ置く ---------------------</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">QPlainTextEdit</span><span class="p">()</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span></span><span class="cl">            <span class="s2">&quot;ここが中央ウィジェット（setCentralWidget）。</span><span class="se">\n</span><span class="s2">&quot;</span></span><span class="cl">            <span class="s2">&quot;上にメニューとツールバー、左にドック、下にステータスバーがある。&quot;</span></span><span class="cl">        <span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">setCentralWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="c1"># --- 動作の定義: QAction にまとめる -------------------------------</span></span><span class="cl">        <span class="c1"># 同じ「開く」をメニューにもツールバーにも置けるのが QAction の利点。</span></span><span class="cl">        <span class="n">open_action</span> <span class="o">=</span> <span class="n">QAction</span><span class="p">(</span><span class="s2">&quot;開く&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></span><span class="cl">        <span class="n">open_action</span><span class="o">.</span><span class="n">setShortcut</span><span class="p">(</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Open</span><span class="p">)</span>  <span class="c1"># Ctrl+O / ⌘O</span></span><span class="cl">        <span class="n">open_action</span><span class="o">.</span><span class="n">setStatusTip</span><span class="p">(</span><span class="s2">&quot;ファイルを開きます&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">open_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">&quot;「開く」が実行されました&quot;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">))</span></span><span class="cl"></span><span class="cl">        <span class="n">save_action</span> <span class="o">=</span> <span class="n">QAction</span><span class="p">(</span><span class="s2">&quot;保存&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></span><span class="cl">        <span class="n">save_action</span><span class="o">.</span><span class="n">setShortcut</span><span class="p">(</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Save</span><span class="p">)</span></span><span class="cl">        <span class="n">save_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">&quot;保存しました&quot;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">))</span></span><span class="cl"></span><span class="cl">        <span class="n">quit_action</span> <span class="o">=</span> <span class="n">QAction</span><span class="p">(</span><span class="s2">&quot;終了&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></span><span class="cl">        <span class="n">quit_action</span><span class="o">.</span><span class="n">setShortcut</span><span class="p">(</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Quit</span><span class="p">)</span></span><span class="cl">        <span class="n">quit_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="n">about_action</span> <span class="o">=</span> <span class="n">QAction</span><span class="p">(</span><span class="s2">&quot;このアプリについて&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></span><span class="cl">        <span class="n">about_action</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;aboutAction&quot;</span><span class="p">)</span>   <span class="c1"># 教材の自動撮影で使う名前</span></span><span class="cl">        <span class="n">about_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span></span><span class="cl">            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">&quot;Qt Widgets で作られたサンプルです&quot;</span><span class="p">,</span> <span class="mi">5000</span><span class="p">))</span></span><span class="cl"></span><span class="cl">        <span class="c1"># --- メニューバー -------------------------------------------------</span></span><span class="cl">        <span class="n">file_menu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">menuBar</span><span class="p">()</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">&quot;ファイル(&amp;F)&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">open_action</span><span class="p">)</span></span><span class="cl">        <span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">save_action</span><span class="p">)</span></span><span class="cl">        <span class="n">file_menu</span><span class="o">.</span><span class="n">addSeparator</span><span class="p">()</span></span><span class="cl">        <span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">quit_action</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="n">help_menu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">menuBar</span><span class="p">()</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">&quot;ヘルプ(&amp;H)&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">help_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">about_action</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="c1"># --- ツールバー ---------------------------------------------------</span></span><span class="cl">        <span class="n">toolbar</span> <span class="o">=</span> <span class="n">QToolBar</span><span class="p">(</span><span class="s2">&quot;主なツール&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">toolbar</span><span class="o">.</span><span class="n">setToolButtonStyle</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">ToolButtonStyle</span><span class="o">.</span><span class="n">ToolButtonTextBesideIcon</span><span class="p">)</span></span><span class="cl">        <span class="n">toolbar</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">open_action</span><span class="p">)</span></span><span class="cl">        <span class="n">toolbar</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">save_action</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">addToolBar</span><span class="p">(</span><span class="n">toolbar</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="c1"># --- ドック（切り離せる脇のパネル） -------------------------------</span></span><span class="cl">        <span class="n">dock</span> <span class="o">=</span> <span class="n">QDockWidget</span><span class="p">(</span><span class="s2">&quot;最近使ったファイル&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></span><span class="cl">        <span class="n">recent</span> <span class="o">=</span> <span class="n">QListWidget</span><span class="p">()</span></span><span class="cl">        <span class="n">recent</span><span class="o">.</span><span class="n">addItems</span><span class="p">([</span><span class="s2">&quot;memo.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;日報.md&quot;</span><span class="p">,</span> <span class="s2">&quot;買い物メモ.txt&quot;</span><span class="p">])</span></span><span class="cl">        <span class="n">dock</span><span class="o">.</span><span class="n">setWidget</span><span class="p">(</span><span class="n">recent</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">addDockWidget</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">DockWidgetArea</span><span class="o">.</span><span class="n">LeftDockWidgetArea</span><span class="p">,</span> <span class="n">dock</span><span class="p">)</span></span><span class="cl"></span><span class="cl">        <span class="c1"># --- ステータスバー -----------------------------------------------</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">&quot;準備完了&quot;</span><span class="p">)</span></span><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">addPermanentWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;UTF-8&quot;</span><span class="p">))</span>  <span class="c1"># 右端に常駐する表示</span></span><span class="cl"></span><span class="cl"></span><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span></span><span class="cl"><span class="n">window</span> <span class="o">=</span> <span class="n">Editor</span><span class="p">()</span></span><span class="cl"><span class="n">window</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></span><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span></span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">メモ帳もどき — QMainWindow の全体像</span></div><img src="../img/ch06-mainwindow.webp" alt="上からメニューバー、ツールバー。左がドック、中央が QPlainTextEdit、下がステータスバー。ドックのタイトル右にある小さなボタンで、切り離したり閉じたりできる。" width="620" height="380" loading="lazy" decoding="async"></div><figcaption>上からメニューバー、ツールバー。左がドック、中央が QPlainTextEdit、下がステータスバー。ドックのタイトル右にある小さなボタンで、切り離したり閉じたりできる。</figcaption></figure>
+
+<h3 id="メニューバー">メニューバー</h3>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">file_menu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">menuBar</span><span class="p">()</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">&quot;ファイル(&amp;F)&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">open_action</span><span class="p">)</span></span><span class="cl"><span class="n">file_menu</span><span class="o">.</span><span class="n">addSeparator</span><span class="p">()</span>          <span class="c1"># 区切り線</span></span><span class="cl"><span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">quit_action</span><span class="p">)</span></span></code></pre></figure>
+
+<p>
+メニュー名の <code>(&amp;F)</code> は、<kbd>Alt</kbd> + <kbd>F</kbd> で開けるようにする指定です。
+<code>&amp;</code> の直後の文字に下線が引かれます。
+</p>
+
+<h3 id="ツールバー">ツールバー</h3>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">toolbar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">addToolBar</span><span class="p">(</span><span class="s2">&quot;主なツール&quot;</span><span class="p">)</span></span><span class="cl"><span class="n">toolbar</span><span class="o">.</span><span class="n">setToolButtonStyle</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">ToolButtonStyle</span><span class="o">.</span><span class="n">ToolButtonTextBesideIcon</span><span class="p">)</span></span><span class="cl"><span class="n">toolbar</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">open_action</span><span class="p">)</span></span></code></pre></figure>
+
+<p>アイコンだけ、文字だけ、両方、といった表示の切り替えは次のとおりです。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>指定</th><th>見た目</th></tr></thead>
+  <tbody>
+    <tr><td><code>ToolButtonIconOnly</code></td><td>アイコンのみ（既定）</td></tr>
+    <tr><td><code>ToolButtonTextOnly</code></td><td>文字のみ</td></tr>
+    <tr><td><code>ToolButtonTextBesideIcon</code></td><td>アイコンの右に文字</td></tr>
+    <tr><td><code>ToolButtonTextUnderIcon</code></td><td>アイコンの下に文字</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="ステータスバー">ステータスバー</h3>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">&quot;準備完了&quot;</span><span class="p">)</span>            <span class="c1"># 一時的な表示</span></span><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">&quot;保存しました&quot;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">)</span>   <span class="c1"># 3 秒で消える</span></span><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">addPermanentWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;UTF-8&quot;</span><span class="p">))</span> <span class="c1"># 右端に常駐</span></span></code></pre></figure>
+
+<figure class="shot"><div class="shot-frame"><div class="shot-bar"><span class="shot-dots"></span><span class="shot-title">メモ帳もどき — QMainWindow の全体像</span></div><img src="../img/ch06-menu.webp" alt="［ヘルプ］→［このアプリについて］を実行した直後。ステータスバーの左側にメッセージが出ている。" width="620" height="380" loading="lazy" decoding="async"></div><figcaption>［ヘルプ］→［このアプリについて］を実行した直後。ステータスバーの左側にメッセージが出ている。</figcaption></figure>
+
+<div class="note">
+  <span class="note-title">setStatusTip は自動でステータスバーに出る</span>
+  <p>
+    <code>QAction</code> に <code>setStatusTip()</code> を設定しておくと、
+    そのメニュー項目にマウスを乗せただけで説明がステータスバーに出ます。
+    自分でシグナルをつなぐ必要はありません。
+  </p>
+</div>
+
+<h3 id="ドック">ドック</h3>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">dock</span> <span class="o">=</span> <span class="n">QDockWidget</span><span class="p">(</span><span class="s2">&quot;最近使ったファイル&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></span><span class="cl"><span class="n">dock</span><span class="o">.</span><span class="n">setWidget</span><span class="p">(</span><span class="n">中身のウィジェット</span><span class="p">)</span></span><span class="cl"><span class="bp">self</span><span class="o">.</span><span class="n">addDockWidget</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">DockWidgetArea</span><span class="o">.</span><span class="n">LeftDockWidgetArea</span><span class="p">,</span> <span class="n">dock</span><span class="p">)</span></span></code></pre></figure>
+
+<p>
+ドックはユーザーが切り離してフローティングにしたり、
+左右上下に付け替えたりできます。エディタのサイドパネルのようなものです。
+</p>
+
+<h2 id="ウィンドウの状態を覚えておく">ウィンドウの状態を覚えておく</h2>
+
+<p>
+「前回終了したときの位置とサイズで開いてほしい」というのは、よくある要望です。
+<code>QSettings</code> を使うと、OS ごとの適切な場所（Windows ならレジストリ、
+macOS なら plist）に自動で保存してくれます。
+</p>
+
+<figure class="code-block" data-lang="python"><div class="code-head"><span class="code-file code-file--plain">python</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtCore</span><span class="w"> </span><span class="kn">import</span> <span class="n">QSettings</span></span><span class="cl"></span><span class="cl"><span class="k">class</span><span class="w"> </span><span class="nc">MyWindow</span><span class="p">(</span><span class="n">QMainWindow</span><span class="p">):</span></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></span><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></span><span class="cl">        <span class="c1"># ... 画面の組み立て ...</span></span><span class="cl">        <span class="n">settings</span> <span class="o">=</span> <span class="n">QSettings</span><span class="p">(</span><span class="s2">&quot;MyCompany&quot;</span><span class="p">,</span> <span class="s2">&quot;MyApp&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">geometry</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">)</span></span><span class="cl">        <span class="k">if</span> <span class="n">geometry</span><span class="p">:</span></span><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">restoreGeometry</span><span class="p">(</span><span class="n">geometry</span><span class="p">)</span></span><span class="cl">        <span class="n">state</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="s2">&quot;windowState&quot;</span><span class="p">)</span></span><span class="cl">        <span class="k">if</span> <span class="n">state</span><span class="p">:</span></span><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">restoreState</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>      <span class="c1"># ツールバーやドックの配置も戻る</span></span><span class="cl"></span><span class="cl">    <span class="k">def</span><span class="w"> </span><span class="nf">closeEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span></span><span class="cl">        <span class="n">settings</span> <span class="o">=</span> <span class="n">QSettings</span><span class="p">(</span><span class="s2">&quot;MyCompany&quot;</span><span class="p">,</span> <span class="s2">&quot;MyApp&quot;</span><span class="p">)</span></span><span class="cl">        <span class="n">settings</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="s2">&quot;geometry&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">saveGeometry</span><span class="p">())</span></span><span class="cl">        <span class="n">settings</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="s2">&quot;windowState&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">saveState</span><span class="p">())</span></span><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">closeEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></span></code></pre></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>ch06_mainwindow.py</code> に「編集」メニューを足し、［元に戻す］［やり直す］を入れる。ショートカットは <code>QKeySequence.StandardKey.Undo</code> / <code>Redo</code>。</li>
+    <li>ドックを右側（<code>RightDockWidgetArea</code>）に移してみる。</li>
+    <li>上の <code>QSettings</code> のコードを組み込んで、ウィンドウを動かして閉じ、もう一度開いてみる。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>QMainWindow</code> はメニュー・ツールバー・ステータスバー・ドックの置き場所を用意してくれる。</li>
+    <li>中身は <code>setCentralWidget()</code> でひとつだけ渡す。直接レイアウトを付けてはいけない。</li>
+    <li>動作は <code>QAction</code> にまとめ、メニューとツールバーで使い回す。</li>
+    <li>Qt6 では <code>QAction</code> は <code>QtGui</code> にある（Qt5 は <code>QtWidgets</code>）。</li>
+    <li>ウィンドウの位置・サイズの記憶は <code>QSettings</code> ＋ <code>saveGeometry()</code>。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../05-widgets/"><span class="pager-dir">← 前の章</span><span class="pager-title">ウィジェット図鑑</span></a>
+<a class="pager-link pager-next" href="../07-object-tree/"><span class="pager-dir">次の章 →</span><span class="pager-title">親子関係とメモリ</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-30 時点）
+  </p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

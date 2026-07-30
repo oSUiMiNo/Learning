@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第3章 Cargo と最初の一本 — dotnet CLI に相当するもの | Rust 入門</title>
+<meta name="description" content="`cargo new` から `cargo run` まで。`Cargo.toml` は .csproj、crates.io は NuGet に当たります。エディションという Rust 独自の概念もここで。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li class="is-current"><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 3 章<span class="dot">·</span>読了目安 13 分</p>
+        <h1>第3章 Cargo と最初の一本 — dotnet CLI に相当するもの</h1>
+        <p class="lede">`cargo new` から `cargo run` まで。`Cargo.toml` は .csproj、crates.io は NuGet に当たります。エディションという Rust 独自の概念もここで。</p>
+      </header>
+      <div class="prose">
+<p>
+Cargo は Rust の <code>dotnet</code> コマンドに当たるものです。
+プロジェクトを作り、依存を解決し、ビルドし、テストを走らせ、
+ドキュメントを生成します。<strong>これ 1 つで一通り済みます。</strong>
+</p>
+
+<p>
+C# の <code>dotnet new console</code> から <code>dotnet run</code> までと、
+やることはほとんど同じです。まず作って動かしてしまいましょう。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 260" role="img" aria-label="cargo new から cargo run までの流れと、生成されるファイル構成。">
+  <rect x="1" y="1" width="718" height="258" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">cargo new から実行までの流れ</text>
+
+  <rect x="24" y="44" width="146" height="56" rx="9" class="d-accent"/>
+  <text x="97" y="68" text-anchor="middle" class="d-code">cargo new hello</text>
+  <text x="97" y="88" text-anchor="middle" class="d-mute">雛形を作る</text>
+
+  <path d="M170 72 L206 72" class="d-flow"/><path d="M206 72 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="206" y="44" width="146" height="56" rx="9" class="d-box"/>
+  <text x="279" y="68" text-anchor="middle" class="d-code">src/main.rs</text>
+  <text x="279" y="88" text-anchor="middle" class="d-mute">ここを書く</text>
+
+  <path d="M352 72 L388 72" class="d-flow"/><path d="M388 72 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="388" y="44" width="146" height="56" rx="9" class="d-tip"/>
+  <text x="461" y="68" text-anchor="middle" class="d-code">cargo run</text>
+  <text x="461" y="88" text-anchor="middle" class="d-mute">ビルドして実行</text>
+
+  <path d="M534 72 L570 72" class="d-flow"/><path d="M570 72 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="570" y="44" width="126" height="56" rx="9" class="d-box"/>
+  <text x="633" y="68" text-anchor="middle" class="d-mute">実行ファイル</text>
+  <text x="633" y="88" text-anchor="middle" class="d-code">target\debug\</text>
+
+  <!-- ファイル構成 -->
+  <rect x="24" y="120" width="330" height="120" rx="9" class="d-box"/>
+  <text x="44" y="142" class="d-title">作られるもの</text>
+  <g class="d-code">
+    <text x="44" y="166">hello/</text>
+    <text x="60" y="186">Cargo.toml</text>
+    <text x="60" y="206">src/main.rs</text>
+    <text x="60" y="226">target/     ← 生成物。git には入れない</text>
+  </g>
+
+  <!-- C# 対応 -->
+  <rect x="366" y="120" width="330" height="120" rx="9" class="d-cs"/>
+  <text x="386" y="142" class="d-head-cs">C# との対応</text>
+  <g class="d-code">
+    <text x="386" y="166">Cargo.toml   ≒  .csproj</text>
+    <text x="386" y="186">Cargo.lock   ≒  packages.lock.json</text>
+    <text x="386" y="206">crates.io    ≒  NuGet</text>
+    <text x="386" y="226">cargo run    ≒  dotnet run</text>
+  </g>
+</svg>
+<figcaption>cargo new から cargo run までの流れ。生成されるのは Cargo.toml と src/main.rs だけで、あとはビルド時に target/ の下に作られる。右側は C# との対応。</figcaption></figure>
+
+<h2 id="プロジェクトを作る">プロジェクトを作る</h2>
+
+<p>
+PowerShell で作業したいフォルダに移り、<code>cargo new</code> を打ちます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> cargo new hello</span>
+<span class="a-b a-92">    Creating</span> binary (application) `hello` package
+<span class="a-b a-92">note</span>: see more `Cargo.toml` keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+<span class="term-cmd"><span class="term-prompt">PS C:\rust\hello&gt;</span> type Cargo.toml</span>
+[package]
+name = &quot;hello&quot;
+version = &quot;0.1.0&quot;
+edition = &quot;2024&quot;
+
+[dependencies]
+<span class="term-cmd"><span class="term-prompt">PS C:\rust\hello&gt;</span> type src\main.rs</span>
+fn main() {
+    println!(&quot;Hello, world!&quot;);
+}</code></pre></div><figcaption>cargo new を実行し、生成された 2 つのファイルの中身をそのまま表示したもの。作られるファイルは驚くほど少ない。</figcaption></figure>
+
+<p>
+できたものは 2 ファイルだけです。<code>Cargo.toml</code> を見てみます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>行</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>[package]</code></td><td>このパッケージ自身の情報</td></tr>
+    <tr><td><code>name</code></td><td>パッケージ名。実行ファイルの名前にもなる</td></tr>
+    <tr><td><code>version</code></td><td>版。セマンティックバージョニング</td></tr>
+    <tr><td><code>edition</code></td><td><strong>エディション。いまは 2024</strong></td></tr>
+    <tr><td><code>[dependencies]</code></td><td>依存クレートを書く場所。最初は空</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">Cargo.toml と .csproj</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>.csproj</code></td><td><code>Cargo.toml</code></td></tr>
+      <tr><td><code>packages.lock.json</code></td><td><code>Cargo.lock</code></td></tr>
+      <tr><td>NuGet</td><td>crates.io</td></tr>
+      <tr><td><code>bin/Debug/net8.0/</code></td><td><code>target/debug/</code></td></tr>
+      <tr><td>ソリューション（.sln）</td><td>ワークスペース</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    大きな違いは、<strong><code>.csproj</code> のようにファイルを列挙しない</strong>ことです。
+    Cargo は <code>src/main.rs</code> を入口として、
+    <code>mod</code> 宣言をたどって必要なファイルを見つけます（第 16 章）。
+    「ファイルを追加したのにビルドに含まれない」という事故は起きません。
+  </p>
+</div>
+
+<h2 id="動かす">動かす</h2>
+
+<p>
+<code>cargo run</code> と打つだけで、ビルドと実行がまとめて行われます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\hello&gt;</span> cargo run</span>
+<span class="a-b a-92">   Compiling</span> hello v0.1.0 (C:\rust\hello)
+<span class="a-b a-92">    Finished</span> `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+<span class="a-b a-92">     Running</span> `target\debug\hello.exe`
+Hello, world!
+<span class="term-cmd"><span class="term-prompt">PS C:\rust\hello&gt;</span> cargo run</span>
+<span class="a-b a-92">    Finished</span> `dev` profile [unoptimized + debuginfo] target(s) in 0.01s
+<span class="a-b a-92">     Running</span> `target\debug\hello.exe`
+Hello, world!</code></pre></div><figcaption>1 回目は Compiling が走り、2 回目は Finished だけになる。Cargo は変更がなければ再ビルドしない。</figcaption></figure>
+
+<p>
+出力の 3 行を見てください。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>行</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>Compiling</code></td><td>コンパイル中。パッケージ名と版、場所が出る</td></tr>
+    <tr><td><code>Finished</code></td><td>完了。<code>dev</code> プロファイル（最適化なし・デバッグ情報あり）だと明記されている</td></tr>
+    <tr><td><code>Running</code></td><td>どの実行ファイルを起動したか</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+そして 2 回目の実行では <code>Compiling</code> が消えています。
+<strong>Cargo は変更がなければ再ビルドしません。</strong>
+</p>
+
+<div class="note">
+  <span class="note-title">主なコマンド</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>コマンド</th><th>やること</th></tr></thead>
+    <tbody>
+      <tr><td><code>cargo run</code></td><td>ビルドして実行</td></tr>
+      <tr><td><code>cargo run -- 引数</code></td><td>プログラムに引数を渡す（<code>--</code> の後がプログラムの引数）</td></tr>
+      <tr><td><code>cargo build</code></td><td>ビルドだけ</td></tr>
+      <tr><td><code>cargo build --release</code></td><td>最適化してビルド（第 21 章）</td></tr>
+      <tr><td><code>cargo check</code></td><td>型検査だけ。速い</td></tr>
+      <tr><td><code>cargo clean</code></td><td><code>target/</code> を消す</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2 id="Hello-の中身を読む">Hello の中身を読む</h2>
+
+<p>
+生成された <code>main.rs</code> は 3 行です。それに少し足したものがこれです。
+</p>
+
+<figure class="code-block" data-lang="rust" data-src="03-cargo/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! cargo new が作る雛形に、少しだけ手を入れたもの。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! この 1 ファイルだけで、Rust のプログラムの形が全部見えます。</span></span><span class="cl"><span class="sd">//!   ・main が入口</span></span><span class="cl"><span class="sd">//!   ・println! はマクロ（! が付いているのが目印）</span></span><span class="cl"><span class="sd">//!   ・文の終わりにセミコロン</span></span><span class="cl"><span class="sd">//!   ・ブロックの最後の式が戻り値（return を書かなくてよい）</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 2 つの数を足す。戻り値の型は -&gt; の後に書く。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="c1">// セミコロンを付けない = これが戻り値</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Hello, world!&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// {} に値を差し込む。変数名を直接書ける（Rust 2021 以降）。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Rust&quot;</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;こんにちは、{name} の世界へ&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// {:?} はデバッグ表示。中身の構造がそのまま出る。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">numbers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;配列をそのまま出す: {numbers:?}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">add</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;2 + 3 = {sum}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// 桁を揃える、小数点以下を指定する、といった書式も使える。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;円周率は {:.3}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="kt">f64</span><span class="p">::</span><span class="n">consts</span><span class="p">::</span><span class="n">PI</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;右詰め 5 桁: [{:&gt;5}]&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">42</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+このファイルだけで、Rust のプログラムの形がほぼ全部見えています。
+</p>
+
+<h3 id="main-が入口">main が入口</h3>
+
+<p>
+C# の <code>Main</code> と同じですが、クラスの中に入れる必要はありません。
+ファイルの一番上に置けます。
+</p>
+
+<h3 id="println-の--はマクロの印">println! の ! はマクロの印</h3>
+
+<p>
+<code>!</code> が付いているものは<strong>マクロ</strong>です。
+関数ではなく、コンパイル時にコードへ展開されます。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">書式指定の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>$"こんにちは {name}"</code></td><td><code>format!("こんにちは {name}")</code></td></tr>
+      <tr><td><code>Console.WriteLine(...)</code></td><td><code>println!(...)</code></td></tr>
+      <tr><td><code>Console.Write(...)</code></td><td><code>print!(...)</code></td></tr>
+      <tr><td><code>string.Format("{0}", x)</code></td><td><code>format!("{}", x)</code></td></tr>
+      <tr><td><code>obj.ToString()</code></td><td><code>{}</code>（Display トレイト）</td></tr>
+      <tr><td>デバッグ表示</td><td><code>{:?}</code>（Debug トレイト）</td></tr>
+      <tr><td><code>x.ToString("F3")</code></td><td><code>{:.3}</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# の文字列補間 <code>$"..."</code> と同じ感覚で
+    <code>println!("{name}")</code> と書けます。
+    これは Rust 2021 から入った書き方です。
+    古い記事は <code>println!("{}", name)</code> と書いていますが、どちらも今も有効です。
+  </p>
+</div>
+
+<h3 id="セミコロンの有無に意味がある">セミコロンの有無に意味がある</h3>
+
+<p>
+<code>add</code> 関数の中を見てください。<code>a + b</code> にセミコロンが付いていません。
+</p>
+
+<div class="compare">
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">セミコロンなし</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">式。これが戻り値になる</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">return を書く</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">;</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">同じ意味。早期 return では必要</figcaption></figure>
+</div>
+
+<p>
+Rust では<strong>ブロックの最後の式が、そのブロックの値</strong>になります。
+セミコロンを付けると「文」になり、値を返さなくなります。
+第 5 章で詳しく扱いますが、ここでは
+「最後の行のセミコロンを消し忘れると型エラーになる」ことだけ覚えてください。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">最頻出のミス: 最後にセミコロンを付けてしまう</span>
+  <p>
+    次のように書くと、<strong>「<code>i32</code> を返すはずなのに <code>()</code> を返している」</strong>
+    という E0308 になります。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">;</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">✗ セミコロンがあるので値を返していない</figcaption></figure>
+  <p>
+    <code>()</code> は「ユニット型」で、C# の <code>void</code> に当たります。
+    エラーに <code>expected `i32`, found `()`</code> と出たら、
+    まず<strong>最後の行のセミコロンを疑ってください</strong>。
+  </p>
+</div>
+
+<h2 id="依存クレートを足す">依存クレートを足す</h2>
+
+<p>
+crates.io にあるライブラリは <code>cargo add</code> で足せます。
+乱数を扱う <code>rand</code> を入れてみます。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\guessing&gt;</span> cargo add rand</span>
+<span class="a-b a-92">    Updating</span> crates.io index
+<span class="a-b a-92">      Adding</span> rand v0.10.2 to dependencies
+             Features:
+             <span class="a-b a-92">+</span> alloc
+             <span class="a-b a-92">+</span> std
+             <span class="a-b a-92">+</span> std_rng
+             <span class="a-b a-92">+</span> sys_rng
+             <span class="a-b a-92">+</span> thread_rng
+             <span class="a-b a-91">-</span> chacha
+             <span class="a-b a-91">-</span> log
+             <span class="a-b a-91">-</span> serde
+             <span class="a-b a-91">-</span> simd_support
+             <span class="a-b a-91">-</span> unbiased
+<span class="a-b a-92">    Updating</span> crates.io index
+<span class="a-b a-92">     Locking</span> 8 packages to latest Rust 1.97.1 compatible versions
+<span class="term-cmd"><span class="term-prompt">PS C:\rust\guessing&gt;</span> type Cargo.toml</span>
+[package]
+name = &quot;guessing&quot;
+version = &quot;0.1.0&quot;
+edition = &quot;2024&quot;
+
+[dependencies]
+rand = &quot;0.10.2&quot;</code></pre></div><figcaption>cargo add rand を実行した結果。有効になった機能（Features）の一覧が出て、Cargo.toml に 1 行足される。ここで解決された版が、この教材を作った時点の最新。</figcaption></figure>
+
+<p>
+<code>+</code> が付いているのが有効になった機能、
+<code>-</code> が無効のままの機能です。
+Rust のクレートは<strong>機能を選んで削れる</strong>ので、
+使わない部分をビルドしなくて済みます。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">cargo add は昔は無かった</span>
+  <p>
+    <code>cargo add</code> が Cargo に標準で入ったのは 1.62（2022 年）です。
+    それより前は <code>cargo-edit</code> という別のツールを入れる必要がありました。
+  </p>
+  <p>
+    そのため古い記事には
+    「<code>cargo install cargo-edit</code> してから <code>cargo add</code>」
+    と書かれていることがあります。<strong>いまは不要です。</strong>
+    あるいは「<code>Cargo.toml</code> を手で編集する」と書かれていることもありますが、
+    それも今でも正しい方法です（<code>cargo add</code> がやってくれるのと同じことです）。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">依存にまつわるコマンド</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>コマンド</th><th>やること</th></tr></thead>
+    <tbody>
+      <tr><td><code>cargo add rand</code></td><td>最新版を足す</td></tr>
+      <tr><td><code>cargo add serde --features derive</code></td><td>機能を指定して足す</td></tr>
+      <tr><td><code>cargo remove rand</code></td><td>外す</td></tr>
+      <tr><td><code>cargo update</code></td><td><code>Cargo.lock</code> を更新する</td></tr>
+      <tr><td><code>cargo tree</code></td><td>依存関係を木で見る</td></tr>
+      <tr><td><code>cargo info rand</code></td><td>クレートの情報を見る</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2 id="Cargolock-は何のためにあるか">Cargo.lock は何のためにあるか</h2>
+
+<p>
+<code>cargo build</code> すると <code>Cargo.lock</code> ができます。
+これは「実際に使った版を 1 つずつ記録したもの」です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>Git に入れるか</th></tr></thead>
+  <tbody>
+    <tr><td>実行ファイルを作るプロジェクト</td><td><strong>入れる。</strong>誰がビルドしても同じ結果になる</td></tr>
+    <tr><td>ライブラリ</td><td>入れないのが慣習。使う側の都合に合わせる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>cargo new hello</code> して <code>cargo run</code> するところまでを、自分の手で通してください。</li>
+    <li><code>add</code> 関数の <code>a + b</code> にセミコロンを付けて <code>cargo build</code> し、E0308 が出ることを確認してください。<strong>わざとエラーを出す練習は無駄になりません。</strong></li>
+    <li><code>cargo run -- こんにちは</code> のように引数を付けて実行し、<code>--</code> の意味を確かめてください（今のコードは引数を読まないので何も変わりませんが、エラーにもなりません）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>cargo new</code> → <code>cargo run</code> で始まる。作られるのは <code>Cargo.toml</code> と <code>src/main.rs</code> だけ。</li>
+    <li><code>Cargo.toml</code> は <code>.csproj</code>、crates.io は NuGet に当たる。<strong>ファイルの列挙は不要</strong>。</li>
+    <li><code>!</code> が付いているのはマクロ。<code>println!("{name}")</code> は C# の <code>$"{name}"</code> と同じ感覚で使える。</li>
+    <li><strong>ブロックの最後の式が戻り値。</strong>セミコロンを付けると値を返さなくなる。</li>
+    <li>依存は <code>cargo add</code>。昔は別ツールが必要だったが、今は標準。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../02-editor/"><span class="pager-dir">← 前の章</span><span class="pager-title">エディタの準備</span></a>
+<a class="pager-link pager-next" href="../04-variables/"><span class="pager-dir">次の章 →</span><span class="pager-title">変数と型</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

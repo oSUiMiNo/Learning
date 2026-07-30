@@ -1,0 +1,47 @@
+<svg viewBox="0 0 720 260" role="img" aria-label="cargo new から cargo run までの流れと、生成されるファイル構成。">
+  <rect x="1" y="1" width="718" height="258" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">cargo new から実行までの流れ</text>
+
+  <rect x="24" y="44" width="146" height="56" rx="9" class="d-accent"/>
+  <text x="97" y="68" text-anchor="middle" class="d-code">cargo new hello</text>
+  <text x="97" y="88" text-anchor="middle" class="d-mute">雛形を作る</text>
+
+  <path d="M170 72 L206 72" class="d-flow"/><path d="M206 72 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="206" y="44" width="146" height="56" rx="9" class="d-box"/>
+  <text x="279" y="68" text-anchor="middle" class="d-code">src/main.rs</text>
+  <text x="279" y="88" text-anchor="middle" class="d-mute">ここを書く</text>
+
+  <path d="M352 72 L388 72" class="d-flow"/><path d="M388 72 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="388" y="44" width="146" height="56" rx="9" class="d-tip"/>
+  <text x="461" y="68" text-anchor="middle" class="d-code">cargo run</text>
+  <text x="461" y="88" text-anchor="middle" class="d-mute">ビルドして実行</text>
+
+  <path d="M534 72 L570 72" class="d-flow"/><path d="M570 72 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="570" y="44" width="126" height="56" rx="9" class="d-box"/>
+  <text x="633" y="68" text-anchor="middle" class="d-mute">実行ファイル</text>
+  <text x="633" y="88" text-anchor="middle" class="d-code">target\debug\</text>
+
+  <!-- ファイル構成 -->
+  <rect x="24" y="120" width="330" height="120" rx="9" class="d-box"/>
+  <text x="44" y="142" class="d-title">作られるもの</text>
+  <g class="d-code">
+    <text x="44" y="166">hello/</text>
+    <text x="60" y="186">Cargo.toml</text>
+    <text x="60" y="206">src/main.rs</text>
+    <text x="60" y="226">target/     ← 生成物。git には入れない</text>
+  </g>
+
+  <!-- C# 対応 -->
+  <rect x="366" y="120" width="330" height="120" rx="9" class="d-cs"/>
+  <text x="386" y="142" class="d-head-cs">C# との対応</text>
+  <g class="d-code">
+    <text x="386" y="166">Cargo.toml   ≒  .csproj</text>
+    <text x="386" y="186">Cargo.lock   ≒  packages.lock.json</text>
+    <text x="386" y="206">crates.io    ≒  NuGet</text>
+    <text x="386" y="226">cargo run    ≒  dotnet run</text>
+  </g>
+</svg>

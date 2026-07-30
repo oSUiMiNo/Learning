@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第8章 文字列 — String と &amp;str、そして UTF-8 | Rust 入門</title>
+<meta name="description" content="C# の string は UTF-16、Rust の String は UTF-8 です。この違いのせいで「文字数の数え方」まで変わります。ここは早めに知るほど得をします。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li class="is-current"><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 8 章<span class="dot">·</span>読了目安 15 分</p>
+        <h1>第8章 文字列 — String と &amp;str、そして UTF-8</h1>
+        <p class="lede">C# の string は UTF-16、Rust の String は UTF-8 です。この違いのせいで「文字数の数え方」まで変わります。ここは早めに知るほど得をします。</p>
+      </header>
+      <div class="prose">
+<p>
+先に答えを書きます。<strong>C# の <code>string</code> は UTF-16、Rust の <code>String</code> は UTF-8 です。</strong>
+</p>
+
+<p>
+この 1 行のせいで、「文字列の長さ」の意味が変わり、
+<code>s[0]</code> が書けなくなり、日本語や絵文字の扱いが変わります。
+日本語を扱う人にとっては、早めに知るほど得をする話です。
+</p>
+
+<h2 id="長さが-3-種類ある">「長さ」が 3 種類ある</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 340" role="img" aria-label="同じ文字列が UTF-8 と UTF-16 で何単位になるかの比較。C# の Length と Rust の len や chars().count() が食い違う理由を示す。">
+  <rect x="1" y="1" width="718" height="338" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="32" class="d-head-warn">同じ文字列なのに「長さ」が 3 通りある</text>
+
+  <!-- ヘッダ行 -->
+  <text x="40" y="66" class="d-mute">文字</text>
+  <text x="150" y="66" class="d-mute">見た目</text>
+  <text x="272" y="66" class="d-head-cs">C# の Length</text>
+  <text x="272" y="82" class="d-mute">UTF-16 の単位数</text>
+  <text x="452" y="66" class="d-head-accent">Rust の len()</text>
+  <text x="452" y="82" class="d-mute">UTF-8 のバイト数</text>
+  <text x="600" y="66" class="d-head-tip">chars().count()</text>
+  <text x="600" y="82" class="d-mute">文字数</text>
+  <path d="M28 92 L692 92" class="d-line"/>
+
+  <!-- A -->
+  <text x="40" y="122" class="d-code">'A'</text>
+  <text x="150" y="122" class="d-code">A</text>
+  <rect x="272" y="106" width="34" height="22" rx="5" class="d-cs"/><text x="289" y="122" text-anchor="middle" class="d-code">1</text>
+  <rect x="452" y="106" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="122" text-anchor="middle" class="d-code">1</text>
+  <rect x="600" y="106" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="122" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="122" class="d-mute">一致</text>
+
+  <!-- あ -->
+  <text x="40" y="160" class="d-code">'あ'</text>
+  <text x="150" y="160" class="d-code">あ</text>
+  <rect x="272" y="144" width="34" height="22" rx="5" class="d-cs"/><text x="289" y="160" text-anchor="middle" class="d-code">1</text>
+  <rect x="452" y="144" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="160" text-anchor="middle" class="d-code">3</text>
+  <rect x="600" y="144" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="160" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="160" class="d-head-warn">ずれる</text>
+
+  <!-- 漢 -->
+  <text x="40" y="198" class="d-code">'漢'</text>
+  <text x="150" y="198" class="d-code">漢</text>
+  <rect x="272" y="182" width="34" height="22" rx="5" class="d-cs"/><text x="289" y="198" text-anchor="middle" class="d-code">1</text>
+  <rect x="452" y="182" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="198" text-anchor="middle" class="d-code">3</text>
+  <rect x="600" y="182" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="198" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="198" class="d-head-warn">ずれる</text>
+
+  <!-- 蟹 -->
+  <text x="40" y="236" class="d-code">'🦀'</text>
+  <text x="150" y="236" class="d-code">🦀</text>
+  <rect x="272" y="220" width="34" height="22" rx="5" class="d-warn"/><text x="289" y="236" text-anchor="middle" class="d-code">2</text>
+  <rect x="452" y="220" width="34" height="22" rx="5" class="d-accent"/><text x="469" y="236" text-anchor="middle" class="d-code">4</text>
+  <rect x="600" y="220" width="34" height="22" rx="5" class="d-tip"/><text x="617" y="236" text-anchor="middle" class="d-code">1</text>
+  <text x="654" y="236" class="d-head-warn">全部違う</text>
+
+  <path d="M28 252 L692 252" class="d-line"/>
+
+  <!-- 注意 -->
+  <rect x="28" y="266" width="664" height="58" rx="10" class="d-warn"/>
+  <text x="48" y="288" class="d-head-warn">⚠ C# の Length は「文字数」ではない</text>
+  <text x="48" y="310" class="d-mute">絵文字や一部の漢字はサロゲートペアで 2 に数えられる。「文字数」が欲しいなら Rust では chars().count()。</text>
+</svg>
+<figcaption>同じ文字が、UTF-16 の単位数（C# の Length）、UTF-8 のバイト数（Rust の len()）、文字数（chars().count()）でそれぞれ違う値になる。ASCII では一致するが、日本語で 3 つに分かれ、絵文字では全部違う。</figcaption></figure>
+
+<p>
+実際に測った結果がこれです。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\08-strings&gt;</span> cargo run --quiet</span>
+── 1. 「長さ」が 3 種類ある ──
+  文字列: こんにちは
+  len()            = 15 ← バイト数
+  chars().count()  = 5 ← 文字数
+  encode_utf16()   = 5 ← C# の Length と同じ数
+
+── 2. 文字によってバイト数が違う ──
+  A  UTF-8 で 1 バイト / UTF-16 で 1 単位
+  あ  UTF-8 で 3 バイト / UTF-16 で 1 単位
+  漢  UTF-8 で 3 バイト / UTF-16 で 1 単位
+  🦀  UTF-8 で 4 バイト / UTF-16 で 2 単位
+
+── 3. 絵文字は C# だと 2 に数えられる ──
+  🦀
+  Rust の chars().count()      = 1
+  C# の Length に相当する値    = 2
+  ← C# ではサロゲートペアで 2 になる。ここが食い違いの元
+
+── 4. n 文字目の取り出し方 ──
+  3 文字目 = に
+
+── 5. String と &amp;str ──
+  String  = 持っている文字列
+  &amp;str    = 持っている文字列
+  リテラル = ソースに直接書いた文字列
+  リテラルは実行ファイルに埋め込まれているので確保も解放も要らない
+
+── 6. つなげる・分ける ──
+  組み立てた = Rust 入門
+  分割した   = [&quot;赤&quot;, &quot;青&quot;, &quot;黄&quot;]
+  分割しても中身の複製は起きていない（どれも元の文字列への窓）
+
+── 7. 書記素という第 4 の数え方 ──
+  見た目          = が
+  chars().count() = 2 ← 目には 1 文字に見えるのに 2
+  正確に数えたいときは unicode-segmentation クレートを使う</code></pre></div><figcaption>examples/08-strings の実行結果。「こんにちは」は 15 バイト・5 文字・UTF-16 で 5 単位。絵文字の 🦀 は 4 バイト・1 文字・UTF-16 で 2 単位になる。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">C# の Length は「文字数」ではない</span>
+  <p>
+    C# 経験者がいちばん誤解しているのがここです。
+    <code>"🦀".Length</code> は <strong>2</strong> になります。
+    UTF-16 でサロゲートペアになるためです。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やりたいこと</th><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td>バイト数</td><td><code>Encoding.UTF8.GetByteCount(s)</code></td><td><code>s.len()</code></td></tr>
+      <tr><td><strong>文字数</strong></td><td><code>s.EnumerateRunes().Count()</code></td><td><code>s.chars().count()</code></td></tr>
+      <tr><td>UTF-16 の単位数</td><td><code>s.Length</code></td><td><code>s.encode_utf16().count()</code></td></tr>
+      <tr><td>見た目の文字数</td><td><code>StringInfo</code></td><td><code>unicode-segmentation</code> クレート</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    つまり <code>s.Length</code> の素直な対応物は Rust には無く、
+    <strong>「何を数えたいのか」を書かせる設計になっています</strong>。
+    面倒に見えますが、日本語を扱うなら結局その区別が必要になります。
+  </p>
+</div>
+
+<h2 id="数字での添字が書けない">数字での添字が書けない</h2>
+
+<p>
+C# なら <code>s[0]</code> で 1 文字取れます。Rust は禁じています。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0277-string-index.rs</span>
+<span class="a-b a-91">error[E0277]</span><span class="a-b">: the type `str` cannot be indexed by `{integer}`</span>
+  <span class="a-b a-94">--&gt; </span>e0277-string-index.rs:14:22
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">14</span> <span class="a-b a-94">|</span>     let first = text[0]; // 数字での添字は用意されていない
+   <span class="a-b a-94">|</span>                      <span class="a-b a-91">^</span> <span class="a-b a-91">string indices are ranges of `usize`</span>
+   <span class="a-b a-94">|</span>
+   <span class="a-b a-94">= </span><span class="a-b">help</span>: the trait `SliceIndex&lt;str&gt;` is not implemented for `{integer}`
+   <span class="a-b a-94">= </span><span class="a-b">note</span>: you can use `.chars().nth()` or `.bytes().nth()`
+           for more information, see chapter 8 in The Book: &lt;https://doc.rust-lang.org/book/ch08-02-strings.html#indexing-into-strings&gt;
+<span class="a-b a-96">help</span>: `usize` implements trait `SliceIndex&lt;T&gt;`
+  <span class="a-b a-94">--&gt; </span>/rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/core/src/slice/index.rs:214:0
+   <span class="a-b a-94">|</span>
+   <span class="a-b a-94">= </span><span class="a-b">note</span>: `SliceIndex&lt;[T]&gt;`
+  <span class="a-b a-94">--&gt; </span>/rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/core/src/bstr/traits.rs:197:0
+   <span class="a-b a-94">|</span>
+   <span class="a-b a-94">= </span><span class="a-b">note</span>: `SliceIndex&lt;ByteStr&gt;`
+   <span class="a-b a-94">= </span><span class="a-b">note</span>: required for `String` to implement `Index&lt;{integer}&gt;`
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0277`.</span></code></pre></div><figcaption>String を数字で添字アクセスした場合。「String は Index&lt;{integer}&gt; を実装していない」と言われ、「String は文字ごとに添字を引けない」という note が付く。</figcaption></figure>
+
+<div class="note pitfall">
+  <span class="note-title">なぜ禁じられているのか</span>
+  <p>
+    UTF-8 では 1 文字が 1〜4 バイトです。
+    <code>"こんにちは"[2]</code> と書いたとき、
+    それが「3 バイト目」なのか「3 文字目」なのか決まりません。
+  </p>
+  <p>
+    しかも「3 バイト目」を返すとすれば、それは文字の途中を指すかもしれません。
+    そんな値を返しても意味がないので、<strong>Rust は最初から用意していない</strong>のです。
+  </p>
+  <p>
+    かわりに、何を数えたいかを書きます。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="n">text</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">nth</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w">          </span><span class="c1">// 3 文字目（Option を返す）</span></span><span class="cl"><span class="n">text</span><span class="p">.</span><span class="n">as_bytes</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span><span class="w">           </span><span class="c1">// 3 バイト目</span></span><span class="cl"><span class="o">&amp;</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="mi">3</span><span class="p">]</span><span class="w">                  </span><span class="c1">// バイト位置で切り出す</span></span></code></pre></figure>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">バイト位置での切り出しは panic しうる</span>
+  <p>
+    <code>&amp;text[0..3]</code> は<strong>バイト位置</strong>で切ります。
+    文字の途中で切ると、コンパイルは通りますが実行時に panic します。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;こんにちは&quot;</span><span class="p">;</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="mi">3</span><span class="p">];</span><span class="w">    </span><span class="c1">// 「こ」は 3 バイトなのでちょうど切れる</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">bad</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="o">..</span><span class="mi">2</span><span class="p">];</span><span class="w">   </span><span class="c1">// 文字の途中 → 実行時に panic</span></span></code></pre></figure>
+  <p>
+    日本語を切り出すときは、バイト数を数えるより
+    <code>chars()</code> を使うほうが安全です。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">first_two</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">take</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="n">collect</span><span class="p">();</span><span class="w">   </span><span class="c1">// 「こん」</span></span></code></pre></figure>
+</div>
+
+<h2 id="String-と-str">String と &amp;str</h2>
+
+<p>
+Rust には文字列の型が 2 つあります。ここは所有権の話がそのまま出てきます。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 340" role="img" aria-label="String と &amp;str のメモリ配置。String は ptr, len, cap の 3 つを持ち、&amp;str は ptr と len の 2 つだけを持つ。">
+  <rect x="1" y="1" width="718" height="338" rx="14" class="d-box-plain"/>
+
+  <!-- String -->
+  <text x="28" y="32" class="d-head-accent">String — 自分で確保して、自分で解放する</text>
+  <rect x="28" y="44" width="300" height="96" rx="10" class="d-accent"/>
+  <rect x="44" y="62" width="88" height="60" rx="6" class="d-box"/>
+  <text x="88" y="84" text-anchor="middle" class="d-code">ptr</text>
+  <text x="88" y="104" text-anchor="middle" class="d-mute">8 バイト</text>
+  <rect x="140" y="62" width="84" height="60" rx="6" class="d-box"/>
+  <text x="182" y="84" text-anchor="middle" class="d-code">len</text>
+  <text x="182" y="104" text-anchor="middle" class="d-mute">15</text>
+  <rect x="232" y="62" width="84" height="60" rx="6" class="d-box"/>
+  <text x="274" y="84" text-anchor="middle" class="d-code">cap</text>
+  <text x="274" y="104" text-anchor="middle" class="d-mute">15 以上</text>
+
+  <!-- &str -->
+  <text x="392" y="32" class="d-head-tip">&amp;str — 借りている「窓」。確保も解放もしない</text>
+  <rect x="392" y="44" width="300" height="96" rx="10" class="d-tip"/>
+  <rect x="408" y="62" width="130" height="60" rx="6" class="d-box"/>
+  <text x="473" y="84" text-anchor="middle" class="d-code">ptr</text>
+  <text x="473" y="104" text-anchor="middle" class="d-mute">8 バイト</text>
+  <rect x="546" y="62" width="130" height="60" rx="6" class="d-box"/>
+  <text x="611" y="84" text-anchor="middle" class="d-code">len</text>
+  <text x="611" y="104" text-anchor="middle" class="d-mute">見ている長さ</text>
+  <text x="542" y="136" text-anchor="middle" class="d-mute">cap が無い ＝ 伸ばせない</text>
+
+  <!-- ヒープ -->
+  <rect x="28" y="176" width="664" height="86" rx="10" class="d-box"/>
+  <text x="44" y="198" class="d-mute">ヒープ上のバイト列（UTF-8）</text>
+  <g class="d-code">
+    <rect x="44" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="74" y="232" text-anchor="middle" class="d-code">こ</text>
+    <rect x="108" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="138" y="232" text-anchor="middle" class="d-code">ん</text>
+    <rect x="172" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="202" y="232" text-anchor="middle" class="d-code">に</text>
+    <rect x="236" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="266" y="232" text-anchor="middle" class="d-code">ち</text>
+    <rect x="300" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="330" y="232" text-anchor="middle" class="d-code">は</text>
+  </g>
+  <text x="384" y="232" class="d-mute">各 3 バイト × 5 文字 = 15 バイト</text>
+
+  <path d="M88 122 L88 152 L74 152 L74 208" class="d-flow"/>
+  <path d="M74 208 l-5 -9 h10 z" class="d-arrowhead"/>
+
+  <path d="M473 122 L473 164 L266 164 L266 208" class="d-flow"/>
+  <path d="M266 208 l-5 -9 h10 z" class="d-arrowhead"/>
+  <text x="380" y="160" text-anchor="middle" class="d-head-tip">途中を指すこともできる</text>
+
+  <!-- 下 -->
+  <rect x="28" y="278" width="664" height="46" rx="10" class="d-dash"/>
+  <text x="48" y="298" class="d-head-accent">要点</text>
+  <text x="48" y="316" class="d-mute">関数の引数は &amp;str で受けるのが基本。String も文字列リテラルも、どちらも渡せるようになる。</text>
+</svg>
+<figcaption>String は ptr / len / cap の 3 つを持ち、ヒープ上のバイト列を所有している。&amp;str は ptr / len の 2 つだけで、他人のバイト列を借りて見ている「窓」。cap が無いので伸ばせない。</figcaption></figure>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th><code>String</code></th><th><code>&amp;str</code></th></tr></thead>
+  <tbody>
+    <tr><td>所有権</td><td><strong>持っている</strong></td><td>借りている</td></tr>
+    <tr><td>伸ばせるか</td><td>伸ばせる</td><td>伸ばせない</td></tr>
+    <tr><td>作り方</td><td><code>String::from("あ")</code> / <code>"あ".to_string()</code></td><td><code>"あ"</code> / <code>&amp;some_string</code></td></tr>
+    <tr><td>C# なら</td><td><code>StringBuilder</code> に近い</td><td><code>ReadOnlySpan&lt;char&gt;</code> に近い</td></tr>
+    <tr><td>使う場面</td><td>構築する、構造体に持たせる</td><td><strong>関数の引数、読むだけ</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">迷ったときの指針</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>場面</th><th>使うもの</th></tr></thead>
+    <tbody>
+      <tr><td>関数の引数（読むだけ）</td><td><strong><code>&amp;str</code></strong></td></tr>
+      <tr><td>関数の戻り値（新しく作る）</td><td><code>String</code></td></tr>
+      <tr><td>構造体のフィールド</td><td><strong><code>String</code></strong>（ライフタイムで悩まなくて済む）</td></tr>
+      <tr><td>定数・固定の文言</td><td><code>&amp;'static str</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>&amp;str</code> で引数を受けると、
+    <code>String</code> も文字列リテラルもそのまま渡せます。
+    <code>&amp;String</code> で受けるとリテラルが渡せなくなるので、損です。
+  </p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">なぜ 2 つに分かれているのか</span>
+  <p>
+    C# の <code>string</code> は不変で、参照型で、GC が面倒を見ます。
+    だから 1 つの型で済みます。
+  </p>
+  <p>
+    Rust には GC が無いので、
+    <strong>「このバイト列を誰が片付けるのか」を型で表す必要があります</strong>。
+    <code>String</code> は「私が片付けます」、
+    <code>&amp;str</code> は「借りているだけなので片付けません」という宣言です。
+  </p>
+  <p>
+    文字列リテラル <code>"あ"</code> が <code>&amp;'static str</code> なのも同じ理屈です。
+    実行ファイルに埋め込まれているので、確保も解放も要りません。
+  </p>
+</div>
+
+<h2 id="組み立てる分ける">組み立てる・分ける</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">new</span><span class="p">();</span></span><span class="cl"><span class="n">s</span><span class="p">.</span><span class="n">push_str</span><span class="p">(</span><span class="s">&quot;Rust&quot;</span><span class="p">);</span><span class="w">      </span><span class="c1">// &amp;str を足す</span></span><span class="cl"><span class="n">s</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="sc">&#39; &#39;</span><span class="p">);</span><span class="w">             </span><span class="c1">// char を足す</span></span><span class="cl"><span class="n">s</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s">&quot;入門&quot;</span><span class="p">;</span><span class="w">              </span><span class="c1">// += も使える</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{s}！&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">// 新しく作る</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">連結の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>a + b</code></td><td><code>format!("{a}{b}")</code></td></tr>
+      <tr><td><code>sb.Append(x)</code></td><td><code>s.push_str(x)</code></td></tr>
+      <tr><td><code>string.Join(",", list)</code></td><td><code>list.join(",")</code></td></tr>
+      <tr><td><code>s.Split(',')</code></td><td><code>s.split(',')</code></td></tr>
+      <tr><td><code>s.Trim()</code></td><td><code>s.trim()</code></td></tr>
+      <tr><td><code>s.Replace(a, b)</code></td><td><code>s.replace(a, b)</code></td></tr>
+      <tr><td><code>s.Contains(x)</code></td><td><code>s.contains(x)</code></td></tr>
+      <tr><td><code>s.ToUpper()</code></td><td><code>s.to_uppercase()</code></td></tr>
+      <tr><td><code>s.StartsWith(x)</code></td><td><code>s.starts_with(x)</code></td></tr>
+      <tr><td><code>int.Parse(s)</code></td><td><code>s.parse::&lt;i32&gt;()</code>（<code>Result</code> を返す）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    名前は <code>PascalCase</code> から <code>snake_case</code> になるだけで、
+    ほとんど推測できます。<strong>大きな違いは <code>parse</code> だけ</strong>で、
+    C# の <code>int.Parse</code> は例外を投げますが、
+    Rust は <code>Result</code> を返します（第 11 章）。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">split はコピーを作らない</span>
+  <p>
+    <code>"赤,青,黄".split(',')</code> が返すのは <code>&amp;str</code> の列です。
+    <strong>元の文字列への窓が 3 つできるだけで、文字はコピーされません。</strong>
+  </p>
+  <p>
+    C# の <code>Split</code> は新しい <code>string</code> の配列を作るので、
+    ここは Rust のほうが素直に速くなります。
+    そのかわり、元の文字列が生きている間しか使えません。
+  </p>
+</div>
+
+<h2 id="見た目-1-文字が-1-文字でないこと">見た目 1 文字が 1 文字でないこと</h2>
+
+<p>
+最後にもう 1 段だけ深い話をします。
+<code>chars()</code> で数えても、まだ「見た目の文字数」とは違うことがあります。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">ka</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;か</span><span class="se">\u{3099}</span><span class="s">&quot;</span><span class="p">;</span><span class="w">      </span><span class="c1">// 「か」＋結合用の濁点</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{ka}&quot;</span><span class="p">);</span><span class="w">            </span><span class="c1">// 「が」のように見える</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ka</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">());</span><span class="w">   </span><span class="c1">// 2</span></span></code></pre></figure>
+
+<div class="note">
+  <span class="note-title">正確に数えたいとき</span>
+  <p>
+    「見た目 1 文字」の単位は<strong>書記素クラスタ</strong>と呼ばれます。
+    標準ライブラリには入っていないので、クレートを足します。
+  </p>
+  <figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">cargo<span class="w"> </span>add<span class="w"> </span>unicode-segmentation</span></code></pre></figure>
+  <p>
+    C# の <code>StringInfo.GetTextElementEnumerator</code> に当たるものです。
+    絵文字の肌色修飾や国旗を正しく 1 つと数えたい場合に必要になります。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="08-strings/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! 文字列と UTF-8 のふるまいを確かめるサンプル。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! C# の string は UTF-16、Rust の String は UTF-8。</span></span><span class="cl"><span class="sd">//! だから「長さ」の意味が食い違う。ここを実際の数字で確認します。</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;こんにちは&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 「長さ」が 3 種類ある ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  文字列: {text}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  len()            = {} ← バイト数&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">text</span><span class="p">.</span><span class="n">len</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  chars().count()  = {} ← 文字数&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">text</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  encode_utf16()   = {} ← C# の Length と同じ数&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">text</span><span class="p">.</span><span class="n">encode_utf16</span><span class="p">().</span><span class="n">count</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. 文字によってバイト数が違う ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">[</span><span class="sc">&#39;A&#39;</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;あ&#39;</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;漢&#39;</span><span class="p">,</span><span class="w"> </span><span class="sc">&#39;🦀&#39;</span><span class="p">]</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">            </span><span class="s">&quot;  {c}  UTF-8 で {} バイト / UTF-16 で {} 単位&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">c</span><span class="p">.</span><span class="n">len_utf8</span><span class="p">(),</span></span><span class="cl"><span class="w">            </span><span class="n">c</span><span class="p">.</span><span class="n">len_utf16</span><span class="p">()</span></span><span class="cl"><span class="w">        </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. 絵文字は C# だと 2 に数えられる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">crab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;🦀&quot;</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {crab}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  Rust の chars().count()      = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">crab</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  C# の Length に相当する値    = {}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">crab</span><span class="p">.</span><span class="n">encode_utf16</span><span class="p">().</span><span class="n">count</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ← C# ではサロゲートペアで 2 になる。ここが食い違いの元&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. n 文字目の取り出し方 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// text[2] のような添字は使えない（E0277）。何を数えるか明示する。</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">third</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">nth</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  3 文字目 = {third}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. String と &amp;str ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">owned</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;持っている文字列&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">borrowed</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">owned</span><span class="p">;</span><span class="w"> </span><span class="c1">// 借りているだけ</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">literal</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ソースに直接書いた文字列&quot;</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  String  = {owned}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  &amp;str    = {borrowed}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  リテラル = {literal}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  リテラルは実行ファイルに埋め込まれているので確保も解放も要らない&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. つなげる・分ける ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">building</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">new</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">building</span><span class="p">.</span><span class="n">push_str</span><span class="p">(</span><span class="s">&quot;Rust&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">building</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="sc">&#39; &#39;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">building</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s">&quot;入門&quot;</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  組み立てた = {building}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">csv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;赤,青,黄&quot;</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">parts</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">csv</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="sc">&#39;,&#39;</span><span class="p">).</span><span class="n">collect</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  分割した   = {parts:?}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  分割しても中身の複製は起きていない（どれも元の文字列への窓）&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. 書記素という第 4 の数え方 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 「か」＋濁点のように、見た目 1 文字が複数の char になることもある。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">ka</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;か</span><span class="se">\u{3099}</span><span class="s">&quot;</span><span class="p">;</span><span class="w"> </span><span class="c1">// か + 結合用濁点</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  見た目          = {ka}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  chars().count() = {} ← 目には 1 文字に見えるのに 2&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">ka</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">count</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  正確に数えたいときは unicode-segmentation クレートを使う&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/08-strings</code> を動かして、3 つの「長さ」が食い違うことを自分の目で確認してください。</li>
+    <li><code>let text = String::from("こんにちは"); let c = text[0];</code> と書いて E0277 を出してください。</li>
+    <li><code>&amp;text[0..2]</code> を実行して、<strong>コンパイルは通るのに実行時に panic する</strong>ことを確認してください。エラーメッセージに「byte index 2 is not a char boundary」と出ます。</li>
+    <li>自分の名前を <code>String</code> に入れて、<code>len()</code> と <code>chars().count()</code> を比べてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>Rust の <code>String</code> は <strong>UTF-8</strong>。C# の <code>string</code> は UTF-16。</li>
+    <li><code>len()</code> は<strong>バイト数</strong>。文字数は <code>chars().count()</code>。</li>
+    <li>C# の <code>Length</code> は文字数ではない（絵文字は 2 になる）。</li>
+    <li><code>s[0]</code> は書けない。何を数えたいか明示する設計。</li>
+    <li>バイト位置での切り出しは、文字の途中だと<strong>実行時に panic</strong>。</li>
+    <li>引数は <code>&amp;str</code>、構造体のフィールドは <code>String</code>。これが基本。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../07-borrowing/"><span class="pager-dir">← 前の章</span><span class="pager-title">★ 借用と参照</span></a>
+<a class="pager-link pager-next" href="../09-structs/"><span class="pager-dir">次の章 →</span><span class="pager-title">構造体と impl</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rust 入門 — C# が書ける人のための、所有権から async まで</title>
+<meta name="description" content="Windows 11 と最新の stable Rust で学ぶ、初心者向けの入門書。掲載コードはすべて実際にビルドして動作確認し、「コンパイルが通らない例」も実際に rustc に通してエラーコードまで確かめています。C# の知識をそのまま足がかりにできるよう、対応関係と「C# の直感が裏切られる箇所」を各章で名指しします。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="./assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="is-cover">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="./">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="cover">
+      <header class="cover-head">
+        <p class="eyebrow">C# が書ける人のための</p>
+        <h1>Rust 入門</h1>
+        <p class="cover-sub">C# が書ける人のための、所有権から async まで</p>
+        <p class="cover-lede">Windows 11 と最新の stable Rust で学ぶ、初心者向けの入門書。掲載コードはすべて実際にビルドして動作確認し、「コンパイルが通らない例」も実際に rustc に通してエラーコードまで確かめています。C# の知識をそのまま足がかりにできるよう、対応関係と「C# の直感が裏切られる箇所」を各章で名指しします。</p>
+        <p class="cover-actions">
+          <a class="btn btn-primary" href="00-intro/">読みはじめる</a>
+          <a class="btn" href="01-setup/">環境構築から始める</a>
+        </p>
+      </header>
+
+      <section class="promise">
+        <h2>この教材の約束</h2>
+        <ul class="promise-list">
+          <li>
+            <strong>載っているコードは、すべて実際にビルドして確認済み</strong>
+            本文のコードは <code>examples/</code> にある実ファイルをそのまま読み込んで表示しています。
+            書き写す途中で壊れる、ということが起きません。
+          </li>
+          <li>
+            <strong>「コンパイルが通らない例」も、本当に通らないことを確認している</strong>
+            所有権の章などで出てくる失敗例は、実際に <code>rustc</code> に通して
+            <strong>エラーコードまで一致すること</strong>を機械的に検証しています。
+            載っているエラーメッセージは、実物の出力そのものです。
+          </li>
+          <li>
+            <strong>ターミナルの画面は、実際に走らせて捕獲したもの</strong>
+            色まで含めて本物です。Windows のインストーラなど、この環境で撮れないものだけは
+            再現ですが、その場合は必ず<strong>「再現」と明記</strong>して出典を添えます。
+          </li>
+          <li>
+            <strong>C# の知識を足がかりにし、裏切られる箇所を名指しする</strong>
+            対応表を並べるだけでなく、<code>async</code> や文字列のように
+            <strong>C# の直感がかえって邪魔になる箇所</strong>を各章で警告します。
+          </li>
+        </ul>
+        <p class="verline">
+          検証環境: <strong>rustc 1.97.1</strong> ／
+          <strong>cargo 1.97.1</strong> ／
+          <strong>edition 2024</strong>（2026-07-30 時点の最新）
+        </p>
+      </section>
+
+      <section class="toc-section">
+        <h2>目次<span class="toc-total">全 23 章 · 通読 約 5 時間 47 分</span></h2>
+        <ol class="toc-cards">
+      <li class="toc-card">
+        <a href="00-intro/">
+          <span class="toc-num">はじめに</span>
+          <span class="toc-title">はじめに</span>
+          <span class="toc-lede">Rust が何のための言語で、なぜ「難しい」と言われるのか。そして C# が書けるあなたが、どこを速く飛ばし、どこで立ち止まるべきかを先に決めます。</span>
+          <span class="toc-time">9 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="01-setup/">
+          <span class="toc-num">第 1 章</span>
+          <span class="toc-title">環境構築</span>
+          <span class="toc-lede">rustup ひとつで、コンパイラもパッケージ管理も整形もぜんぶ入ります。Windows だけに必要な「もう 1 つの準備」も、つまずく前に片付けます。</span>
+          <span class="toc-time">13 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="02-editor/">
+          <span class="toc-num">第 2 章</span>
+          <span class="toc-title">エディタの準備</span>
+          <span class="toc-lede">Rust は「エディタが賢いと一気に楽になる」言語です。型を目で見えるようにして、コンパイル前に間違いを潰せる状態を作ります。</span>
+          <span class="toc-time">11 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="03-cargo/">
+          <span class="toc-num">第 3 章</span>
+          <span class="toc-title">Cargo と最初の一本</span>
+          <span class="toc-lede">`cargo new` から `cargo run` まで。`Cargo.toml` は .csproj、crates.io は NuGet に当たります。エディションという Rust 独自の概念もここで。</span>
+          <span class="toc-time">13 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="04-variables/">
+          <span class="toc-num">第 4 章</span>
+          <span class="toc-title">変数と型</span>
+          <span class="toc-lede">C# との最大の違いは、変数が既定で書き換えられないことです。`var` と `let` は似て見えて、態度がまるで違います。</span>
+          <span class="toc-time">14 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="05-control-flow/">
+          <span class="toc-num">第 5 章</span>
+          <span class="toc-title">関数と制御フロー</span>
+          <span class="toc-lede">`if` が値を返し、ブロックの最後の行が戻り値になります。C# の式形式メンバーが好きな人には、たぶん気持ちのいい章です。</span>
+          <span class="toc-time">12 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="06-ownership/">
+          <span class="toc-num">第 6 章</span>
+          <span class="toc-title">★ 所有権</span>
+          <span class="toc-lede">この教材でいちばん大事な章です。Rust に GC はなく、かわりに「値には所有者がひとりだけいる」という規則で寿命を決めます。</span>
+          <span class="toc-time">20 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="07-borrowing/">
+          <span class="toc-num">第 7 章</span>
+          <span class="toc-title">★ 借用と参照</span>
+          <span class="toc-lede">所有権を渡さずに値を使わせるのが借用です。「書き込みできる参照は同時に 1 つだけ」という一行が、データ競合を根こそぎ防ぎます。</span>
+          <span class="toc-time">18 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="08-strings/">
+          <span class="toc-num">第 8 章</span>
+          <span class="toc-title">文字列</span>
+          <span class="toc-lede">C# の string は UTF-16、Rust の String は UTF-8 です。この違いのせいで「文字数の数え方」まで変わります。ここは早めに知るほど得をします。</span>
+          <span class="toc-time">15 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="09-structs/">
+          <span class="toc-num">第 9 章</span>
+          <span class="toc-title">構造体と impl</span>
+          <span class="toc-lede">Rust に class はありません。データは struct、ふるまいは impl に分けて書きます。そして継承がありません。その埋め合わせ方まで見ます。</span>
+          <span class="toc-time">14 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="10-enums/">
+          <span class="toc-num">第 10 章</span>
+          <span class="toc-title">列挙型と match</span>
+          <span class="toc-lede">Rust の enum は値を持てます。だから `Option&lt;T&gt;` で「無いかもしれない」を型として表せて、null 参照例外という概念そのものが無くなります。</span>
+          <span class="toc-time">16 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="11-errors/">
+          <span class="toc-num">第 11 章</span>
+          <span class="toc-title">エラー処理</span>
+          <span class="toc-lede">失敗は投げるのではなく、戻り値で返します。`Result&lt;T, E&gt;` と `?` の 2 つで、try-catch と同じくらい短く書けます。</span>
+          <span class="toc-time">16 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="12-collections/">
+          <span class="toc-num">第 12 章</span>
+          <span class="toc-title">コレクション</span>
+          <span class="toc-lede">`List&lt;T&gt;` は `Vec&lt;T&gt;`、`Dictionary&lt;K,V&gt;` は `HashMap&lt;K,V&gt;`。対応は素直ですが、借用の規則がここで初めて実戦になります。</span>
+          <span class="toc-time">13 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="13-iterators/">
+          <span class="toc-num">第 13 章</span>
+          <span class="toc-title">イテレータ</span>
+          <span class="toc-lede">`Where` は `filter`、`Select` は `map`。遅延評価まで同じです。この章はたぶん、C# 経験がいちばん効きます。</span>
+          <span class="toc-time">16 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="14-traits/">
+          <span class="toc-num">第 14 章</span>
+          <span class="toc-title">★ トレイト</span>
+          <span class="toc-lede">トレイトはインターフェースによく似ていますが、「後から他人の型に実装できる」点が決定的に違います。単相化の話も避けずにやります。</span>
+          <span class="toc-time">18 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="15-lifetimes/">
+          <span class="toc-num">第 15 章</span>
+          <span class="toc-title">★ ライフタイム</span>
+          <span class="toc-lede">初心者がいちばん怖がる記法です。しかし正体は「この参照はいつまで有効か」をコンパイラに伝えるだけのもの。落ち着いて読めば短い話です。</span>
+          <span class="toc-time">16 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="16-modules/">
+          <span class="toc-num">第 16 章</span>
+          <span class="toc-title">モジュールとクレート</span>
+          <span class="toc-lede">`mod` はファイル分割の仕組みでもあり、公開範囲の仕組みでもあります。既定が非公開なところが C# と違います。外部クレートの入れ方もここで。</span>
+          <span class="toc-time">13 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="17-testing/">
+          <span class="toc-num">第 17 章</span>
+          <span class="toc-title">テストとドキュメント</span>
+          <span class="toc-lede">テスト機構は言語に組み込みです。さらに「ドキュメントに書いた例がテストとして走る」仕組みまであります。この教材自身もそれに支えられています。</span>
+          <span class="toc-time">12 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="18-smart-pointers/">
+          <span class="toc-num">第 18 章</span>
+          <span class="toc-title">スマートポインタ</span>
+          <span class="toc-lede">「所有者はひとりだけ」では書けない形が出てきたときの道具です。参照カウントと、実行時に借用を検査する仕組みを使い分けます。</span>
+          <span class="toc-time">15 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="19-concurrency/">
+          <span class="toc-num">第 19 章</span>
+          <span class="toc-title">並行処理</span>
+          <span class="toc-lede">Rust の売り文句「恐れなき並行性」の中身を見ます。所有権と借用の規則を、そのままスレッドに適用しただけだと分かります。</span>
+          <span class="toc-time">16 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="20-async/">
+          <span class="toc-num">第 20 章</span>
+          <span class="toc-title">★ async / await</span>
+          <span class="toc-lede">見た目はそっくりですが、動き方が根本的に違います。Rust の Future は、誰かが await するまで 1 行も走りません。ここは必ず読んでください。</span>
+          <span class="toc-time">18 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="21-cli-app/">
+          <span class="toc-num">第 21 章</span>
+          <span class="toc-title">実践: CLI ツール</span>
+          <span class="toc-lede">ここまでの全部入り。引数解析・ファイル読み書き・JSON・エラー処理を組み合わせて、単体で配布できる実行ファイルまで持っていきます。</span>
+          <span class="toc-time">22 分</span>
+        </a>
+      </li>
+      <li class="toc-card">
+        <a href="99-pitfalls/">
+          <span class="toc-num">付録</span>
+          <span class="toc-title">つまずき集と次の一歩</span>
+          <span class="toc-lede">エラーコード早見表、古い記事との差分、そして unsafe・FFI・WebAssembly の入口。ここから先は自力で進めるための地図です。</span>
+          <span class="toc-time">17 分</span>
+        </a>
+      </li>
+        </ol>
+      </section>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="./assets/book.js" defer></script>
+</body>
+</html>

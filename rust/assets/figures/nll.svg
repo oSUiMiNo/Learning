@@ -1,0 +1,36 @@
+<svg viewBox="0 0 720 260" role="img" aria-label="借用の寿命が「最後に使った行」で終わることを示す図。古い Rust ではスコープの終わりまで続いたため、同じコードがエラーになっていた。">
+  <rect x="1" y="1" width="718" height="258" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">同じコードが、昔はエラーで、いまは通る</text>
+
+  <!-- コード -->
+  <g class="d-code">
+    <text x="40" y="62">1  let mut v = vec![1, 2, 3];</text>
+    <text x="40" y="86">2  let first = &amp;v[0];</text>
+    <text x="40" y="110">3  println!("{first}");</text>
+    <text x="40" y="134">4  v.push(4);</text>
+    <text x="40" y="158">5  println!("{v:?}");</text>
+  </g>
+
+  <!-- 昔の借用範囲 -->
+  <rect x="330" y="72" width="160" height="98" rx="7" class="d-warn"/>
+  <text x="410" y="94" text-anchor="middle" class="d-head-warn">2015 年ごろ</text>
+  <text x="410" y="114" text-anchor="middle" class="d-mute">借用は 2 行目から</text>
+  <text x="410" y="132" text-anchor="middle" class="d-mute">スコープの終わりまで</text>
+  <text x="410" y="156" text-anchor="middle" class="d-head-warn">4 行目で E0502</text>
+
+  <!-- いまの借用範囲 -->
+  <rect x="518" y="72" width="174" height="98" rx="7" class="d-tip"/>
+  <text x="605" y="94" text-anchor="middle" class="d-head-tip">いま（NLL）</text>
+  <text x="605" y="114" text-anchor="middle" class="d-mute">借用は 2 行目から</text>
+  <text x="605" y="132" text-anchor="middle" class="d-mute">3 行目（最後の使用）まで</text>
+  <text x="605" y="156" text-anchor="middle" class="d-head-tip">4 行目は通る</text>
+
+  <!-- 帯 -->
+  <rect x="300" y="76" width="6" height="90" rx="3" class="d-warn"/>
+  <rect x="500" y="76" width="6" height="42" rx="3" class="d-tip"/>
+
+  <rect x="28" y="188" width="664" height="58" rx="10" class="d-dash"/>
+  <text x="48" y="210" class="d-head-warn">古い記事を読むときの注意</text>
+  <text x="48" y="230" class="d-mute">「Rust の借用検査は厳しすぎる」という記述は、この改良より前のものかもしれません。まず実際に試してみてください。</text>
+</svg>

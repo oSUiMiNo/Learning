@@ -1,0 +1,239 @@
+<p>
+<code>'a</code> という記法は、Rust でいちばん怖がられているものです。
+けれど正体は単純です。
+</p>
+
+<p>
+<strong>「この参照はいつまで有効か」をコンパイラに伝えるだけの注釈です。</strong>
+新しい寿命を作るのではなく、すでにある寿命に名前を付けているだけ。
+それが分かれば、あとは短い話です。
+</p>
+
+<h2>何を防いでいるのか</h2>
+
+<!--figure: lifetime | ライフタイムは「参照が有効な区間」を表す。借りた先が参照より長生きしていれば通る。内側のブロックで作った値を外に持ち出そうとすると、参照の区間が借用先からはみ出すので止められる。 -->
+
+<p>
+実際にはみ出させてみると、こう言われます。
+</p>
+
+<!--term: err-e0597-does-not-live-long-enough | 内側のブロックで作った値への参照を、ブロックの外で使った場合。「inner does not live long enough」「borrow later used here」と、どこで消えてどこで使ったかが両方示される。 -->
+
+<div class="note csharp">
+  <span class="note-title">C# ではこれが起きない理由</span>
+  <p>
+    C# で同じことを書いても問題ありません。
+    GC が「まだ誰かが参照している」ことを知っているので、
+    オブジェクトは生き続けます。
+  </p>
+  <p>
+    Rust には GC が無いので、<code>inner</code> はブロックを抜けた時点で片付けられます。
+    その後に <code>outer</code> を使えば、<strong>片付けた場所を読むことになります</strong>。
+    C や C++ ならダングリングポインタで、
+    運が良ければ動き、運が悪いとおかしな値を読んだり落ちたりします。
+  </p>
+  <p>
+    ライフタイムは、それをコンパイル時に止めるための仕組みです。
+  </p>
+</div>
+
+<h2>ほとんどの場合、書かなくてよい</h2>
+
+<p>
+先に安心する話をします。<strong>ライフタイムはほとんど書かなくて済みます。</strong>
+コンパイラが推測できる場合は省略できて、その規則（省略規則）が実用上ほぼ全部を覆います。
+</p>
+
+<div class="src" data-lang="rust" data-cap="引数が 1 つなら書かなくてよい">
+fn first_word(text: &amp;str) -&gt; &amp;str {
+    text.split_whitespace().next().unwrap_or("")
+}
+</div>
+
+<div class="note">
+  <span class="note-title">省略規則（3 つ）</span>
+  <ol>
+    <li>引数の各参照には、それぞれ別のライフタイムが割り当てられる。</li>
+    <li><strong>引数の参照が 1 つだけなら</strong>、戻り値のライフタイムはそれになる。</li>
+    <li><strong>メソッドで <code>&amp;self</code> があるなら</strong>、戻り値のライフタイムは <code>&amp;self</code> のものになる。</li>
+  </ol>
+  <p>
+    実務のコードは大半がこの 2 番目か 3 番目に当てはまります。
+    だから <code>'a</code> を書く場面は意外に少ないのです。
+  </p>
+</div>
+
+<h2>書かされる場面</h2>
+
+<p>
+規則に当てはまらないのは、<strong>参照の引数が 2 つ以上あって、参照を返すとき</strong>です。
+</p>
+
+<!--term: err-e0106-missing-lifetime | 引数が 2 つあるのに戻り値の参照の出どころを書いていない場合。「expected named lifetime parameter」と、どう書けばよいかの例まで示される。 -->
+
+<p>
+コンパイラの提案どおりに書けば通ります。
+</p>
+
+<div class="src" data-lang="rust">
+fn longer&lt;'a&gt;(a: &amp;'a str, b: &amp;'a str) -&gt; &amp;'a str {
+    if a.chars().count() &gt;= b.chars().count() { a } else { b }
+}
+</div>
+
+<div class="note">
+  <span class="note-title">この 'a が言っていること</span>
+  <p>
+    「<code>a</code> と <code>b</code> と戻り値は、<strong>同じくらい生きる</strong>」
+    ── もっと正確に言えば
+    「戻り値は、<code>a</code> と <code>b</code> のうち<strong>短いほうが生きている間だけ</strong>有効」
+    です。
+  </p>
+  <p>
+    これを書くことで、呼び出し側では次のような使い方が止められます。
+  </p>
+  <div class="src" data-lang="rust" data-cap="✗ short が先に消えるので、result は使えない">
+let long = String::from("うさぎとかめ");
+let result;
+{
+    let short = String::from("かめ");
+    result = longer(&amp;long, &amp;short);
+}
+println!("{result}");
+  </div>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">'a は「長さ」を指定するものではない</span>
+  <p>
+    よくある誤解です。<code>'a</code> と書くことで参照が長生きするようになる、
+    ということは<strong>ありません</strong>。
+  </p>
+  <p>
+    <code>'a</code> は「これらの寿命には関係がある」と<strong>宣言している</strong>だけで、
+    実際の寿命は変わりません。
+    コンパイラはその宣言と実際の寿命を突き合わせて、矛盾があれば怒ります。
+  </p>
+  <p>
+    だから「エラーが出たから <code>'a</code> を足す」では直りません。
+    <strong>直すのは寿命そのもの</strong>（もっと外側で値を作る、所有させる）です。
+  </p>
+</div>
+
+<h2>構造体に参照を持たせる</h2>
+
+<p>
+構造体が参照を持つなら、ライフタイムが必須になります。
+</p>
+
+<div class="src" data-lang="rust">
+struct Excerpt&lt;'a&gt; {
+    source: &amp;'a str,
+    part: &amp;'a str,
+}
+
+impl&lt;'a&gt; Excerpt&lt;'a&gt; {
+    fn new(source: &amp;'a str) -&gt; Self { /* ... */ }
+    fn part(&amp;self) -&gt; &amp;str { self.part }   // 省略規則 3 で書かなくてよい
+}
+</div>
+
+<p>
+これは「この構造体は、借りている元より長生きできない」という宣言です。
+</p>
+
+<div class="note">
+  <span class="note-title">迷ったら「所有させる」</span>
+  <p>
+    ライフタイムで詰まったときの<strong>いちばん実用的な逃げ道</strong>がこれです。
+    参照をやめて、所有する型にしてしまいます。
+  </p>
+  <div class="compare">
+    <div class="src" data-lang="rust" data-file="参照を持つ" data-cap="速いが、ライフタイムの管理が要る">
+struct Excerpt&lt;'a&gt; {
+    part: &amp;'a str,
+}
+    </div>
+    <div class="src" data-lang="rust" data-file="所有する" data-cap="少しコピーが増えるが、悩まなくてよい">
+struct Excerpt {
+    part: String,
+}
+    </div>
+  </div>
+  <p>
+    <code>String</code> にすれば <code>'a</code> が消えます。
+    <code>.to_string()</code> のコストを払うだけです。
+  </p>
+  <p>
+    <strong>初心者のうちは、構造体のフィールドは <code>String</code> にしておくことを勧めます。</strong>
+    参照を持たせるのは、性能が本当に問題になってからで構いません。
+    第 8 章で「構造体のフィールドは <code>String</code>」と書いたのはこの理由です。
+  </p>
+</div>
+
+<h2>'static</h2>
+
+<div class="src" data-lang="rust">
+fn motto() -&gt; &amp;'static str {
+    "速く、安全に"
+}
+</div>
+
+<p>
+<code>'static</code> は「プログラムが終わるまで生きる」という意味です。
+文字列リテラルは実行ファイルに埋め込まれているので、これになります。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">'static を安易に付けないこと</span>
+  <p>
+    エラーを消すために <code>'static</code> を付けたくなることがありますが、
+    それは「この値は永遠に生きます」という強い主張です。
+    ふつうのローカル変数には当てはまらないので、たいてい別のエラーに変わるだけです。
+  </p>
+  <p>
+    <code>&amp;'static str</code> が正しいのは、文字列リテラルや
+    <code>const</code>／<code>static</code> で定義したものを返すときだけです。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 15-lifetimes/src/main.rs-->
+
+<div class="note deep">
+  <span class="note-title">ライフタイムのエラーで詰まったときの手順</span>
+  <ol>
+    <li><strong>コンパイラの提案をそのまま書く。</strong>E0106 なら書き方の例が出ている。</li>
+    <li><strong>値を作る場所を外側に移す。</strong>ブロックの外で <code>let</code> する。</li>
+    <li><strong>参照をやめて所有させる。</strong><code>&amp;str</code> → <code>String</code>、<code>&amp;[T]</code> → <code>Vec&lt;T&gt;</code>。</li>
+    <li><strong>それでも駄目なら設計を見直す。</strong>参照を持つ構造体をやめる、第 18 章の <code>Rc</code> を使う。</li>
+  </ol>
+  <p>
+    2 番目と 3 番目でほぼ解決します。
+    <code>'a</code> を増やして解決しようとすると、たいてい迷路に入ります。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/15-lifetimes</code> を動かしてください。</li>
+    <li><code>longer</code> の <code>'a</code> を全部消して、E0106 を出してください。エラーメッセージが<strong>そのまま直し方を示している</strong>ことを確認してください。</li>
+    <li><code>Excerpt</code> の定義から <code>&lt;'a&gt;</code> を消して、どうなるか見てください。</li>
+    <li><code>examples/errors/e0597-does-not-live-long-enough.rs</code> を <code>rustc</code> で直接コンパイルして、エラー全文を読んでください。</li>
+    <li><code>Excerpt</code> を <code>String</code> を持つ形に書き換えて、<code>'a</code> が全部消えることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>'a</code> は「参照が有効な区間」に名前を付けるだけ。<strong>寿命を伸ばす機能ではない</strong>。</li>
+    <li>省略規則があるので、実際に書く場面は少ない。</li>
+    <li>書かされるのは「参照の引数が 2 つ以上あって、参照を返すとき」。</li>
+    <li>参照を持つ構造体には必須。ただし<strong><code>String</code> にすれば悩まなくて済む</strong>。</li>
+    <li>詰まったら「外側で作る → 所有させる」の順に試す。<code>'a</code> を増やしても直らない。</li>
+    <li><code>'static</code> はリテラルや定数を返すときだけ。安易に付けない。</li>
+  </ul>
+</div>

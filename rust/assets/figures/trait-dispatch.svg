@@ -1,0 +1,48 @@
+<svg viewBox="0 0 720 320" role="img" aria-label="ジェネリクスによる単相化と dyn Trait による動的ディスパッチの比較。前者は型ごとに実体が作られ、後者は vtable を経由する。">
+  <rect x="1" y="1" width="718" height="318" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">同じトレイトを使う 2 つの呼び出し方</text>
+
+  <!-- 左: 単相化 -->
+  <rect x="20" y="44" width="330" height="212" rx="10" class="d-accent"/>
+  <text x="185" y="68" text-anchor="middle" class="d-title">静的（単相化）</text>
+  <text x="185" y="88" text-anchor="middle" class="d-code">fn f&lt;T: Greet&gt;(x: T)</text>
+
+  <rect x="46" y="102" width="278" height="28" rx="7" class="d-box"/>
+  <text x="185" y="121" text-anchor="middle" class="d-mute">コンパイラが型ごとに複製する</text>
+
+  <path d="M120 130 L92 154" class="d-line"/>
+  <path d="M250 130 L278 154" class="d-line"/>
+
+  <rect x="40" y="158" width="126" height="30" rx="7" class="d-tip"/>
+  <text x="103" y="178" text-anchor="middle" class="d-code">f_person()</text>
+  <rect x="204" y="158" width="126" height="30" rx="7" class="d-tip"/>
+  <text x="267" y="178" text-anchor="middle" class="d-code">f_robot()</text>
+
+  <text x="185" y="212" text-anchor="middle" class="d-head-accent">呼び出しは直接。実行時コスト 0</text>
+  <text x="185" y="232" text-anchor="middle" class="d-mute">代わりにコードの量とビルド時間が増える</text>
+  <text x="185" y="248" text-anchor="middle" class="d-mute">型が違うものを 1 つの Vec に混ぜられない</text>
+
+  <!-- 右: dyn -->
+  <rect x="370" y="44" width="330" height="212" rx="10" class="d-deep"/>
+  <text x="535" y="68" text-anchor="middle" class="d-title">動的（dyn Trait）</text>
+  <text x="535" y="88" text-anchor="middle" class="d-code">fn f(x: &amp;dyn Greet)</text>
+
+  <rect x="396" y="102" width="278" height="28" rx="7" class="d-box"/>
+  <text x="535" y="121" text-anchor="middle" class="d-mute">実体は 1 つ。表を見て飛ぶ</text>
+
+  <path d="M535 130 L535 152" class="d-flow-deep"/>
+  <path d="M535 152 l-5 -9 h10 z" class="d-arrowhead-deep"/>
+
+  <rect x="424" y="156" width="222" height="34" rx="7" class="d-box"/>
+  <text x="535" y="171" text-anchor="middle" class="d-code">vtable</text>
+  <text x="535" y="185" text-anchor="middle" class="d-mute">name → ここ / hello → ここ</text>
+
+  <text x="535" y="212" text-anchor="middle" class="d-head-deep">C# のインターフェース呼び出しに近い</text>
+  <text x="535" y="232" text-anchor="middle" class="d-mute">ポインタ 1 段ぶん遅いが、コードは太らない</text>
+  <text x="535" y="248" text-anchor="middle" class="d-mute">Vec&lt;Box&lt;dyn Greet&gt;&gt; で混ぜられる</text>
+
+  <!-- 下 -->
+  <rect x="20" y="270" width="680" height="36" rx="10" class="d-dash"/>
+  <text x="40" y="293" class="d-mute">迷ったら静的（ジェネリクス）から。「違う型を 1 つの箱にまとめたい」と思ったときだけ dyn に切り替える。</text>
+</svg>

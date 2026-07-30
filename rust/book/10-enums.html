@@ -1,0 +1,286 @@
+<p>
+C# の <code>enum</code> は、整数に名前を付けたものです。
+Rust の <code>enum</code> は<strong>それぞれの選択肢が値を持てます</strong>。
+これは別物と考えたほうがよく、F# の判別共用体や TypeScript の直和型に近いものです。
+</p>
+
+<p>
+そしてこの仕組みのおかげで、<strong>Rust には <code>null</code> がありません</strong>。
+null 参照例外という概念そのものが消えます。この章の主題はそこです。
+</p>
+
+<h2>値を持てる列挙型</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C# の enum" data-cap="ただの整数。値は持てない">
+enum Shape { Circle, Rectangle, Triangle }
+// 半径や幅はどこに持たせる？
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust の enum" data-cap="選択肢ごとに違う値を持てる">
+enum Shape {
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
+    Triangle(f64, f64),
+}
+  </div>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">C# でこれをやるには</span>
+  <p>
+    C# で同じことを表現するなら、抽象クラスか interface を作って
+    <code>Circle</code>、<code>Rectangle</code>、<code>Triangle</code> の 3 クラスを継承させます。
+  </p>
+  <p>
+    Rust の <code>enum</code> は<strong>それを 1 つの型で表したもの</strong>です。
+    利点は 2 つあります。
+  </p>
+  <ul>
+    <li>ヒープ確保が起きない（クラスならインスタンスごとに確保が必要）</li>
+    <li><strong>選択肢が閉じている</strong>ので、<code>match</code> で漏れを検出できる</li>
+  </ul>
+  <p>
+    C# 側でも近年は <code>abstract record</code> ＋ パターンマッチで似た書き方をしますが、
+    「他の誰かが勝手に派生クラスを増やせる」ので網羅性は保証されません。
+  </p>
+</div>
+
+<h2>match で分解する</h2>
+
+<div class="src" data-lang="rust">
+match self {
+    Shape::Circle { radius } =&gt; std::f64::consts::PI * radius * radius,
+    Shape::Rectangle { width, height } =&gt; width * height,
+    Shape::Triangle(base, height) =&gt; base * height / 2.0,
+}
+</div>
+
+<p>
+<code>match</code> は分岐と同時に<strong>中身を取り出します</strong>。
+C# の <code>is</code> パターンや switch 式の分解と同じ働きです。
+</p>
+
+<h2>網羅性がエラーになる</h2>
+
+<!--figure: match-exhaustive | 列挙型に選択肢を 1 つ足すと、対応していない match がすべてコンパイルエラーになる。C# の switch は default が無ければ黙って何もしないが、Rust は「まだ考えていない場合」を残したままビルドできない。 -->
+
+<!--term: err-e0004-non-exhaustive-match | Yellow を書き忘れた match。「pattern `Signal::Yellow` not covered」と、どの選択肢が漏れているかまで名指しされる。 -->
+
+<div class="note">
+  <span class="note-title">これが列挙型のいちばんの価値</span>
+  <p>
+    列挙型に選択肢を足したとき、<strong>直すべき場所を全部コンパイラが教えてくれます。</strong>
+  </p>
+  <p>
+    「支払方法に新しい種類を追加したら、対応し忘れた画面があった」
+    という種類の不具合が、原理的に起きません。
+    C# で同じ安全性を得るには、テストを書くか、レビューで気づくしかありません。
+  </p>
+  <p>
+    逆に <code>_ =&gt; ...</code>（それ以外）を書くと、この恩恵を捨てることになります。
+    <strong>本当に「それ以外は同じ扱い」のときだけ使ってください。</strong>
+  </p>
+</div>
+
+<h2>Option — null の代わり</h2>
+
+<p>
+標準ライブラリの <code>Option&lt;T&gt;</code> は、ただの列挙型です。
+</p>
+
+<div class="src" data-lang="rust">
+enum Option&lt;T&gt; {
+    Some(T),
+    None,
+}
+</div>
+
+<p>
+これだけです。特別な言語機能ではありません。
+そして<strong>これが C# の <code>null</code> の役目を全部引き受けます</strong>。
+</p>
+
+<!--figure: option | C# では戻り値が User なのか null なのか署名から分からず、.Name と書いた瞬間に落ちる可能性が残る。Rust は Option&lt;User&gt; と型に書いてあり、中身を出すには必ず「無かった場合」を通らなければならない。 -->
+
+<div class="note csharp">
+  <span class="note-title">nullable 参照型との違い</span>
+  <p>
+    C# 8 の nullable 参照型（<code>User?</code>）は、かなり近いところまで来ています。
+    しかし決定的な違いが 2 つあります。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C# の <code>User?</code></th><th>Rust の <code>Option&lt;User&gt;</code></th></tr></thead>
+    <tbody>
+      <tr><td>破ったとき</td><td><strong>警告</strong>（設定次第で無効化できる）</td><td><strong>コンパイルエラー</strong></td></tr>
+      <tr><td>実行時の表現</td><td>同じ参照。<code>null</code> が入りうる</td><td>別の型。<code>None</code> は値のひとつ</td></tr>
+      <tr><td>入れ子</td><td><code>User??</code> は書けない</td><td><code>Option&lt;Option&lt;T&gt;&gt;</code> が書ける</td></tr>
+      <tr><td>既存コードとの互換</td><td>後付けなので抜け穴がある</td><td>最初からこれしかない</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    「後付けの警告」と「最初からある型」の差です。
+    Rust では <code>Option</code> を通らずに中身に触る方法が<strong>存在しません</strong>。
+  </p>
+</div>
+
+<h2>Option の開け方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>match opt { Some(v) =&gt; .., None =&gt; .. }</code></td><td>両方を扱う</td><td><code>if (x != null) ... else ...</code></td></tr>
+    <tr><td><code>if let Some(v) = opt { }</code></td><td>あるときだけ</td><td><code>if (x != null) { }</code></td></tr>
+    <tr><td><code>let Some(v) = opt else { return; };</code></td><td><strong>無ければ抜ける</strong></td><td>早期 return のガード節</td></tr>
+    <tr><td><code>opt.unwrap_or(既定値)</code></td><td>無ければ既定値</td><td><code>x ?? 既定値</code></td></tr>
+    <tr><td><code>opt.unwrap_or_default()</code></td><td>無ければ型の既定値</td><td><code>x ?? default</code></td></tr>
+    <tr><td><code>opt.map(|v| ..)</code></td><td>あれば変換</td><td><code>x?.Foo()</code></td></tr>
+    <tr><td><code>opt.and_then(|v| ..)</code></td><td>あれば次も Option を返す処理へ</td><td><code>x?.Foo()?.Bar()</code></td></tr>
+    <tr><td><code>opt.unwrap()</code></td><td><strong>無ければ panic</strong></td><td><code>x!</code>（null 免除演算子）</td></tr>
+    <tr><td><code>opt.expect("説明")</code></td><td>無ければ panic（説明付き）</td><td>—</td></tr>
+    <tr><td><code>opt.is_some()</code> / <code>is_none()</code></td><td>あるか無いかだけ調べる</td><td><code>x != null</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">?. の対応が map と and_then</span>
+  <p>
+    C# の <code>?.</code> を連ねる書き方は、Rust では <code>map</code> / <code>and_then</code> になります。
+  </p>
+  <div class="compare">
+    <div class="src" data-lang="csharp" data-file="C#">
+var len = user?.Name?.Length;
+    </div>
+    <div class="src" data-lang="rust" data-file="Rust">
+let len = user.and_then(|u| u.name).map(|n| n.len());
+    </div>
+  </div>
+  <p>
+    <strong>見分け方</strong>: 渡す関数が <code>Option</code> を返すなら <code>and_then</code>、
+    ふつうの値を返すなら <code>map</code> です。
+    <code>map</code> に <code>Option</code> を返す関数を渡すと
+    <code>Option&lt;Option&lt;T&gt;&gt;</code> になってしまいます。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">unwrap() を書き散らさないこと</span>
+  <p>
+    <code>unwrap()</code> は「無ければ panic」です。C# の <code>x!</code> と同じで、
+    <strong>「絶対にあると分かっている」という主張</strong>です。
+  </p>
+  <p>
+    学習中や書き捨てでは便利ですが、残しておくと本番で落ちます。
+    最低限 <code>expect("なぜあるはずなのかの説明")</code> にしておくと、
+    落ちたときに原因が分かって助かります。
+  </p>
+  <div class="src" data-lang="rust">
+let value = map.get("key").expect("設定ファイルに key があることは検証済み");
+  </div>
+</div>
+
+<h2>let else — 早期 return を素直に書く</h2>
+
+<p>
+「無ければ抜ける」を書くための構文です。C# のガード節に相当します。
+</p>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C#">
+var user = FindUser(id);
+if (user is null) {
+    Console.WriteLine("該当なし");
+    return;
+}
+// ここから user が使える
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust">
+let Some(user) = find_user(id) else {
+    println!("該当なし");
+    return;
+};
+// ここから user が使える
+  </div>
+</div>
+
+<div class="note">
+  <span class="note-title">let else は比較的新しい構文</span>
+  <p>
+    <code>let ... else</code> が使えるようになったのは Rust 1.65（2022 年）です。
+    それより前の記事では、同じことを次のように書いています。
+  </p>
+  <div class="src" data-lang="rust" data-file="昔の書き方">
+let user = match find_user(id) {
+    Some(u) =&gt; u,
+    None =&gt; return,
+};
+  </div>
+  <p>どちらも今も動きますが、<code>let else</code> のほうが短く読めます。</p>
+</div>
+
+<h2>if let と while let</h2>
+
+<div class="src" data-lang="rust">
+// あるときだけ何かする
+if let Some(name) = find_user(2) {
+    println!("見つかった: {name}");
+}
+
+// 取り出せる間くり返す
+let mut stack = vec![1, 2, 3];
+while let Some(top) = stack.pop() {
+    println!("{top}");
+}
+</div>
+
+<div class="note deep">
+  <span class="note-title">let 連鎖（let chains）</span>
+  <p>
+    <code>if let</code> を <code>&amp;&amp;</code> でつなげて書けます。
+  </p>
+  <div class="src" data-lang="rust">
+if let Some(user) = find_user(id)
+    &amp;&amp; let Some(email) = user.email
+    &amp;&amp; email.ends_with(".jp")
+{
+    println!("国内のユーザ");
+}
+  </div>
+  <p>
+    これは長く待たれていた機能で、<strong>安定版で使えるようになったのはごく最近</strong>です
+    （2024 エディション以降）。それより古い記事では
+    「入れ子の <code>if let</code> を書くしかない」と説明されています。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 10-enums/src/main.rs-->
+
+<!--term: run-enums | 実行結果。Option の各メソッドが何を返すかが並んでいる。 -->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/10-enums</code> を動かしてください。</li>
+    <li><code>Shape</code> に <code>Square { side: f64 }</code> を足して <code>cargo build</code> してください。<strong><code>area()</code> の match がエラーになる</strong>ことを確認してください。これがこの章の要点です。</li>
+    <li><code>find_user(99).unwrap()</code> を書いて実行し、panic のメッセージを見てください。</li>
+    <li>それを <code>expect("id 99 は必ずあるはず")</code> に変えて、メッセージが変わることを確認してください。</li>
+    <li><code>describe</code> を <code>let else</code> ではなく <code>match</code> で書き直してみてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>Rust の <code>enum</code> は<strong>選択肢ごとに値を持てる</strong>。C# の enum とは別物。</li>
+    <li><code>match</code> は<strong>網羅していないとコンパイルエラー</strong>。選択肢を足すと直す場所が全部分かる。</li>
+    <li><code>Option&lt;T&gt;</code> はただの列挙型。これが <code>null</code> の役目を引き受ける。</li>
+    <li>C# の nullable 参照型は警告、Rust の <code>Option</code> はエラー。抜け穴が無い。</li>
+    <li><code>?.</code> は <code>map</code> / <code>and_then</code>、<code>??</code> は <code>unwrap_or</code>、<code>!</code> は <code>unwrap</code>。</li>
+    <li><code>unwrap()</code> は最終的に <code>expect("理由")</code> か、ちゃんとした分岐に置き換える。</li>
+  </ul>
+</div>

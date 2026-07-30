@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はじめに — この教材の歩き方 | Qt6 Widgets 入門</title>
+<meta name="description" content="Qt とは何か、なぜ PySide6 と Qt Widgets なのか、そして「ネットの記事どおりに書いたのに動かない」がなぜ起きるのかを先に片付けます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129513;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('qt6book-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Qt</span>
+    <span class="brand-text">Qt6 Widgets 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際に動作確認されています">
+    Qt 6.11.1 / PySide6 6.11.1
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li class="is-current"><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-first-window/"><span class="nav-num">第2章</span><span class="nav-label">最初のウィンドウ</span></a></li>
+<li><a href="../03-signals/"><span class="nav-num">第3章</span><span class="nav-label">シグナルとスロット</span></a></li>
+<li><a href="../04-layouts/"><span class="nav-num">第4章</span><span class="nav-label">レイアウト</span></a></li>
+<li><a href="../05-widgets/"><span class="nav-num">第5章</span><span class="nav-label">ウィジェット図鑑</span></a></li>
+<li><a href="../06-mainwindow/"><span class="nav-num">第6章</span><span class="nav-label">ウィンドウの骨格</span></a></li>
+<li><a href="../07-object-tree/"><span class="nav-num">第7章</span><span class="nav-label">親子関係とメモリ</span></a></li>
+<li><a href="../08-dialogs/"><span class="nav-num">第8章</span><span class="nav-label">ダイアログ</span></a></li>
+<li><a href="../09-designer/"><span class="nav-num">第9章</span><span class="nav-label">Qt Designer</span></a></li>
+<li><a href="../10-model-view/"><span class="nav-num">第10章</span><span class="nav-label">モデル / ビュー</span></a></li>
+<li><a href="../11-styling/"><span class="nav-num">第11章</span><span class="nav-label">見た目を整える</span></a></li>
+<li><a href="../12-todo-app/"><span class="nav-num">第12章</span><span class="nav-label">実践: ToDo アプリ</span></a></li>
+<li><a href="../13-pitfalls/"><span class="nav-num">第13章</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+<li><a href="../14-cpp/"><span class="nav-num">第14章</span><span class="nav-label">付録: C++ の場合</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">はじめに<span class="dot">·</span>読了目安 7 分</p>
+        <h1>はじめに — この教材の歩き方</h1>
+        <p class="lede">Qt とは何か、なぜ PySide6 と Qt Widgets なのか、そして「ネットの記事どおりに書いたのに動かない」がなぜ起きるのかを先に片付けます。</p>
+      </header>
+      <div class="prose">
+<h2 id="この教材が解こうとしている問題">この教材が解こうとしている問題</h2>
+
+<p>
+GUI プログラミングの入門でいちばん多い挫折は、文法が難しいことではありません。
+<strong>「記事のとおりに書いたのに動かない」</strong>ことです。
+</p>
+
+<p>
+Qt は 30 年近く使われてきた道具なので、Web 上には膨大な情報があります。
+ところがその多くは Qt5 以前のもので、Qt6 ではそのまま書くと動きません。
+初心者にとって最悪なのは、エラーメッセージを読んでも
+「自分が間違えたのか、記事が古いのか」が判断できないことです。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">やっかいなのは「エラーになるとは限らない」こと</span>
+  <p>
+    たとえば <code>from PySide6.QtWidgets import QAction</code> は、Qt6 では
+    はっきり <code>ImportError</code> になります。これはまだ親切なほうです。
+  </p>
+  <p>
+    一方で <code>app.exec_()</code>（末尾のアンダースコア）や
+    <code>Qt.AlignCenter</code>（途中で切った書き方）は、
+    <strong>PySide6 では今も動いてしまいます</strong>。
+    古い書き方をそのまま受け付ける「寛容モード」があるためです。
+    動くので気づかないまま、時代遅れの書き方が身についてしまう。
+    こちらのほうが厄介です。
+  </p>
+  <p>
+    本文では、こうした箇所を見つけるたびにこの ⚠️ 印で名指しし、
+    <strong>「エラーになるのか、黙って動くのか」まで区別して</strong>書いていきます。
+  </p>
+</div>
+
+<p>
+そこでこの教材は、書き方をひとつ決めました。
+<strong>本文に載っているコードは、書き写したものではなく、実際に動かしたファイルそのもの</strong>です。
+</p>
+
+<ul>
+  <li>コードは <code>qt6-widgets/examples/</code> にある <code>.py</code> ファイルが唯一の原本です。ページを組み立てるときに、その中身をそのまま読み込んで表示しています。</li>
+  <li>スクリーンショットは、<strong>その同じファイルを実際に起動して撮影</strong>したものです。イラストでも作図でもありません。</li>
+  <li>ページを作るたびに全サンプルが自動で起動テストされ、1 つでもエラーになれば公開できない仕組みになっています。</li>
+</ul>
+
+<p>
+つまり「本文とコードと画面写真が食い違う」ことが、構造的に起きません。
+安心して、書いてあるとおりに手を動かしてください。
+</p>
+
+<h2 id="Qt-とはなにか">Qt とはなにか</h2>
+
+<p>
+Qt（キュート）は、デスクトップアプリの画面を作るための道具箱です。
+もともと C++ 用に作られたもので、
+KDE、VLC、OBS Studio、Autodesk Maya、Blender の一部など、
+身の回りの多くのソフトが Qt で作られています。
+</p>
+
+<p>
+その Qt を Python から使えるようにしたものが <strong>PySide6</strong>（別名 Qt for Python）です。
+Qt を開発している会社が自ら公式に提供しているので、
+Qt 本体の新しいバージョンにもきちんと追随します。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 330" role="img" aria-label="Qt アプリケーションの全体像。QApplication の下にウィジェットの木があり、イベントループが操作を配っている。">
+  <rect x="1" y="1" width="718" height="328" rx="14" class="d-box-plain"/>
+
+  <!-- QApplication -->
+  <rect x="30" y="28" width="180" height="70" rx="10" class="d-accent"/>
+  <text x="120" y="55" text-anchor="middle" class="d-title">QApplication</text>
+  <text x="120" y="76" text-anchor="middle" class="d-mute">アプリ全体の司令塔</text>
+  <text x="120" y="91" text-anchor="middle" class="d-mute">ひとつだけ作る</text>
+
+  <!-- Event loop -->
+  <rect x="30" y="128" width="180" height="86" rx="10" class="d-tip"/>
+  <text x="120" y="155" text-anchor="middle" class="d-title">イベントループ</text>
+  <text x="120" y="176" text-anchor="middle" class="d-mute">app.exec()</text>
+  <text x="120" y="196" text-anchor="middle" class="d-mute">操作を受け取って配る</text>
+
+  <path d="M120 98 L120 128" class="d-flow"/>
+  <path d="M120 128 l-5 -9 h10 z" class="d-arrowhead"/>
+
+  <!-- OS -->
+  <rect x="30" y="244" width="180" height="56" rx="10" class="d-box"/>
+  <text x="120" y="268" text-anchor="middle" class="d-title">OS / ウィンドウシステム</text>
+  <text x="120" y="288" text-anchor="middle" class="d-mute">クリック・キー入力</text>
+  <path d="M120 244 L120 214" class="d-flow"/>
+  <path d="M120 214 l-5 9 h10 z" class="d-arrowhead"/>
+
+  <!-- Widget tree -->
+  <rect x="272" y="28" width="418" height="272" rx="12" class="d-dash"/>
+  <text x="292" y="52" class="d-head-accent">ウィジェットの木（画面の中身）</text>
+
+  <rect x="292" y="66" width="170" height="44" rx="8" class="d-accent"/>
+  <text x="377" y="93" text-anchor="middle" class="d-title">QWidget（ウィンドウ）</text>
+
+  <path d="M377 110 L377 134 L340 134 L340 152" class="d-line"/>
+  <path d="M377 110 L377 134 L520 134 L520 152" class="d-line"/>
+  <path d="M340 152 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+  <path d="M520 152 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+
+  <rect x="292" y="152" width="96" height="40" rx="8" class="d-box"/>
+  <text x="340" y="177" text-anchor="middle" class="d-code">QLabel</text>
+
+  <rect x="440" y="152" width="160" height="40" rx="8" class="d-box"/>
+  <text x="520" y="177" text-anchor="middle" class="d-code">QWidget（枠）</text>
+
+  <path d="M520 192 L520 214 L470 214 L470 232" class="d-line"/>
+  <path d="M520 192 L520 214 L590 214 L590 232" class="d-line"/>
+  <path d="M470 232 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+  <path d="M590 232 l-4 -8 h8 z" class="d-arrowhead-mute"/>
+
+  <rect x="416" y="232" width="108" height="40" rx="8" class="d-box"/>
+  <text x="470" y="257" text-anchor="middle" class="d-code">QLineEdit</text>
+
+  <rect x="536" y="232" width="120" height="40" rx="8" class="d-box"/>
+  <text x="596" y="257" text-anchor="middle" class="d-code">QPushButton</text>
+
+  <!-- loop to widgets -->
+  <path d="M210 171 L272 171" class="d-flow"/>
+  <path d="M272 171 l-9 -5 v10 z" class="d-arrowhead"/>
+  <text x="241" y="163" text-anchor="middle" class="d-mark">配る</text>
+</svg>
+<figcaption>Qt アプリの全体像。司令塔の QApplication があり、その下にウィジェット（画面部品）が木のようにぶら下がる。イベントループが OS からの操作を受け取り、対応するウィジェットに配っていく。</figcaption></figure>
+
+<h2 id="Qt-Widgets-と-Qt-Quick--この教材が選んだほう">Qt Widgets と Qt Quick — この教材が選んだほう</h2>
+
+<p>
+Qt には、系統のまったく違う UI の作り方が 2 つあります。
+最初にここで迷う人が多いので、先に整理しておきます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th></th><th>Qt Widgets（この教材）</th><th>Qt Quick / QML</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>書く言語</td>
+      <td>Python だけ</td>
+      <td>Python ＋ QML という別言語</td>
+    </tr>
+    <tr>
+      <td>得意なこと</td>
+      <td>ボタン・表・メニューが並ぶ業務アプリ、ツール類</td>
+      <td>アニメーション、タッチ操作、独自デザインの画面</td>
+    </tr>
+    <tr>
+      <td>見た目</td>
+      <td>OS のネイティブな見た目になる</td>
+      <td>自分でデザインする（どの OS でも同じ）</td>
+    </tr>
+    <tr>
+      <td>向いている先</td>
+      <td>デスクトップ</td>
+      <td>組み込み機器、モバイル、デスクトップ</td>
+    </tr>
+    <tr>
+      <td>最初の一歩</td>
+      <td>短い。Python の知識だけで始められる</td>
+      <td>QML の文法を覚えるところから</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+この教材は <strong>Qt Widgets</strong> だけを扱います。
+理由は単純で、Python を知っている人が「動くデスクトップアプリ」に最短でたどり着けるからです。
+表やメニューやダイアログといった、業務ツールに必要なものが最初から全部そろっています。
+</p>
+
+<div class="note">
+  <span class="note-title">ヒント</span>
+  <p>
+    Qt Widgets が「古い技術」ということはありません。
+    最新の Qt 6.11 でも現役で保守されており、デスクトップ向けアプリの主力です。
+    アニメーションの多い凝った画面を作りたくなったときに、Qt Quick を学べば十分です。
+  </p>
+</div>
+
+<h2 id="この教材が前提とするバージョン">この教材が前提とするバージョン</h2>
+
+<p>
+ページの上部にあるバッジに、この教材が検証された正確なバージョンが出ています。
+これは執筆時に手で書いたものではなく、<strong>ページを組み立てた環境から自動で読み取った実際の値</strong>です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>この教材</th><th>補足</th></tr></thead>
+  <tbody>
+    <tr><td>Qt</td><td>6.11 系</td><td>2026 年 3 月に登場した最新の系列</td></tr>
+    <tr><td>PySide6</td><td>6.11 系</td><td>Qt 本体とバージョン番号がそろう</td></tr>
+    <tr><td>Python</td><td>3.10 〜 3.14</td><td>PySide6 6.11 が対応する範囲。<strong>3.9 では入りません</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note deep">
+  <span class="note-title">LTS って何？ 6.8 のほうがいいの？</span>
+  <p>
+    Qt には 4 つおきに <strong>LTS（長期サポート）</strong>版があり、現在は 6.8 系がそれにあたります。
+    企業が何年も保守する製品なら LTS を選ぶ意味がありますが、
+    学習や個人の道具づくりなら最新版で問題ありません。
+    この教材の内容は 6.8 でもほぼそのまま通用します。
+  </p>
+</div>
+
+<h2 id="この教材の読み方">この教材の読み方</h2>
+
+<p>
+第 1 章から順番に読み進める作りになっています。とくに次の 3 つの章は飛ばさないでください。
+</p>
+
+<ul>
+  <li><strong>第 2 章（イベントループ）</strong> — ここが分かると、アプリが固まる理由もわかります。</li>
+  <li><strong>第 4 章（レイアウト）</strong> — 座標を書かない Qt 流の並べ方。この教材でいちばん大事な章です。</li>
+  <li><strong>第 7 章（親子関係）</strong> — 「ウィンドウが一瞬で消える」の原因はほぼここです。</li>
+</ul>
+
+<p>本文中では、次の 4 種類の囲みを使い分けます。</p>
+
+<div class="note">
+  <span class="note-title">ヒント</span>
+  <p>知っておくと少し楽になる話。読み飛ばしても先に進めます。</p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">つまずきポイント</span>
+  <p>ここを知らないと詰まります。とくに「古い記事との違い」はここで扱います。</p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">もっと詳しく</span>
+  <p>仕組みの背景。急いでいる人は後回しでかまいません。</p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <p>手を動かす小さな課題。読むだけより圧倒的に身につきます。</p>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>GUI 入門の最大の敵は「古い情報」。この教材は実行済みのコードと実写のスクリーンショットでそれを避ける。</li>
+    <li>PySide6 は Qt を Python から使うための公式の道具。</li>
+    <li>Qt には Widgets と Quick があり、この教材はデスクトップ向けの <strong>Qt Widgets</strong> を扱う。</li>
+    <li>迷ったら、ページ上部のバッジのバージョンと自分の環境を突き合わせる。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<span class="pager-link pager-empty"></span>
+<a class="pager-link pager-next" href="../01-setup/"><span class="pager-dir">次の章 →</span><span class="pager-title">環境構築</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Qt6 Widgets 入門 — Python (PySide6) ではじめるデスクトップ GUI</p>
+  <p class="footer-meta">
+    Qt 6.11.1 / PySide6 6.11.1 / Python 3.11.15 で検証（2026-07-30 時点）
+  </p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

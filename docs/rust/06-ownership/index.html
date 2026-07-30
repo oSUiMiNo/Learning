@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第6章 所有権 — GC のない世界の片付け方 | Rust 入門</title>
+<meta name="description" content="この教材でいちばん大事な章です。Rust に GC はなく、かわりに「値には所有者がひとりだけいる」という規則で寿命を決めます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li class="is-current"><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 6 章<span class="dot">·</span>読了目安 20 分</p>
+        <h1>第6章 所有権 — GC のない世界の片付け方</h1>
+        <p class="lede">この教材でいちばん大事な章です。Rust に GC はなく、かわりに「値には所有者がひとりだけいる」という規則で寿命を決めます。</p>
+      </header>
+      <div class="prose">
+<p>
+この教材でいちばん大事な章です。ここを越えれば、残りはずっと楽になります。
+</p>
+
+<p>
+先に答えを書きます。Rust の規則はこの 3 行だけです。
+</p>
+
+<div class="note">
+  <span class="note-title">所有権の 3 つの規則</span>
+  <ol>
+    <li>すべての値には<strong>持ち主（owner）がひとりだけ</strong>いる。</li>
+    <li>持ち主は同時にひとりだけ。<strong>別の変数に渡すと、持ち主が移る</strong>。</li>
+    <li>持ち主がスコープを抜けると、値は<strong>その場で片付けられる</strong>。</li>
+  </ol>
+</div>
+
+<p>
+これだけで、GC なしでメモリが正しく片付き、
+かつ「解放したものを見てしまう」事故が起きなくなります。
+順番に見ていきましょう。
+</p>
+
+<h2 id="まずスタックとヒープ">まずスタックとヒープ</h2>
+
+<p>
+所有権の話は、値がどこに置かれているかを知らないと分かりません。
+C# でも「値型はスタック、参照型はヒープ」と習ったと思いますが、その区別がそのまま効きます。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 280" role="img" aria-label="スタックとヒープの違い。固定サイズの値はスタックに、大きさが変わる値はヒープに置かれ、スタック側はそこを指すハンドルを持つ。">
+  <rect x="1" y="1" width="718" height="278" rx="14" class="d-box-plain"/>
+
+  <!-- スタック -->
+  <rect x="28" y="24" width="300" height="220" rx="10" class="d-box"/>
+  <text x="178" y="48" text-anchor="middle" class="d-title">スタック</text>
+  <text x="178" y="66" text-anchor="middle" class="d-mute">速い / 大きさが決まっているものだけ</text>
+
+  <rect x="48" y="80" width="260" height="34" rx="7" class="d-accent"/>
+  <text x="62" y="102" class="d-code">let n: i32 = 42</text>
+  <text x="262" y="102" text-anchor="end" class="d-mute">4 バイト</text>
+
+  <rect x="48" y="122" width="260" height="34" rx="7" class="d-accent"/>
+  <text x="62" y="144" class="d-code">let f: f64 = 0.5</text>
+  <text x="262" y="144" text-anchor="end" class="d-mute">8 バイト</text>
+
+  <rect x="48" y="164" width="260" height="52" rx="7" class="d-tip"/>
+  <text x="62" y="184" class="d-code">let s: String</text>
+  <text x="62" y="204" class="d-mute">ptr + len + cap = 24 バイト</text>
+
+  <text x="178" y="236" text-anchor="middle" class="d-mute">関数を抜けると、まとめて捨てられる</text>
+
+  <!-- ヒープ -->
+  <rect x="392" y="24" width="300" height="220" rx="10" class="d-box"/>
+  <text x="542" y="48" text-anchor="middle" class="d-title">ヒープ</text>
+  <text x="542" y="66" text-anchor="middle" class="d-mute">実行中に大きさが決まるもの</text>
+
+  <rect x="412" y="86" width="260" height="66" rx="7" class="d-tip"/>
+  <text x="542" y="112" text-anchor="middle" class="d-code">"こんにちは" の中身</text>
+  <text x="542" y="134" text-anchor="middle" class="d-mute">15 バイト（伸ばせる）</text>
+
+  <rect x="412" y="166" width="260" height="50" rx="7" class="d-dash"/>
+  <text x="542" y="188" text-anchor="middle" class="d-head-accent">誰が片付けるのか？</text>
+  <text x="542" y="206" text-anchor="middle" class="d-mute">C# は GC。Rust は「所有者」が消えた瞬間</text>
+
+  <path d="M308 190 L412 190 L412 152" class="d-flow"/>
+  <path d="M412 152 l-5 9 h10 z" class="d-arrowhead"/>
+  <text x="352" y="182" text-anchor="middle" class="d-mark">ptr</text>
+</svg>
+<figcaption>大きさが決まっている値はスタックに、実行中に大きさが変わる値はヒープに置かれる。String はハンドル（ptr/len/cap の 24 バイト）だけをスタックに持ち、中身はヒープにある。問題は「ヒープの中身を誰が片付けるか」。</figcaption></figure>
+
+<p>
+図の右下が問題です。<strong>ヒープに置いたものは、誰かが片付けなければなりません。</strong>
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>言語</th><th>誰が片付けるか</th><th>代償</th></tr></thead>
+  <tbody>
+    <tr><td>C#</td><td>ガベージコレクタ</td><td>実行時のコストと、いつ動くか分からない停止</td></tr>
+    <tr><td>C / C++</td><td>書いた人が <code>free</code> / <code>delete</code> を呼ぶ</td><td>忘れると漏れる。2 回呼ぶと壊れる</td></tr>
+    <tr><td><strong>Rust</strong></td><td><strong>持ち主がいなくなった時点で自動的に</strong></td><td>持ち主の規則をコンパイラに納得させる手間</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="Copy-される型と-move-される型">Copy される型と move される型</h2>
+
+<p>
+代入したときのふるまいが、型によって 2 通りあります。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 250" role="img" aria-label="Copy される型と move される型の違い。i32 は代入すると複製され両方使えるが、String は所有権が移り元が使えなくなる。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <!-- Copy -->
+  <rect x="20" y="20" width="330" height="210" rx="10" class="d-tip"/>
+  <text x="185" y="44" text-anchor="middle" class="d-title">Copy される型</text>
+  <text x="185" y="62" text-anchor="middle" class="d-code">i32, f64, bool, char, &amp;T …</text>
+
+  <text x="44" y="88" class="d-code">let a = 10;</text>
+  <text x="44" y="108" class="d-code">let b = a;</text>
+
+  <rect x="48" y="122" width="120" height="44" rx="7" class="d-box"/>
+  <text x="108" y="142" text-anchor="middle" class="d-code">a = 10</text>
+  <text x="108" y="158" text-anchor="middle" class="d-head-tip">使える</text>
+
+  <rect x="200" y="122" width="120" height="44" rx="7" class="d-box"/>
+  <text x="260" y="142" text-anchor="middle" class="d-code">b = 10</text>
+  <text x="260" y="158" text-anchor="middle" class="d-head-tip">使える</text>
+
+  <path d="M168 144 L200 144" class="d-flow"/>
+  <path d="M200 144 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <text x="185" y="192" text-anchor="middle" class="d-mute">中身が小さいので、まるごと複製しても安い</text>
+  <text x="185" y="212" text-anchor="middle" class="d-mute">C# の値型（struct, int）と同じ感覚</text>
+
+  <!-- Move -->
+  <rect x="370" y="20" width="330" height="210" rx="10" class="d-accent"/>
+  <text x="535" y="44" text-anchor="middle" class="d-title">move される型</text>
+  <text x="535" y="62" text-anchor="middle" class="d-code">String, Vec&lt;T&gt;, Box&lt;T&gt; …</text>
+
+  <text x="394" y="88" class="d-code">let s = String::from("あ");</text>
+  <text x="394" y="108" class="d-code">let t = s;</text>
+
+  <rect x="398" y="122" width="120" height="44" rx="7" class="d-dead"/>
+  <text x="458" y="142" text-anchor="middle" class="d-dead-text">s</text>
+  <text x="458" y="158" text-anchor="middle" class="d-dead-text">使えない</text>
+  <path d="M406 128 L510 160" class="d-strike"/>
+  <path d="M510 128 L406 160" class="d-strike"/>
+
+  <rect x="550" y="122" width="120" height="44" rx="7" class="d-box"/>
+  <text x="610" y="142" text-anchor="middle" class="d-code">t</text>
+  <text x="610" y="158" text-anchor="middle" class="d-head-accent">使える</text>
+
+  <path d="M518 144 L550 144" class="d-flow"/>
+  <path d="M550 144 l-9 -5 v10 z" class="d-arrowhead"/>
+
+  <text x="535" y="192" text-anchor="middle" class="d-mute">中身はヒープにあるので、複製すると高い</text>
+  <text x="535" y="212" text-anchor="middle" class="d-head-warn">複製したいときは明示的に .clone()</text>
+</svg>
+<figcaption>i32 のように小さくて固定サイズの型は代入で複製され、両方使える（Copy）。String のように中身がヒープにある型は所有権が移り、元の変数が使えなくなる（move）。</figcaption></figure>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">;</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{a} {b}&quot;</span><span class="p">);</span><span class="w">   </span><span class="c1">// どちらも使える</span></span></code></pre><figcaption class="code-cap">Copy される型。C# の値型と同じ感覚</figcaption></figure>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">s1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;こんにちは&quot;</span><span class="p">);</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s1</span><span class="p">;</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{s1}&quot;</span><span class="p">);</span><span class="w">      </span><span class="c1">// ✗ s1 はもう使えない</span></span></code></pre><figcaption class="code-cap">move される型。ここが C# と決定的に違う</figcaption></figure>
+
+<p>実際にコンパイルすると、こう言われます。</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0382-use-after-move.rs</span>
+<span class="a-b a-91">error[E0382]</span><span class="a-b">: borrow of moved value: `s1`</span>
+  <span class="a-b a-94">--&gt; </span>e0382-use-after-move.rs:12:16
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 9</span> <span class="a-b a-94">|</span>     let s1 = String::from(&quot;こんにちは&quot;);
+   <span class="a-b a-94">|</span>         <span class="a-b a-94">--</span> <span class="a-b a-94">move occurs because `s1` has type `String`, which does not implement the `Copy` trait</span>
+<span class="a-b a-94">10</span> <span class="a-b a-94">|</span>     let s2 = s1; // ここで所有権が s1 から s2 へ移る
+   <span class="a-b a-94">|</span>              <span class="a-b a-94">--</span> <span class="a-b a-94">value moved here</span>
+<span class="a-b a-94">11</span> <span class="a-b a-94">|</span>
+<span class="a-b a-94">12</span> <span class="a-b a-94">|</span>     println!(&quot;{s1}&quot;); // s1 はもう使えない
+   <span class="a-b a-94">|</span>                <span class="a-b a-91">^^</span> <span class="a-b a-91">value borrowed here after move</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-96">help</span>: consider cloning the value if the performance cost is acceptable
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">10</span> <span class="a-b a-94">| </span>    let s2 = s1<span class="a-92">.clone()</span>; // ここで所有権が s1 から s2 へ移る
+   <span class="a-b a-94">|</span>                <span class="a-92">++++++++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0382`.</span></code></pre></div><figcaption>move した後の変数を使った場合。何が起きたかが 3 行に分けて示され、最後に「clone すればよい」という具体的な提案まで出る。</figcaption></figure>
+
+<p>
+エラーの読み方を覚えておくと、これから何度も助かります。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>出ている行</th><th>言っていること</th></tr></thead>
+  <tbody>
+    <tr><td><code>move occurs because ... does not implement the `Copy` trait</code></td>
+        <td>この型は複製されない、と教えている</td></tr>
+    <tr><td><code>value moved here</code></td><td>所有権が移った場所</td></tr>
+    <tr><td><code>value borrowed here after move</code></td><td>移った後に触ってしまった場所</td></tr>
+    <tr><td><code>help: consider cloning the value ...</code></td><td>直し方の提案</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+そして move の瞬間に何が起きているかが、これです。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 330" role="img" aria-label="let s2 = s1 で所有権が移る図。ヒープ上の文字列はそのままで、それを指すハンドルが s1 から s2 へ移り、s1 は使えなくなる。">
+  <rect x="1" y="1" width="718" height="328" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="32" class="d-head-accent">let s1 = String::from("こんにちは");  ここまでは s1 が持ち主</text>
+
+  <!-- 上段: move 前 -->
+  <rect x="28" y="46" width="290" height="106" rx="10" class="d-box"/>
+  <text x="44" y="66" class="d-mute">スタック（変数そのもの）</text>
+  <rect x="44" y="76" width="120" height="60" rx="8" class="d-accent"/>
+  <text x="104" y="96" text-anchor="middle" class="d-mono-title">s1</text>
+  <text x="104" y="113" text-anchor="middle" class="d-mute">ptr / len / cap</text>
+  <text x="104" y="128" text-anchor="middle" class="d-mute">= 24 バイト</text>
+
+  <rect x="402" y="46" width="290" height="106" rx="10" class="d-box"/>
+  <text x="418" y="66" class="d-mute">ヒープ（中身の置き場）</text>
+  <rect x="418" y="76" width="258" height="60" rx="8" class="d-tip"/>
+  <text x="547" y="103" text-anchor="middle" class="d-code">こ ん に ち は</text>
+  <text x="547" y="124" text-anchor="middle" class="d-mute">UTF-8 で 15 バイト</text>
+
+  <path d="M164 106 L418 106" class="d-flow"/>
+  <path d="M418 106 l-10 -5 v10 z" class="d-arrowhead"/>
+  <text x="291" y="98" text-anchor="middle" class="d-mark">指している</text>
+
+  <!-- 区切り -->
+  <path d="M28 168 L692 168" class="d-dash"/>
+  <text x="28" y="196" class="d-head-warn">let s2 = s1;  ← ここで所有権が引っ越す</text>
+
+  <!-- 下段: move 後 -->
+  <rect x="28" y="210" width="290" height="100" rx="10" class="d-box"/>
+  <rect x="44" y="226" width="120" height="66" rx="8" class="d-dead"/>
+  <text x="104" y="252" text-anchor="middle" class="d-dead-text">s1</text>
+  <text x="104" y="271" text-anchor="middle" class="d-dead-text">もう使えない</text>
+  <path d="M52 234 L156 284" class="d-strike"/>
+  <path d="M156 234 L52 284" class="d-strike"/>
+
+  <rect x="180" y="226" width="122" height="66" rx="8" class="d-accent"/>
+  <text x="241" y="252" text-anchor="middle" class="d-mono-title">s2</text>
+  <text x="241" y="271" text-anchor="middle" class="d-mute">新しい持ち主</text>
+
+  <rect x="402" y="210" width="290" height="100" rx="10" class="d-box"/>
+  <rect x="418" y="226" width="258" height="66" rx="8" class="d-tip"/>
+  <text x="547" y="252" text-anchor="middle" class="d-code">こ ん に ち は</text>
+  <text x="547" y="275" text-anchor="middle" class="d-head-tip">中身は 1 バイトも動いていない</text>
+
+  <path d="M302 259 L418 259" class="d-flow"/>
+  <path d="M418 259 l-10 -5 v10 z" class="d-arrowhead"/>
+</svg>
+<figcaption>let s2 = s1; の前後。ヒープ上の文字列は 1 バイトも動かず、それを指すハンドルだけが s1 から s2 へ移る。s1 は「持ち主でなくなった」ので、以後触れない。</figcaption></figure>
+
+<div class="note deep">
+  <span class="note-title">なぜ「両方使える」ではいけないのか</span>
+  <p>
+    もし <code>s1</code> も <code>s2</code> も使えるとすると、
+    スコープを抜けるときに<strong>同じヒープ領域を 2 回解放してしまいます</strong>。
+    これは C++ で「二重解放」と呼ばれる、深刻な不具合の原因です。
+  </p>
+  <p>
+    かといって「参照カウントを持って、最後の 1 人が解放する」方式にすると、
+    C# のような実行時コストが発生します。
+    Rust は<strong>「持ち主はひとりだけ」と決めることで、どちらも避けました</strong>。
+    片付けるのは常に持ち主ひとりなので、カウントも GC も要りません。
+  </p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">C# の値型・参照型との対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td>小さい値</td><td>値型（<code>int</code>, <code>struct</code>）→ コピー</td><td><code>Copy</code> な型 → コピー</td></tr>
+      <tr><td>大きい値</td><td>参照型（<code>class</code>）→ 参照がコピーされ、<strong>両方から同じ実体を見る</strong></td><td>→ <strong>所有権が移り、元は使えなくなる</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# で <code>var b = a;</code>（<code>a</code> がクラス）と書いたとき、
+    <code>a</code> も <code>b</code> も同じオブジェクトを見ます。これが Rust では通りません。
+    <strong>「参照型を代入したら両方から見える」という C# の直感が、
+    最初につまずく原因です。</strong>
+  </p>
+</div>
+
+<h2 id="どの型が-Copy-なのか">どの型が Copy なのか</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th><code>Copy</code> な型（代入でコピー）</th><th>move される型</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>i32</code>, <code>u8</code>, <code>f64</code> などの数値<br>
+        <code>bool</code>, <code>char</code><br>
+        <code>&amp;T</code>（参照そのもの）<br>
+        全要素が <code>Copy</code> なタプルや配列
+      </td>
+      <td>
+        <code>String</code><br>
+        <code>Vec&lt;T&gt;</code>, <code>HashMap&lt;K, V&gt;</code><br>
+        <code>Box&lt;T&gt;</code><br>
+        自分で定義した <code>struct</code>（既定）
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+見分け方は「<strong>ヒープを持っているか</strong>」です。
+ヒープを持つ型は、丸ごとコピーすると高いので move になります。
+</p>
+
+<div class="note">
+  <span class="note-title">自分の型を Copy にする</span>
+  <p>
+    フィールドが全部 <code>Copy</code> なら、<code>derive</code> で <code>Copy</code> にできます。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="cp">#[derive(Debug, Clone, Copy)]</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Point</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">}</span></span></code></pre></figure>
+  <p>
+    <code>Copy</code> には <code>Clone</code> も必要です。
+    <code>String</code> を含む型は <code>Copy</code> にできません。
+  </p>
+</div>
+
+<h2 id="関数に渡すと所有権も渡る">関数に渡すと所有権も渡る</h2>
+
+<p>
+代入と同じことが、引数でも起きます。ここが実務でいちばん引っかかる場所です。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0382-move-into-function.rs</span>
+<span class="a-b a-91">error[E0382]</span><span class="a-b">: use of moved value: `message`</span>
+  <span class="a-b a-94">--&gt; </span>e0382-move-into-function.rs:16:13
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">13</span> <span class="a-b a-94">|</span>     let message = String::from(&quot;おはよう&quot;);
+   <span class="a-b a-94">|</span>         <span class="a-b a-94">-------</span> <span class="a-b a-94">move occurs because `message` has type `String`, which does not implement the `Copy` trait</span>
+<span class="a-b a-94">14</span> <span class="a-b a-94">|</span>
+<span class="a-b a-94">15</span> <span class="a-b a-94">|</span>     consume(message); // ここで所有権が関数に移る
+   <span class="a-b a-94">|</span>             <span class="a-b a-94">-------</span> <span class="a-b a-94">value moved here</span>
+<span class="a-b a-94">16</span> <span class="a-b a-94">|</span>     consume(message); // 2 回目は渡すものが残っていない
+   <span class="a-b a-94">|</span>             <span class="a-b a-91">^^^^^^^</span> <span class="a-b a-91">value used here after move</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-92">note</span>: consider changing this parameter type in function `consume` to borrow instead if owning the value isn&#x27;t necessary
+  <span class="a-b a-94">--&gt; </span>e0382-move-into-function.rs:8:18
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 8</span> <span class="a-b a-94">|</span> fn consume(text: String) {
+   <span class="a-b a-94">|</span>    <span class="a-b a-94">-------</span>       <span class="a-b a-92">^^^^^^</span> <span class="a-b a-92">this parameter takes ownership of the value</span>
+   <span class="a-b a-94">|</span>    <span class="a-b a-94">|</span>
+   <span class="a-b a-94">|</span>    <span class="a-b a-94">in this function</span>
+<span class="a-b a-96">help</span>: consider cloning the value if the performance cost is acceptable
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">15</span> <span class="a-b a-94">| </span>    consume(message<span class="a-92">.clone()</span>); // ここで所有権が関数に移る
+   <span class="a-b a-94">|</span>                    <span class="a-92">++++++++</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0382`.</span></code></pre></div><figcaption>同じ String を 2 回関数に渡した場合。1 回目で所有権が関数に移っているため、2 回目に渡すものが残っていない。</figcaption></figure>
+
+<div class="note pitfall">
+  <span class="note-title">「関数を呼んだら変数が使えなくなった」</span>
+  <p>
+    C# で <code>Consume(message)</code> と書いても、
+    <code>message</code> はその後も使えます。参照が渡るだけだからです。
+  </p>
+  <p>
+    Rust で <code>consume(message)</code> と書くと、
+    <strong><code>message</code> の所有権が関数に移ります</strong>。
+    関数が終わるとそこで片付けられるので、呼び出し側には返ってきません。
+  </p>
+  <p>
+    直し方は 3 つあります。<strong>ほとんどの場合、正解は 1 番目です。</strong>
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やり方</th><th>書き方</th><th>使う場面</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1. 借りる</strong></td><td><code>fn peek(text: &amp;str)</code></td><td><strong>読むだけならこれ。第 7 章の主題</strong></td></tr>
+      <tr><td>2. 複製する</td><td><code>consume(message.clone())</code></td><td>本当に 2 つ必要なとき</td></tr>
+      <tr><td>3. 返してもらう</td><td><code>let m = shout(m);</code></td><td>加工して返す形にしたいとき</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    初心者のうちは <code>clone()</code> を貼って前に進んでも構いません。
+    <strong>動かないコードより、少し遅いコードのほうがましです。</strong>
+    慣れてきたら借用に置き換えていけばよいのです。
+  </p>
+</div>
+
+<h2 id="スコープを抜けると片付けられる">スコープを抜けると片付けられる</h2>
+
+<p>
+3 番目の規則です。持ち主がいなくなった瞬間に <code>drop</code> が呼ばれます。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 250" role="img" aria-label="C# の using と Rust の Drop の対応。using はスコープを書く必要があるが、Rust は所有者が消えた時点で自動的に drop が呼ばれる。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <!-- C# -->
+  <rect x="20" y="20" width="330" height="150" rx="10" class="d-cs"/>
+  <text x="185" y="44" text-anchor="middle" class="d-head-cs">C# — using を書いた範囲だけ</text>
+  <g class="d-code">
+    <text x="44" y="70">using (var f = File.Open(..))</text>
+    <text x="44" y="90">{</text>
+    <text x="60" y="110">f.Write(..);</text>
+    <text x="44" y="130">}  ← ここで Dispose()</text>
+  </g>
+  <text x="185" y="156" text-anchor="middle" class="d-head-warn">using を書き忘れると解放されない</text>
+
+  <!-- Rust -->
+  <rect x="370" y="20" width="330" height="150" rx="10" class="d-accent"/>
+  <text x="535" y="44" text-anchor="middle" class="d-head-accent">Rust — 持ち主がいなくなった時点で</text>
+  <g class="d-code">
+    <text x="394" y="70">{</text>
+    <text x="410" y="90">let f = File::open(..)?;</text>
+    <text x="410" y="110">// 使う</text>
+    <text x="394" y="130">}  ← ここで drop() が自動で</text>
+  </g>
+  <text x="535" y="156" text-anchor="middle" class="d-head-accent">書き忘れようがない</text>
+
+  <!-- 下 -->
+  <rect x="20" y="186" width="680" height="46" rx="10" class="d-dash"/>
+  <text x="40" y="206" class="d-head-accent">drop は自分では呼べない</text>
+  <text x="40" y="224" class="d-mute">早めに手放したいときは std::mem::drop(値) に所有権を渡す。二重解放が起こりえない作りになっている。</text>
+</svg>
+<figcaption>C# の using はスコープを自分で書く必要があり、書き忘れると解放されない。Rust は所有者が消えた時点で必ず drop が呼ばれるので、書き忘れようがない。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">IDisposable と Drop</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td>後片付けを書く場所</td><td><code>Dispose()</code></td><td><code>impl Drop for T { fn drop(&amp;mut self) }</code></td></tr>
+      <tr><td>呼ぶきっかけ</td><td><code>using</code> を書く / 手で呼ぶ</td><td><strong>自動。所有者が消えた時点</strong></td></tr>
+      <tr><td>書き忘れると</td><td>解放されない</td><td><strong>起こりえない</strong></td></tr>
+      <tr><td>自分で呼べるか</td><td>呼べる（複数回呼ぶ危険もある）</td><td><strong>呼べない</strong>（<code>drop(値)</code> に渡す）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>Drop</code> は「所有権が消える場所」に紐づいているので、
+    <strong>C# の <code>using</code> より漏れません</strong>。
+    ファイル・ソケット・ロックの解放が、全部この仕組みに乗っています。
+    第 19 章の <code>Mutex</code> でロックの外し忘れが起きないのも、これのおかげです。
+  </p>
+</div>
+
+<h2 id="全部まとめて動かしてみる">全部まとめて動かしてみる</h2>
+
+<p>
+ここまでの話を 1 本のプログラムにしたものです。
+</p>
+
+<figure class="code-block" data-lang="rust" data-src="06-ownership/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! 所有権のふるまいを、実際に動かして目で見るためのサンプル。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! 「値には所有者がひとりだけいて、所有者がいなくなったら片付けられる」</span></span><span class="cl"><span class="sd">//! という規則が、どこで働いているかを順に確かめます。</span></span><span class="cl"></span><span class="cl"><span class="sd">/// スコープを抜けるときに何が起きるかを見せるための型。</span></span><span class="cl"><span class="sd">/// C# の IDisposable に相当する後片付けが、Rust では Drop になる。</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Receipt</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="nb">Drop</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">Receipt</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">drop</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="c1">// ここは自分で呼ばない。所有者がいなくなった時点で自動的に呼ばれる。</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  [drop] {} を片付けました&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">label</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 引数で String を受け取る = 所有権をもらう。</span></span><span class="cl"><span class="sd">/// 関数が終わるとここで片付けられるので、呼び出し側にはもう返らない。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">consume</span><span class="p">(</span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  もらった: {text}&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 参照で受け取る = 借りるだけ。呼び出し側の所有権はそのまま。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">peek</span><span class="p">(</span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  見せてもらった: {text}（長さ {} バイト）&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">text</span><span class="p">.</span><span class="n">len</span><span class="p">());</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 所有権をもらって、加工してから返す。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">shout</span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">text</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="sc">&#39;!&#39;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">text</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. Copy される型 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// i32 はスタックに収まる固定サイズなので、代入は「複製」になる。</span></span><span class="cl"><span class="w">    </span><span class="c1">// 元の変数もそのまま使える。C# の値型と同じ感覚でよい。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  a = {a}, b = {b}（どちらも使える）&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. move される型 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// String は中身がヒープにあるので、代入は「引っ越し」になる。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">s1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;こんにちは&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s1</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="c1">// ここで s1 を使うとコンパイルエラー（E0382）。</span></span><span class="cl"><span class="w">    </span><span class="c1">// examples/errors/e0382-use-after-move.rs で実際に確かめている。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  s2 = {s2}（s1 はもう使えない）&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. clone すれば両方残る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">original</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;複製したい&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">copy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">original</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  original = {original}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  copy     = {copy}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. 関数に渡すと所有権も渡る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">given</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;あげる文字列&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">consume</span><span class="p">(</span><span class="n">given</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// ここで given を使うとエラーになる。渡した先で片付けられたから。</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. 参照なら渡しても残る ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">kept</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;貸すだけの文字列&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">peek</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kept</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  呼び出し側でもまだ使える: {kept}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. もらって返せば戻ってくる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;やった&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shout</span><span class="p">(</span><span class="n">word</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  返ってきた: {word}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. スコープと片付け ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">_inner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Receipt</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;内側のブロックの値&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">};</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ブロックの中にいます&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="c1">// ここで _inner の所有者がいなくなり、drop が呼ばれる</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ブロックを抜けました&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_outer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Receipt</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;main の値&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">  main の終わりに向かいます&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// _outer はこの後、main が終わるときに片付けられる</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\06-ownership&gt;</span> cargo run --quiet</span>
+── 1. Copy される型 ──
+  a = 10, b = 10（どちらも使える）
+
+── 2. move される型 ──
+  s2 = こんにちは（s1 はもう使えない）
+
+── 3. clone すれば両方残る ──
+  original = 複製したい
+  copy     = 複製したい
+
+── 4. 関数に渡すと所有権も渡る ──
+  もらった: あげる文字列
+
+── 5. 参照なら渡しても残る ──
+  見せてもらった: 貸すだけの文字列（長さ 24 バイト）
+  呼び出し側でもまだ使える: 貸すだけの文字列
+
+── 6. もらって返せば戻ってくる ──
+  返ってきた: やった!
+
+── 7. スコープと片付け ──
+  ブロックの中にいます
+  [drop] 内側のブロックの値 を片付けました
+  ブロックを抜けました
+
+  main の終わりに向かいます
+  [drop] main の値 を片付けました</code></pre></div><figcaption>実行結果。最後の 2 つの drop が呼ばれる順番に注目。内側のブロックの値はブロックを抜けた時点で、main の値は main の最後で片付けられている。</figcaption></figure>
+
+<div class="note deep">
+  <span class="note-title">Copy と Clone の違い</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th><code>Copy</code></th><th><code>Clone</code></th></tr></thead>
+    <tbody>
+      <tr><td>いつ起きるか</td><td>代入すると自動で</td><td><code>.clone()</code> と書いたときだけ</td></tr>
+      <tr><td>コスト</td><td>安い（ビット列のコピー）</td><td>高いこともある（ヒープの確保を伴う）</td></tr>
+      <tr><td>設計の意図</td><td>「複製が安いので気にしなくてよい」</td><td>「複製は高いので、明示的に書かせる」</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    Rust が <code>clone()</code> を書かせるのは、
+    <strong>コストが目に見えるようにするため</strong>です。
+    C# では <code>list.ToList()</code> のような複製が、
+    書かれていても目立たないまま性能問題になることがあります。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/06-ownership</code> を動かして、<code>drop</code> が呼ばれる順番を確認してください。</li>
+    <li><code>let s2 = s1;</code> の次の行に <code>println!("{s1}");</code> を足して、E0382 を自分の目で見てください。</li>
+    <li>それを <code>let s2 = s1.clone();</code> に直して、通ることを確認してください。</li>
+    <li><code>consume(given);</code> を 2 回書いて、エラーメッセージを読んでください。<code>help:</code> の行に何と書いてあるでしょうか。</li>
+    <li><code>Receipt</code> を作る順番を入れ替えて、<code>drop</code> の順番がどう変わるか観察してください（後で作ったものから先に片付けられます）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>値には<strong>持ち主がひとりだけ</strong>。持ち主が消えたら値も片付けられる。</li>
+    <li>小さい型（<code>i32</code> など）は代入でコピー。ヒープを持つ型（<code>String</code>, <code>Vec</code>）は <strong>move</strong>。</li>
+    <li>関数に渡すのも move。読むだけなら<strong>借りる（第 7 章）</strong>のが正解。</li>
+    <li>困ったら <code>clone()</code> で前に進んでよい。後で借用に置き換えられる。</li>
+    <li><code>Drop</code> は <code>IDisposable</code> に当たるが、<strong>書き忘れようがない</strong>。</li>
+    <li>E0382 が出たら、<code>value moved here</code> の行を見て「どこで手放したか」を探す。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../05-control-flow/"><span class="pager-dir">← 前の章</span><span class="pager-title">関数と制御フロー</span></a>
+<a class="pager-link pager-next" href="../07-borrowing/"><span class="pager-dir">次の章 →</span><span class="pager-title">★ 借用と参照</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

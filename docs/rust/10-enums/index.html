@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第10章 列挙型と match — null が消える仕組み | Rust 入門</title>
+<meta name="description" content="Rust の enum は値を持てます。だから `Option&lt;T&gt;` で「無いかもしれない」を型として表せて、null 参照例外という概念そのものが無くなります。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li class="is-current"><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 10 章<span class="dot">·</span>読了目安 16 分</p>
+        <h1>第10章 列挙型と match — null が消える仕組み</h1>
+        <p class="lede">Rust の enum は値を持てます。だから `Option&lt;T&gt;` で「無いかもしれない」を型として表せて、null 参照例外という概念そのものが無くなります。</p>
+      </header>
+      <div class="prose">
+<p>
+C# の <code>enum</code> は、整数に名前を付けたものです。
+Rust の <code>enum</code> は<strong>それぞれの選択肢が値を持てます</strong>。
+これは別物と考えたほうがよく、F# の判別共用体や TypeScript の直和型に近いものです。
+</p>
+
+<p>
+そしてこの仕組みのおかげで、<strong>Rust には <code>null</code> がありません</strong>。
+null 参照例外という概念そのものが消えます。この章の主題はそこです。
+</p>
+
+<h2 id="値を持てる列挙型">値を持てる列挙型</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C# の enum</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="n">Shape</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Circle</span><span class="p">,</span><span class="w"> </span><span class="n">Rectangle</span><span class="p">,</span><span class="w"> </span><span class="n">Triangle</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="c1">// 半径や幅はどこに持たせる？</span></span></code></pre><figcaption class="code-cap">ただの整数。値は持てない</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust の enum</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nc">Shape</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Circle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">radius</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="n">Rectangle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">width</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="n">Triangle</span><span class="p">(</span><span class="kt">f64</span><span class="p">,</span><span class="w"> </span><span class="kt">f64</span><span class="p">),</span></span><span class="cl"><span class="p">}</span></span></code></pre><figcaption class="code-cap">選択肢ごとに違う値を持てる</figcaption></figure>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">C# でこれをやるには</span>
+  <p>
+    C# で同じことを表現するなら、抽象クラスか interface を作って
+    <code>Circle</code>、<code>Rectangle</code>、<code>Triangle</code> の 3 クラスを継承させます。
+  </p>
+  <p>
+    Rust の <code>enum</code> は<strong>それを 1 つの型で表したもの</strong>です。
+    利点は 2 つあります。
+  </p>
+  <ul>
+    <li>ヒープ確保が起きない（クラスならインスタンスごとに確保が必要）</li>
+    <li><strong>選択肢が閉じている</strong>ので、<code>match</code> で漏れを検出できる</li>
+  </ul>
+  <p>
+    C# 側でも近年は <code>abstract record</code> ＋ パターンマッチで似た書き方をしますが、
+    「他の誰かが勝手に派生クラスを増やせる」ので網羅性は保証されません。
+  </p>
+</div>
+
+<h2 id="match-で分解する">match で分解する</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Shape</span><span class="p">::</span><span class="n">Circle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">radius</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="kt">f64</span><span class="p">::</span><span class="n">consts</span><span class="p">::</span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">radius</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">radius</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">Shape</span><span class="p">::</span><span class="n">Rectangle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">width</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">height</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">Shape</span><span class="p">::</span><span class="n">Triangle</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+<code>match</code> は分岐と同時に<strong>中身を取り出します</strong>。
+C# の <code>is</code> パターンや switch 式の分解と同じ働きです。
+</p>
+
+<h2 id="網羅性がエラーになる">網羅性がエラーになる</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 250" role="img" aria-label="match の網羅性検査。列挙型に選択肢を追加すると、対応していない match が全部コンパイルエラーになる。">
+  <rect x="1" y="1" width="718" height="248" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">列挙型に 1 つ足すと、直すべき場所が全部エラーになる</text>
+
+  <!-- before -->
+  <rect x="20" y="44" width="330" height="140" rx="10" class="d-tip"/>
+  <text x="185" y="66" text-anchor="middle" class="d-title">いまの状態</text>
+  <g class="d-code">
+    <text x="44" y="92">enum Signal { Red, Green }</text>
+    <text x="44" y="118">match s {</text>
+    <text x="60" y="138">Red =&gt; ..,</text>
+    <text x="60" y="158">Green =&gt; ..,</text>
+    <text x="44" y="176">}   ← 網羅している</text>
+  </g>
+
+  <path d="M350 114 L390 114" class="d-flow-warn"/>
+  <path d="M390 114 l-10 -5 v10 z" class="d-arrowhead-warn"/>
+  <text x="370" y="104" text-anchor="middle" class="d-mute">Yellow を追加</text>
+
+  <!-- after -->
+  <rect x="390" y="44" width="310" height="140" rx="10" class="d-warn"/>
+  <text x="545" y="66" text-anchor="middle" class="d-title">追加した直後</text>
+  <g class="d-code">
+    <text x="410" y="92">enum Signal { Red, Green, Yellow }</text>
+    <text x="410" y="118">match s {</text>
+    <text x="426" y="138">Red =&gt; ..,</text>
+    <text x="426" y="158">Green =&gt; ..,</text>
+  </g>
+  <text x="410" y="176" class="d-head-warn">}   ← E0004 でここが止まる</text>
+
+  <rect x="20" y="200" width="680" height="36" rx="10" class="d-dash"/>
+  <text x="40" y="223" class="d-mute">C# の switch は default が無ければ黙って何もしない。Rust は「まだ考えていない場合」を残したままビルドできない。</text>
+</svg>
+<figcaption>列挙型に選択肢を 1 つ足すと、対応していない match がすべてコンパイルエラーになる。C# の switch は default が無ければ黙って何もしないが、Rust は「まだ考えていない場合」を残したままビルドできない。</figcaption></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust&gt;</span> rustc e0004-non-exhaustive-match.rs</span>
+<span class="a-b a-91">error[E0004]</span><span class="a-b">: non-exhaustive patterns: `Signal::Yellow` not covered</span>
+  <span class="a-b a-94">--&gt; </span>e0004-non-exhaustive-match.rs:16:11
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">16</span> <span class="a-b a-94">|</span>     match signal {
+   <span class="a-b a-94">|</span>           <span class="a-b a-91">^^^^^^</span> <span class="a-b a-91">pattern `Signal::Yellow` not covered</span>
+   <span class="a-b a-94">|</span>
+<span class="a-b a-92">note</span>: `Signal` defined here
+  <span class="a-b a-94">--&gt; </span>e0004-non-exhaustive-match.rs:9:6
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94"> 9</span> <span class="a-b a-94">|</span> enum Signal {
+   <span class="a-b a-94">|</span>      <span class="a-b a-92">^^^^^^</span>
+<span class="a-b a-94">10</span> <span class="a-b a-94">|</span>     Red,
+<span class="a-b a-94">11</span> <span class="a-b a-94">|</span>     Yellow,
+   <span class="a-b a-94">|</span>     <span class="a-b a-94">------</span> <span class="a-b a-94">not covered</span>
+   <span class="a-b a-94">= </span><span class="a-b">note</span>: the matched value is of type `Signal`
+<span class="a-b a-96">help</span>: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+   <span class="a-b a-94">|</span>
+<span class="a-b a-94">18</span> <span class="a-92">~ </span>        Signal::Green =&gt; &quot;進む&quot;<span class="a-92">,</span>
+<span class="a-b a-94">19</span> <span class="a-92">~         Signal::Yellow =&gt; todo!()</span>,
+   <span class="a-b a-94">|</span>
+
+<span class="a-b a-91">error</span><span class="a-b">: aborting due to 1 previous error</span>
+
+<span class="a-b">For more information about this error, try `rustc --explain E0004`.</span></code></pre></div><figcaption>Yellow を書き忘れた match。「pattern `Signal::Yellow` not covered」と、どの選択肢が漏れているかまで名指しされる。</figcaption></figure>
+
+<div class="note">
+  <span class="note-title">これが列挙型のいちばんの価値</span>
+  <p>
+    列挙型に選択肢を足したとき、<strong>直すべき場所を全部コンパイラが教えてくれます。</strong>
+  </p>
+  <p>
+    「支払方法に新しい種類を追加したら、対応し忘れた画面があった」
+    という種類の不具合が、原理的に起きません。
+    C# で同じ安全性を得るには、テストを書くか、レビューで気づくしかありません。
+  </p>
+  <p>
+    逆に <code>_ =&gt; ...</code>（それ以外）を書くと、この恩恵を捨てることになります。
+    <strong>本当に「それ以外は同じ扱い」のときだけ使ってください。</strong>
+  </p>
+</div>
+
+<h2 id="Option--null-の代わり">Option — null の代わり</h2>
+
+<p>
+標準ライブラリの <code>Option&lt;T&gt;</code> は、ただの列挙型です。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="nb">Some</span><span class="p">(</span><span class="n">T</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="nb">None</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+これだけです。特別な言語機能ではありません。
+そして<strong>これが C# の <code>null</code> の役目を全部引き受けます</strong>。
+</p>
+
+<figure class="diagram"><svg viewBox="0 0 720 260" role="img" aria-label="null と Option の比較。null は型に現れないため検査できないが、Option は Some か None の 2 択として型に現れるので扱い漏れがコンパイルエラーになる。">
+  <rect x="1" y="1" width="718" height="258" rx="14" class="d-box-plain"/>
+
+  <!-- C# -->
+  <rect x="20" y="20" width="330" height="170" rx="10" class="d-cs"/>
+  <text x="185" y="44" text-anchor="middle" class="d-head-cs">C# — null は型に現れない</text>
+  <rect x="44" y="58" width="282" height="30" rx="7" class="d-box"/>
+  <text x="185" y="78" text-anchor="middle" class="d-code">User FindUser(int id)</text>
+
+  <rect x="44" y="98" width="134" height="30" rx="7" class="d-box"/>
+  <text x="111" y="118" text-anchor="middle" class="d-code">User</text>
+  <rect x="192" y="98" width="134" height="30" rx="7" class="d-warn"/>
+  <text x="259" y="118" text-anchor="middle" class="d-code">null</text>
+
+  <text x="185" y="150" text-anchor="middle" class="d-mute">どちらが返るか、署名からは分からない</text>
+  <text x="185" y="172" text-anchor="middle" class="d-head-warn">.Name を書いた瞬間に落ちる可能性</text>
+
+  <!-- Rust -->
+  <rect x="370" y="20" width="330" height="170" rx="10" class="d-accent"/>
+  <text x="535" y="44" text-anchor="middle" class="d-head-accent">Rust — Option が型に現れる</text>
+  <rect x="394" y="58" width="282" height="30" rx="7" class="d-box"/>
+  <text x="535" y="78" text-anchor="middle" class="d-code">fn find_user(id: u32) -&gt; Option&lt;User&gt;</text>
+
+  <rect x="394" y="98" width="134" height="30" rx="7" class="d-tip"/>
+  <text x="461" y="118" text-anchor="middle" class="d-code">Some(user)</text>
+  <rect x="542" y="98" width="134" height="30" rx="7" class="d-box"/>
+  <text x="609" y="118" text-anchor="middle" class="d-code">None</text>
+
+  <text x="535" y="150" text-anchor="middle" class="d-mute">2 択であることが型に書いてある</text>
+  <text x="535" y="172" text-anchor="middle" class="d-head-accent">中身を出すには必ず開ける手続きが要る</text>
+
+  <!-- 下 -->
+  <rect x="20" y="206" width="680" height="40" rx="10" class="d-dash"/>
+  <text x="40" y="230" class="d-code">match / if let / unwrap_or / map / ?  ← どれかで「無かった場合」を通らないと、中身に触れない</text>
+</svg>
+<figcaption>C# では戻り値が User なのか null なのか署名から分からず、.Name と書いた瞬間に落ちる可能性が残る。Rust は Option&lt;User&gt; と型に書いてあり、中身を出すには必ず「無かった場合」を通らなければならない。</figcaption></figure>
+
+<div class="note csharp">
+  <span class="note-title">nullable 参照型との違い</span>
+  <p>
+    C# 8 の nullable 参照型（<code>User?</code>）は、かなり近いところまで来ています。
+    しかし決定的な違いが 2 つあります。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C# の <code>User?</code></th><th>Rust の <code>Option&lt;User&gt;</code></th></tr></thead>
+    <tbody>
+      <tr><td>破ったとき</td><td><strong>警告</strong>（設定次第で無効化できる）</td><td><strong>コンパイルエラー</strong></td></tr>
+      <tr><td>実行時の表現</td><td>同じ参照。<code>null</code> が入りうる</td><td>別の型。<code>None</code> は値のひとつ</td></tr>
+      <tr><td>入れ子</td><td><code>User??</code> は書けない</td><td><code>Option&lt;Option&lt;T&gt;&gt;</code> が書ける</td></tr>
+      <tr><td>既存コードとの互換</td><td>後付けなので抜け穴がある</td><td>最初からこれしかない</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    「後付けの警告」と「最初からある型」の差です。
+    Rust では <code>Option</code> を通らずに中身に触る方法が<strong>存在しません</strong>。
+  </p>
+</div>
+
+<h2 id="Option-の開け方">Option の開け方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>match opt { Some(v) =&gt; .., None =&gt; .. }</code></td><td>両方を扱う</td><td><code>if (x != null) ... else ...</code></td></tr>
+    <tr><td><code>if let Some(v) = opt { }</code></td><td>あるときだけ</td><td><code>if (x != null) { }</code></td></tr>
+    <tr><td><code>let Some(v) = opt else { return; };</code></td><td><strong>無ければ抜ける</strong></td><td>早期 return のガード節</td></tr>
+    <tr><td><code>opt.unwrap_or(既定値)</code></td><td>無ければ既定値</td><td><code>x ?? 既定値</code></td></tr>
+    <tr><td><code>opt.unwrap_or_default()</code></td><td>無ければ型の既定値</td><td><code>x ?? default</code></td></tr>
+    <tr><td><code>opt.map(|v| ..)</code></td><td>あれば変換</td><td><code>x?.Foo()</code></td></tr>
+    <tr><td><code>opt.and_then(|v| ..)</code></td><td>あれば次も Option を返す処理へ</td><td><code>x?.Foo()?.Bar()</code></td></tr>
+    <tr><td><code>opt.unwrap()</code></td><td><strong>無ければ panic</strong></td><td><code>x!</code>（null 免除演算子）</td></tr>
+    <tr><td><code>opt.expect("説明")</code></td><td>無ければ panic（説明付き）</td><td>—</td></tr>
+    <tr><td><code>opt.is_some()</code> / <code>is_none()</code></td><td>あるか無いかだけ調べる</td><td><code>x != null</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">?. の対応が map と and_then</span>
+  <p>
+    C# の <code>?.</code> を連ねる書き方は、Rust では <code>map</code> / <code>and_then</code> になります。
+  </p>
+  <div class="compare">
+    <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">user</span><span class="o">?.</span><span class="n">Name</span><span class="o">?.</span><span class="n">Length</span><span class="p">;</span></span></code></pre></figure>
+    <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">user</span><span class="p">.</span><span class="n">and_then</span><span class="p">(</span><span class="o">|</span><span class="n">u</span><span class="o">|</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">name</span><span class="p">).</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">n</span><span class="o">|</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">len</span><span class="p">());</span></span></code></pre></figure>
+  </div>
+  <p>
+    <strong>見分け方</strong>: 渡す関数が <code>Option</code> を返すなら <code>and_then</code>、
+    ふつうの値を返すなら <code>map</code> です。
+    <code>map</code> に <code>Option</code> を返す関数を渡すと
+    <code>Option&lt;Option&lt;T&gt;&gt;</code> になってしまいます。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">unwrap() を書き散らさないこと</span>
+  <p>
+    <code>unwrap()</code> は「無ければ panic」です。C# の <code>x!</code> と同じで、
+    <strong>「絶対にあると分かっている」という主張</strong>です。
+  </p>
+  <p>
+    学習中や書き捨てでは便利ですが、残しておくと本番で落ちます。
+    最低限 <code>expect("なぜあるはずなのかの説明")</code> にしておくと、
+    落ちたときに原因が分かって助かります。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;key&quot;</span><span class="p">).</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;設定ファイルに key があることは検証済み&quot;</span><span class="p">);</span></span></code></pre></figure>
+</div>
+
+<h2 id="let-else--早期-return-を素直に書く">let else — 早期 return を素直に書く</h2>
+
+<p>
+「無ければ抜ける」を書くための構文です。C# のガード節に相当します。
+</p>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FindUser</span><span class="p">(</span><span class="n">id</span><span class="p">);</span></span><span class="cl"><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">user</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;該当なし&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">return</span><span class="p">;</span></span><span class="cl"><span class="p">}</span></span><span class="cl"><span class="c1">// ここから user が使える</span></span></code></pre></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">user</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;該当なし&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">return</span><span class="p">;</span></span><span class="cl"><span class="p">};</span></span><span class="cl"><span class="c1">// ここから user が使える</span></span></code></pre></figure>
+</div>
+
+<div class="note">
+  <span class="note-title">let else は比較的新しい構文</span>
+  <p>
+    <code>let ... else</code> が使えるようになったのは Rust 1.65（2022 年）です。
+    それより前の記事では、同じことを次のように書いています。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">昔の書き方</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="nb">Some</span><span class="p">(</span><span class="n">u</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">u</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="nb">None</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">return</span><span class="p">,</span></span><span class="cl"><span class="p">};</span></span></code></pre></figure>
+  <p>どちらも今も動きますが、<code>let else</code> のほうが短く読めます。</p>
+</div>
+
+<h2 id="if-let-と-while-let">if let と while let</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="c1">// あるときだけ何かする</span></span><span class="cl"><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;見つかった: {name}&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="c1">// 取り出せる間くり返す</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span></span><span class="cl"><span class="k">while</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">top</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stack</span><span class="p">.</span><span class="n">pop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{top}&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note deep">
+  <span class="note-title">let 連鎖（let chains）</span>
+  <p>
+    <code>if let</code> を <code>&amp;&amp;</code> でつなげて書けます。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">user</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="n">id</span><span class="p">)</span></span><span class="cl"><span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">email</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">user</span><span class="p">.</span><span class="n">email</span></span><span class="cl"><span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">email</span><span class="p">.</span><span class="n">ends_with</span><span class="p">(</span><span class="s">&quot;.jp&quot;</span><span class="p">)</span></span><span class="cl"><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;国内のユーザ&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <p>
+    これは長く待たれていた機能で、<strong>安定版で使えるようになったのはごく最近</strong>です
+    （2024 エディション以降）。それより古い記事では
+    「入れ子の <code>if let</code> を書くしかない」と説明されています。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="10-enums/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! 列挙型と match。null が要らなくなる仕組みを確かめます。</span></span><span class="cl"></span><span class="cl"><span class="sd">/// Rust の enum は、それぞれの選択肢が値を持てる。</span></span><span class="cl"><span class="sd">/// C# の enum（ただの整数の別名）とは別物で、</span></span><span class="cl"><span class="sd">/// F# の判別共用体や TypeScript の直和型に近い。</span></span><span class="cl"><span class="cp">#[derive(Debug)]</span></span><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nc">Shape</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Circle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">radius</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="n">Rectangle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">width</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="w">    </span><span class="n">Triangle</span><span class="p">(</span><span class="kt">f64</span><span class="p">,</span><span class="w"> </span><span class="kt">f64</span><span class="p">),</span><span class="w"> </span><span class="c1">// 底辺と高さ</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Shape</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">area</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="c1">// match で分解しながら、必要な値だけ取り出す</span></span><span class="cl"><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">Shape</span><span class="p">::</span><span class="n">Circle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">radius</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="kt">f64</span><span class="p">::</span><span class="n">consts</span><span class="p">::</span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">radius</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">radius</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">Shape</span><span class="p">::</span><span class="n">Rectangle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">width</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">height</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">Shape</span><span class="p">::</span><span class="n">Triangle</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 見つからないことがある検索。C# なら null を返すか例外を投げるところ。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">find_user</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;&amp;&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="mi">1</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="s">&quot;すずき&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="mi">2</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="s">&quot;たなか&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nb">None</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. 値を持つ列挙型 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">shapes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span></span><span class="cl"><span class="w">        </span><span class="n">Shape</span><span class="p">::</span><span class="n">Circle</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">radius</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="p">},</span></span><span class="cl"><span class="w">        </span><span class="n">Shape</span><span class="p">::</span><span class="n">Rectangle</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="n">width</span><span class="p">:</span><span class="w"> </span><span class="mf">3.0</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">height</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="p">},</span></span><span class="cl"><span class="w">        </span><span class="n">Shape</span><span class="p">::</span><span class="n">Triangle</span><span class="p">(</span><span class="mf">6.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">];</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">shape</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="n">shapes</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {shape:?} の面積 = {:.2}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">shape</span><span class="p">.</span><span class="n">area</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. Option が null の代わり ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">99</span><span class="p">]</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="nb">Some</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  id {id} → {name}&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">            </span><span class="nb">None</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  id {id} → 見つかりません&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. if let は「片方だけ気にする」書き方 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  見つかった: {name}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. let else で早く抜ける ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 「無ければ関数を抜ける」を素直に書ける</span></span><span class="cl"><span class="w">    </span><span class="n">describe</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">describe</span><span class="p">(</span><span class="mi">99</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. Option の便利メソッド ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">found</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">missing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="mi">99</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  unwrap_or  = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">missing</span><span class="p">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="s">&quot;名無し&quot;</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  is_some    = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">found</span><span class="p">.</span><span class="n">is_some</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  map        = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">found</span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">n</span><span class="o">|</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">len</span><span class="p">()));</span></span><span class="cl"><span class="w">    </span><span class="c1">// and_then は「次も失敗しうる処理」をつなぐとき</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  and_then   = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">found</span><span class="p">.</span><span class="n">and_then</span><span class="p">(</span><span class="o">|</span><span class="n">n</span><span class="o">|</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">next</span><span class="p">()));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. match の網羅性 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// Shape に新しい種類を足すと、この match が</span></span><span class="cl"><span class="w">    </span><span class="c1">// 「対応し忘れている」とコンパイルエラーになる。</span></span><span class="cl"><span class="w">    </span><span class="c1">// 追加のたびに直すべき場所を全部教えてくれる。</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  Shape を増やすと、上の area() が必ずエラーになって気づける&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  id {id} は該当なし。ここで打ち切ります&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="k">return</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  id {id} は {name} さん&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\10-enums&gt;</span> cargo run --quiet</span>
+── 1. 値を持つ列挙型 ──
+  Circle { radius: 1.0 } の面積 = 3.14
+  Rectangle { width: 3.0, height: 4.0 } の面積 = 12.00
+  Triangle(6.0, 2.0) の面積 = 6.00
+
+── 2. Option が null の代わり ──
+  id 1 → すずき
+  id 99 → 見つかりません
+
+── 3. if let は「片方だけ気にする」書き方 ──
+  見つかった: たなか
+
+── 4. let else で早く抜ける ──
+  id 1 は すずき さん
+  id 99 は該当なし。ここで打ち切ります
+
+── 5. Option の便利メソッド ──
+  unwrap_or  = 名無し
+  is_some    = true
+  map        = Some(9)
+  and_then   = Some(&#x27;す&#x27;)
+
+── 6. match の網羅性 ──
+  Shape を増やすと、上の area() が必ずエラーになって気づける</code></pre></div><figcaption>実行結果。Option の各メソッドが何を返すかが並んでいる。</figcaption></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/10-enums</code> を動かしてください。</li>
+    <li><code>Shape</code> に <code>Square { side: f64 }</code> を足して <code>cargo build</code> してください。<strong><code>area()</code> の match がエラーになる</strong>ことを確認してください。これがこの章の要点です。</li>
+    <li><code>find_user(99).unwrap()</code> を書いて実行し、panic のメッセージを見てください。</li>
+    <li>それを <code>expect("id 99 は必ずあるはず")</code> に変えて、メッセージが変わることを確認してください。</li>
+    <li><code>describe</code> を <code>let else</code> ではなく <code>match</code> で書き直してみてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>Rust の <code>enum</code> は<strong>選択肢ごとに値を持てる</strong>。C# の enum とは別物。</li>
+    <li><code>match</code> は<strong>網羅していないとコンパイルエラー</strong>。選択肢を足すと直す場所が全部分かる。</li>
+    <li><code>Option&lt;T&gt;</code> はただの列挙型。これが <code>null</code> の役目を引き受ける。</li>
+    <li>C# の nullable 参照型は警告、Rust の <code>Option</code> はエラー。抜け穴が無い。</li>
+    <li><code>?.</code> は <code>map</code> / <code>and_then</code>、<code>??</code> は <code>unwrap_or</code>、<code>!</code> は <code>unwrap</code>。</li>
+    <li><code>unwrap()</code> は最終的に <code>expect("理由")</code> か、ちゃんとした分岐に置き換える。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../09-structs/"><span class="pager-dir">← 前の章</span><span class="pager-title">構造体と impl</span></a>
+<a class="pager-link pager-next" href="../11-errors/"><span class="pager-dir">次の章 →</span><span class="pager-title">エラー処理</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

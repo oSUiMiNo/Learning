@@ -1,0 +1,15 @@
+{
+  "name": "run-modules",
+  "title": "Windows PowerShell",
+  "note": "examples/16-modules の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\16-modules>",
+      "command": "cargo run --quiet",
+      "output": "── 1. モジュールの中の型を使う ──\r\n  2 点の距離 = 5\r\n\r\n── 2. 入れ子のモジュール ──\r\n  半径 2 の円   = 12.57\r\n  3 × 4 の長方形 = 12.00\r\n\r\n── 3. 非公開のものは見えない ──\r\n  pub の付いていない関数は、モジュールの外からは呼べません\r\n  でも中で使っている公開関数を通せば結果は得られる:\r\n  doubled_distance = 10\r\n\r\n── 3.5 pub(crate) は「このクレート限定」 ──\r\n  対角の長方形の面積 = 12.0\r\n\r\n── 4. フルパスでも書ける ──\r\n  crate::geometry::area::circle(1.0) = 3.1416\r\n\r\n── 5. 既定は非公開 ──\r\n  C# は internal が既定、Rust はモジュール内だけが既定\r\n  外に出したいものに 1 つずつ pub を付けていく\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

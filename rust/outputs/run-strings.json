@@ -1,0 +1,15 @@
+{
+  "name": "run-strings",
+  "title": "Windows PowerShell",
+  "note": "examples/08-strings の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\08-strings>",
+      "command": "cargo run --quiet",
+      "output": "── 1. 「長さ」が 3 種類ある ──\r\n  文字列: こんにちは\r\n  len()            = 15 ← バイト数\r\n  chars().count()  = 5 ← 文字数\r\n  encode_utf16()   = 5 ← C# の Length と同じ数\r\n\r\n── 2. 文字によってバイト数が違う ──\r\n  A  UTF-8 で 1 バイト / UTF-16 で 1 単位\r\n  あ  UTF-8 で 3 バイト / UTF-16 で 1 単位\r\n  漢  UTF-8 で 3 バイト / UTF-16 で 1 単位\r\n  🦀  UTF-8 で 4 バイト / UTF-16 で 2 単位\r\n\r\n── 3. 絵文字は C# だと 2 に数えられる ──\r\n  🦀\r\n  Rust の chars().count()      = 1\r\n  C# の Length に相当する値    = 2\r\n  ← C# ではサロゲートペアで 2 になる。ここが食い違いの元\r\n\r\n── 4. n 文字目の取り出し方 ──\r\n  3 文字目 = に\r\n\r\n── 5. String と &str ──\r\n  String  = 持っている文字列\r\n  &str    = 持っている文字列\r\n  リテラル = ソースに直接書いた文字列\r\n  リテラルは実行ファイルに埋め込まれているので確保も解放も要らない\r\n\r\n── 6. つなげる・分ける ──\r\n  組み立てた = Rust 入門\r\n  分割した   = [\"赤\", \"青\", \"黄\"]\r\n  分割しても中身の複製は起きていない（どれも元の文字列への窓）\r\n\r\n── 7. 書記素という第 4 の数え方 ──\r\n  見た目          = が\r\n  chars().count() = 2 ← 目には 1 文字に見えるのに 2\r\n  正確に数えたいときは unicode-segmentation クレートを使う\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

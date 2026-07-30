@@ -1,0 +1,51 @@
+<svg viewBox="0 0 720 340" role="img" aria-label="String と &amp;str のメモリ配置。String は ptr, len, cap の 3 つを持ち、&amp;str は ptr と len の 2 つだけを持つ。">
+  <rect x="1" y="1" width="718" height="338" rx="14" class="d-box-plain"/>
+
+  <!-- String -->
+  <text x="28" y="32" class="d-head-accent">String — 自分で確保して、自分で解放する</text>
+  <rect x="28" y="44" width="300" height="96" rx="10" class="d-accent"/>
+  <rect x="44" y="62" width="88" height="60" rx="6" class="d-box"/>
+  <text x="88" y="84" text-anchor="middle" class="d-code">ptr</text>
+  <text x="88" y="104" text-anchor="middle" class="d-mute">8 バイト</text>
+  <rect x="140" y="62" width="84" height="60" rx="6" class="d-box"/>
+  <text x="182" y="84" text-anchor="middle" class="d-code">len</text>
+  <text x="182" y="104" text-anchor="middle" class="d-mute">15</text>
+  <rect x="232" y="62" width="84" height="60" rx="6" class="d-box"/>
+  <text x="274" y="84" text-anchor="middle" class="d-code">cap</text>
+  <text x="274" y="104" text-anchor="middle" class="d-mute">15 以上</text>
+
+  <!-- &str -->
+  <text x="392" y="32" class="d-head-tip">&amp;str — 借りている「窓」。確保も解放もしない</text>
+  <rect x="392" y="44" width="300" height="96" rx="10" class="d-tip"/>
+  <rect x="408" y="62" width="130" height="60" rx="6" class="d-box"/>
+  <text x="473" y="84" text-anchor="middle" class="d-code">ptr</text>
+  <text x="473" y="104" text-anchor="middle" class="d-mute">8 バイト</text>
+  <rect x="546" y="62" width="130" height="60" rx="6" class="d-box"/>
+  <text x="611" y="84" text-anchor="middle" class="d-code">len</text>
+  <text x="611" y="104" text-anchor="middle" class="d-mute">見ている長さ</text>
+  <text x="542" y="136" text-anchor="middle" class="d-mute">cap が無い ＝ 伸ばせない</text>
+
+  <!-- ヒープ -->
+  <rect x="28" y="176" width="664" height="86" rx="10" class="d-box"/>
+  <text x="44" y="198" class="d-mute">ヒープ上のバイト列（UTF-8）</text>
+  <g class="d-code">
+    <rect x="44" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="74" y="232" text-anchor="middle" class="d-code">こ</text>
+    <rect x="108" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="138" y="232" text-anchor="middle" class="d-code">ん</text>
+    <rect x="172" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="202" y="232" text-anchor="middle" class="d-code">に</text>
+    <rect x="236" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="266" y="232" text-anchor="middle" class="d-code">ち</text>
+    <rect x="300" y="208" width="60" height="38" rx="5" class="d-box-plain"/><text x="330" y="232" text-anchor="middle" class="d-code">は</text>
+  </g>
+  <text x="384" y="232" class="d-mute">各 3 バイト × 5 文字 = 15 バイト</text>
+
+  <path d="M88 122 L88 152 L74 152 L74 208" class="d-flow"/>
+  <path d="M74 208 l-5 -9 h10 z" class="d-arrowhead"/>
+
+  <path d="M473 122 L473 164 L266 164 L266 208" class="d-flow"/>
+  <path d="M266 208 l-5 -9 h10 z" class="d-arrowhead"/>
+  <text x="380" y="160" text-anchor="middle" class="d-head-tip">途中を指すこともできる</text>
+
+  <!-- 下 -->
+  <rect x="28" y="278" width="664" height="46" rx="10" class="d-dash"/>
+  <text x="48" y="298" class="d-head-accent">要点</text>
+  <text x="48" y="316" class="d-mute">関数の引数は &amp;str で受けるのが基本。String も文字列リテラルも、どちらも渡せるようになる。</text>
+</svg>

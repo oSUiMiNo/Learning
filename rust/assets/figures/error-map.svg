@@ -1,0 +1,55 @@
+<svg viewBox="0 0 720 320" role="img" aria-label="よく出るコンパイルエラーの早見マップ。症状からエラーコードと該当章を引ける。">
+  <rect x="1" y="1" width="718" height="318" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">症状から引く、エラーの早見マップ</text>
+
+  <!-- 所有権系 -->
+  <rect x="24" y="44" width="216" height="128" rx="9" class="d-accent"/>
+  <text x="132" y="66" text-anchor="middle" class="d-title">所有権まわり</text>
+  <g class="d-code">
+    <text x="40" y="90">E0382</text><text x="104" y="90" class="d-mute">move 後に使った</text>
+    <text x="40" y="112">E0505</text><text x="104" y="112" class="d-mute">貸出中に引っ越した</text>
+    <text x="40" y="134">E0507</text><text x="104" y="134" class="d-mute">借用から持ち出した</text>
+  </g>
+  <text x="132" y="160" text-anchor="middle" class="d-head-accent">第 6 章へ</text>
+
+  <!-- 借用系 -->
+  <rect x="252" y="44" width="216" height="128" rx="9" class="d-tip"/>
+  <text x="360" y="66" text-anchor="middle" class="d-title">借用まわり</text>
+  <g class="d-code">
+    <text x="268" y="90">E0502</text><text x="332" y="90" class="d-mute">読みと書きが同席</text>
+    <text x="268" y="112">E0499</text><text x="332" y="112" class="d-mute">&amp;mut が 2 本</text>
+    <text x="268" y="134">E0596</text><text x="332" y="134" class="d-mute">mut を付け忘れた</text>
+  </g>
+  <text x="360" y="160" text-anchor="middle" class="d-head-tip">第 7 章へ</text>
+
+  <!-- 寿命系 -->
+  <rect x="480" y="44" width="216" height="128" rx="9" class="d-deep"/>
+  <text x="588" y="66" text-anchor="middle" class="d-title">寿命まわり</text>
+  <g class="d-code">
+    <text x="496" y="90">E0106</text><text x="560" y="90" class="d-mute">'a を書いていない</text>
+    <text x="496" y="112">E0597</text><text x="560" y="112" class="d-mute">借用先が先に消える</text>
+    <text x="496" y="134">E0621</text><text x="560" y="134" class="d-mute">寿命の対応が不明</text>
+  </g>
+  <text x="588" y="160" text-anchor="middle" class="d-head-deep">第 15 章へ</text>
+
+  <!-- 型系 -->
+  <rect x="24" y="186" width="330" height="112" rx="9" class="d-box"/>
+  <text x="189" y="208" text-anchor="middle" class="d-title">型とトレイト</text>
+  <g class="d-code">
+    <text x="40" y="232">E0308</text><text x="104" y="232" class="d-mute">型が合わない（暗黙変換なし）</text>
+    <text x="40" y="254">E0277</text><text x="104" y="254" class="d-mute">必要な能力を実装していない</text>
+    <text x="40" y="276">E0599</text><text x="104" y="276" class="d-mute">そのメソッドが生えていない</text>
+  </g>
+
+  <!-- 網羅性/可視性 -->
+  <rect x="366" y="186" width="330" height="112" rx="9" class="d-box"/>
+  <text x="531" y="208" text-anchor="middle" class="d-title">分岐と公開範囲</text>
+  <g class="d-code">
+    <text x="382" y="232">E0004</text><text x="446" y="232" class="d-mute">match に漏れがある</text>
+    <text x="382" y="254">E0384</text><text x="446" y="254" class="d-mute">不変なものに再代入した</text>
+    <text x="382" y="276">E0603</text><text x="446" y="276" class="d-mute">pub が付いていない</text>
+  </g>
+
+  <text x="360" y="312" text-anchor="middle" class="d-mute">どのコードも rustc --explain E0382 のように打てば、公式の解説が読めます。</text>
+</svg>

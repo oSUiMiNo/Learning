@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第18章 スマートポインタ — Box, Rc, RefCell | Rust 入門</title>
+<meta name="description" content="「所有者はひとりだけ」では書けない形が出てきたときの道具です。参照カウントと、実行時に借用を検査する仕組みを使い分けます。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li class="is-current"><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 18 章<span class="dot">·</span>読了目安 15 分</p>
+        <h1>第18章 スマートポインタ — Box, Rc, RefCell</h1>
+        <p class="lede">「所有者はひとりだけ」では書けない形が出てきたときの道具です。参照カウントと、実行時に借用を検査する仕組みを使い分けます。</p>
+      </header>
+      <div class="prose">
+<p>
+「持ち主はひとりだけ」という規則は強力ですが、それでは書けない形もあります。
+</p>
+
+<ul>
+  <li>再帰的なデータ構造（木、連結リスト）</li>
+  <li>複数の場所から同じものを見たい（親子の相互参照、キャッシュ）</li>
+  <li>外から見ると不変なのに、中身を書き換えたい</li>
+</ul>
+
+<p>
+そのための道具が用意されています。<strong>4 つ覚えれば足ります。</strong>
+</p>
+
+<h2 id="使い分け">使い分け</h2>
+
+<figure class="diagram"><svg viewBox="0 0 720 290" role="img" aria-label="Box, Rc, Arc, RefCell, Mutex の使い分けを決めるフローチャート。">
+  <rect x="1" y="1" width="718" height="288" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">まず「所有者は 1 人で足りるか」を考える</text>
+
+  <!-- 質問1 -->
+  <rect x="24" y="46" width="200" height="60" rx="9" class="d-box"/>
+  <text x="124" y="70" text-anchor="middle" class="d-title">持ち主は 1 人？</text>
+  <text x="124" y="90" text-anchor="middle" class="d-mute">ふつうはこちら</text>
+
+  <path d="M224 76 L282 76" class="d-flow"/>
+  <path d="M282 76 l-10 -5 v10 z" class="d-arrowhead"/>
+  <text x="253" y="66" text-anchor="middle" class="d-mute">はい</text>
+
+  <rect x="282" y="46" width="180" height="60" rx="9" class="d-accent"/>
+  <text x="372" y="70" text-anchor="middle" class="d-code">そのまま持つ</text>
+  <text x="372" y="90" text-anchor="middle" class="d-mute">大きい / 再帰なら Box&lt;T&gt;</text>
+
+  <path d="M124 106 L124 140" class="d-flow"/>
+  <path d="M124 140 l-5 -9 h10 z" class="d-arrowhead"/>
+  <text x="136" y="128" class="d-mute">いいえ</text>
+
+  <!-- 質問2 -->
+  <rect x="24" y="140" width="200" height="60" rx="9" class="d-box"/>
+  <text x="124" y="164" text-anchor="middle" class="d-title">スレッドをまたぐ？</text>
+
+  <path d="M224 170 L282 170" class="d-flow"/>
+  <path d="M282 170 l-10 -5 v10 z" class="d-arrowhead"/>
+  <text x="253" y="160" text-anchor="middle" class="d-mute">いいえ</text>
+  <rect x="282" y="140" width="180" height="60" rx="9" class="d-tip"/>
+  <text x="372" y="170" text-anchor="middle" class="d-code">Rc&lt;T&gt;</text>
+  <text x="372" y="190" text-anchor="middle" class="d-mute">参照カウント（速い）</text>
+
+  <path d="M462 170 L520 170" class="d-flow"/>
+  <path d="M520 170 l-10 -5 v10 z" class="d-arrowhead"/>
+  <text x="491" y="160" text-anchor="middle" class="d-mute">はい</text>
+  <rect x="520" y="140" width="176" height="60" rx="9" class="d-deep"/>
+  <text x="608" y="170" text-anchor="middle" class="d-code">Arc&lt;T&gt;</text>
+  <text x="608" y="190" text-anchor="middle" class="d-mute">原子的なカウント</text>
+
+  <!-- 書き換え -->
+  <rect x="24" y="216" width="672" height="60" rx="9" class="d-dash"/>
+  <text x="44" y="238" class="d-head-accent">共有したうえで書き換えたいなら、さらに内側に包む</text>
+  <text x="44" y="258" class="d-code">単一スレッド: Rc&lt;RefCell&lt;T&gt;&gt;          複数スレッド: Arc&lt;Mutex&lt;T&gt;&gt;</text>
+  <text x="440" y="272" class="d-mute">RefCell は借用の検査が実行時になるので、破ると panic する</text>
+</svg>
+<figcaption>使い分けのフローチャート。持ち主が 1 人なら Box、複数なら Rc（単一スレッド）か Arc（複数スレッド）。さらに共有したうえで書き換えたいなら、内側に RefCell か Mutex を包む。</figcaption></figure>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>型</th><th>役目</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>Box&lt;T&gt;</code></td><td>中身をヒープに置く。持ち主は 1 人</td><td>ふつうの参照型（ただし共有はしない）</td></tr>
+    <tr><td><code>Rc&lt;T&gt;</code></td><td>参照カウントで共有。単一スレッド</td><td><strong>ふつうの参照型</strong></td></tr>
+    <tr><td><code>Arc&lt;T&gt;</code></td><td>同じ。スレッドをまたげる</td><td>ふつうの参照型</td></tr>
+    <tr><td><code>RefCell&lt;T&gt;</code></td><td>借用の検査を実行時に回す</td><td>—（C# は常にこれ相当）</td></tr>
+    <tr><td><code>Weak&lt;T&gt;</code></td><td>カウントを増やさない参照</td><td><code>WeakReference</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="Box--再帰的なデータ構造">Box — 再帰的なデータ構造</h2>
+
+<p>
+次の <code>enum</code> は、<code>Box</code> が無いと<strong>定義できません</strong>。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nc">Tree</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Leaf</span><span class="p">(</span><span class="kt">i32</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="n">Node</span><span class="p">(</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Tree</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Tree</span><span class="o">&gt;</span><span class="p">),</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note deep">
+  <span class="note-title">なぜ Box が必要なのか</span>
+  <p>
+    Rust はコンパイル時に「この型は何バイトか」を決めます。
+    <code>Node(Tree, Tree)</code> と書くと、
+    <code>Tree</code> の大きさを決めるために <code>Tree</code> の大きさが必要になり、
+    無限に続いてしまいます。
+  </p>
+  <p>
+    <code>Box&lt;Tree&gt;</code> はポインタなので、常に 8 バイトです。
+    大きさが決まるので定義できるようになります。
+  </p>
+  <p>
+    C# ではクラスが常に参照なので、この問題が起きません。
+    かわりに<strong>すべてのオブジェクトが必ずヒープに置かれます</strong>。
+    Rust は「ヒープに置くかどうか」を選べる、という違いです。
+  </p>
+</div>
+
+<h2 id="Rc--複数の持ち主">Rc — 複数の持ち主</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">doc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Document</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;仕様書&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">});</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">viewer_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">);</span><span class="w">    </span><span class="c1">// 中身は複製しない。カウントが増える</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">viewer_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">);</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">));</span><span class="w">   </span><span class="c1">// 3</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">これが C# の「ふつう」</span>
+  <p>
+    C# でクラスのインスタンスを 3 つの変数に代入すれば、
+    3 か所から同じものが見えます。それが既定の動作です。
+  </p>
+  <p>
+    Rust では<strong>それを明示的に選ぶ</strong>ことになります。
+    <code>Rc</code> と書くことで「これは共有されている」ことがコードに現れます。
+  </p>
+  <p>
+    <code>Rc::clone(&amp;doc)</code> と書く慣習にも意味があります。
+    <code>doc.clone()</code> でも同じですが、
+    前者だと「中身の複製ではなくカウントの増加だ」と読み手に伝わります。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">Rc は書き換えられない</span>
+  <p>
+    <code>Rc&lt;T&gt;</code> から得られるのは <code>&amp;T</code> だけです。
+    <strong>複数の持ち主がいるので、書き換えを許すと借用規則が破れます。</strong>
+  </p>
+  <p>
+    共有したうえで書き換えたいときは、内側に <code>RefCell</code> を包みます。
+    それが次の話です。
+  </p>
+</div>
+
+<h2 id="RefCell--内部可変性">RefCell — 内部可変性</h2>
+
+<p>
+<code>RefCell</code> は「借用の検査をコンパイル時ではなく<strong>実行時</strong>に行う」箱です。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Counter</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">hits</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Counter</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">hit</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                    </span><span class="c1">// &amp;self なのに書き換えられる</span></span><span class="cl"><span class="w">        </span><span class="o">*</span><span class="bp">self</span><span class="p">.</span><span class="n">hits</span><span class="p">.</span><span class="n">borrow_mut</span><span class="p">()</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<div class="note">
+  <span class="note-title">なぜこれが要るのか</span>
+  <p>
+    「外から見ると不変なのに、中では状態を持ちたい」場面があります。
+    キャッシュ、呼び出し回数の記録、遅延初期化などです。
+  </p>
+  <p>
+    C# なら <code>private int _hits;</code> を書けば済みます。
+    Rust では <code>&amp;self</code> のメソッドから書き換えられないので、
+    <code>RefCell</code> で「実行時に検査する」ことを選びます。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">RefCell は破ると panic する</span>
+  <p>
+    検査が実行時なので、規則を破ると<strong>コンパイルは通り、実行時に落ちます</strong>。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">borrow</span><span class="p">();</span><span class="w">       </span><span class="c1">// 読む借用</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">borrow_mut</span><span class="p">();</span><span class="w">  </span><span class="c1">// 書く借用 → 実行時に panic</span></span></code></pre></figure>
+  <p>
+    メッセージは <code>already borrowed: BorrowMutError</code> です。
+    落ちてほしくないなら <code>try_borrow_mut()</code> を使って
+    <code>Result</code> で受けてください。
+  </p>
+  <p>
+    <strong>コンパイル時の安全を、実行時の安全と引き換えにしている</strong>ことを
+    忘れないでください。使うのは本当に必要な場面だけです。
+  </p>
+</div>
+
+<h2 id="Rc--RefCell--定番の組み合わせ">Rc + RefCell — 定番の組み合わせ</h2>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">shared</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">()));</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">shared</span><span class="p">);</span></span><span class="cl"><span class="n">writer</span><span class="p">.</span><span class="n">borrow_mut</span><span class="p">().</span><span class="n">push</span><span class="p">(</span><span class="s">&quot;追記した&quot;</span><span class="p">);</span></span><span class="cl"><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="n">borrow</span><span class="p">());</span></span></code></pre></figure>
+
+<p>
+「共有したうえで書き換えたい」ときの形です。
+C# のふつうのオブジェクト共有に、いちばん近い状態になります。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">C# の楽さと引き換えているもの</span>
+  <p>
+    <code>Rc&lt;RefCell&lt;T&gt;&gt;</code> は、C# なら何も書かずに得られる状態です。
+    Rust ではそれが冗長に見えます。
+  </p>
+  <p>
+    ただし C# 側にも代償があります。
+    「このオブジェクトはどこから書き換えられるのか」が分からないという代償です。
+    Rust では <code>Rc&lt;RefCell&lt;T&gt;&gt;</code> と型に書いてあるので、
+    <strong>共有可変であることが一目で分かります</strong>。
+  </p>
+  <p>
+    そして重要なのは、<strong>ほとんどの場面ではこれが要らない</strong>ことです。
+    まず所有権と借用で書けないか考えてください。
+    <code>Rc&lt;RefCell&lt;T&gt;&gt;</code> が増えてきたら、設計を見直す合図です。
+  </p>
+</div>
+
+<h2 id="Weak--循環参照を避ける">Weak — 循環参照を避ける</h2>
+
+<div class="note pitfall">
+  <span class="note-title">Rc だけでは漏れる</span>
+  <p>
+    親が子を <code>Rc</code> で持ち、子が親を <code>Rc</code> で持つと、
+    カウントが 0 にならず<strong>永遠に解放されません</strong>。
+  </p>
+  <p>
+    C# の GC は循環参照を検出できるので問題ありませんが、
+    <strong>参照カウント方式では検出できません</strong>。
+    ここは C# より弱い部分です。
+  </p>
+  <p>
+    片方を <code>Weak</code> にすれば解決します。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Child</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">parent</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="o">&lt;</span><span class="n">Weak</span><span class="o">&lt;</span><span class="n">Parent</span><span class="o">&gt;&gt;</span><span class="p">,</span><span class="w">   </span><span class="c1">// 弱い参照</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="c1">// 使うときは upgrade する。相手が消えていれば None</span></span><span class="cl"><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">found</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">child</span><span class="p">.</span><span class="n">parent</span><span class="p">.</span><span class="n">borrow</span><span class="p">().</span><span class="n">upgrade</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span></span></code></pre></figure>
+</div>
+
+<h2 id="Deref--Box-が透過的に見える理由">Deref — Box が透過的に見える理由</h2>
+
+<div class="note deep">
+  <span class="note-title">なぜ box.method() と書けるのか</span>
+  <p>
+    <code>Box&lt;String&gt;</code> に対して <code>.len()</code> と書けます。
+    <code>Box</code> に <code>len()</code> は無いのに動きます。
+  </p>
+  <p>
+    これは <code>Deref</code> トレイトのおかげです。
+    メソッドが見つからないとき、Rust は
+    <strong>自動的に参照を外して探しに行きます</strong>（自動参照外し）。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>この型に</th><th>これが自動で使える</th></tr></thead>
+    <tbody>
+      <tr><td><code>Box&lt;T&gt;</code></td><td><code>T</code> のメソッド</td></tr>
+      <tr><td><code>Rc&lt;T&gt;</code></td><td><code>T</code> のメソッド</td></tr>
+      <tr><td><code>String</code></td><td><code>&amp;str</code> のメソッド</td></tr>
+      <tr><td><code>Vec&lt;T&gt;</code></td><td><code>&amp;[T]</code> のメソッド</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>String</code> に <code>&amp;str</code> のメソッドが使えるのも、これが理由です。
+    第 8 章で「引数は <code>&amp;str</code> で受ければ <code>String</code> も渡せる」
+    と書いたのは、この仕組みによるものです。
+  </p>
+</div>
+
+<h2 id="全体を動かす">全体を動かす</h2>
+
+<figure class="code-block" data-lang="rust" data-src="18-smart-pointers/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! スマートポインタ。「所有者はひとりだけ」では書けない形への対処です。</span></span><span class="cl"></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">cell</span><span class="p">::</span><span class="n">RefCell</span><span class="p">;</span></span><span class="cl"><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">rc</span><span class="p">::{</span><span class="n">Rc</span><span class="p">,</span><span class="w"> </span><span class="n">Weak</span><span class="p">};</span></span><span class="cl"></span><span class="cl"><span class="sd">/// Box は「中身をヒープに置く」だけの箱。</span></span><span class="cl"><span class="sd">/// 再帰的なデータ構造は、これが無いとサイズが決まらず定義できない。</span></span><span class="cl"><span class="cp">#[derive(Debug)]</span></span><span class="cl"><span class="k">enum</span><span class="w"> </span><span class="nc">Tree</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">Leaf</span><span class="p">(</span><span class="kt">i32</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="n">Node</span><span class="p">(</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Tree</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">Tree</span><span class="o">&gt;</span><span class="p">),</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">sum</span><span class="p">(</span><span class="n">tree</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Tree</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">tree</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">Tree</span><span class="p">::</span><span class="n">Leaf</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">v</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">Tree</span><span class="p">::</span><span class="n">Node</span><span class="p">(</span><span class="n">left</span><span class="p">,</span><span class="w"> </span><span class="n">right</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">sum</span><span class="p">(</span><span class="n">left</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sum</span><span class="p">(</span><span class="n">right</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// Rc は参照カウント付きの共有。読むだけなら複数の持ち主を作れる。</span></span><span class="cl"><span class="sd">/// C# の参照とだいたい同じ感覚だが、カウントが見える点が違う。</span></span><span class="cl"><span class="cp">#[derive(Debug)]</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Document</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// RefCell は「借用の検査を実行時に回す」箱。</span></span><span class="cl"><span class="sd">/// 外から見ると不変なのに中身を書き換えられる（内部可変性）。</span></span><span class="cl"><span class="cp">#[derive(Debug)]</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Counter</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">hits</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">Counter</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="sd">/// &amp;self なのに書き換えられる。ここが RefCell の使いどころ。</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">hit</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="o">*</span><span class="bp">self</span><span class="p">.</span><span class="n">hits</span><span class="p">.</span><span class="n">borrow_mut</span><span class="p">()</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 親子で相互に参照したいとき、両方を Rc にすると循環して解放されない。</span></span><span class="cl"><span class="sd">/// 片方を Weak にすると解決する。</span></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Parent</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">children</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Rc</span><span class="o">&lt;</span><span class="n">Child</span><span class="o">&gt;&gt;&gt;</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">struct</span><span class="w"> </span><span class="nc">Child</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">parent</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="o">&lt;</span><span class="n">Weak</span><span class="o">&lt;</span><span class="n">Parent</span><span class="o">&gt;&gt;</span><span class="p">,</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. Box でヒープに置く ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">tree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Tree</span><span class="p">::</span><span class="n">Node</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Tree</span><span class="p">::</span><span class="n">Leaf</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span></span><span class="cl"><span class="w">        </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Tree</span><span class="p">::</span><span class="n">Node</span><span class="p">(</span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Tree</span><span class="p">::</span><span class="n">Leaf</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span><span class="w"> </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Tree</span><span class="p">::</span><span class="n">Leaf</span><span class="p">(</span><span class="mi">3</span><span class="p">)))),</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  合計 = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">sum</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tree</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  Box が無いと、この enum は「サイズが無限」になって定義できない&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. Rc で共有する ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">doc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Document</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;仕様書&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">});</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  作った直後のカウント = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">viewer_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">);</span><span class="w"> </span><span class="c1">// 中身は複製しない。カウントだけ増える</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">viewer_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  2 人が見ている       = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">));</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">            </span><span class="s">&quot;  どちらも同じ中身     = {} / {}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">            </span><span class="n">viewer_a</span><span class="p">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">viewer_b</span><span class="p">.</span><span class="n">title</span></span><span class="cl"><span class="w">        </span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="c1">// ここで 2 人ぶん減る</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  抜けた後のカウント   = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">doc</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. RefCell で内部可変性 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Counter</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">hits</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="n">counter</span><span class="p">.</span><span class="n">hit</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">counter</span><span class="p">.</span><span class="n">hit</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="n">counter</span><span class="p">.</span><span class="n">hit</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="c1">// counter は mut ではないのに、中身が増えている</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  hits = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">counter</span><span class="p">.</span><span class="n">hits</span><span class="p">.</span><span class="n">borrow</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  変数に mut を付けていないのに書き換えられた&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. RefCell の代償 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// コンパイル時ではなく実行時に検査するので、破ると panic する。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">borrow</span><span class="p">();</span></span><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">try_borrow_mut</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  借用できた（ここには来ない）&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  読み中に書き込み借用しようとして弾かれた（実行時検査）&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="nb">drop</span><span class="p">(</span><span class="n">first</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;  借用を手放してからなら書ける: {:?}&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">        </span><span class="n">cell</span><span class="p">.</span><span class="n">try_borrow_mut</span><span class="p">().</span><span class="n">is_ok</span><span class="p">()</span></span><span class="cl"><span class="w">    </span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. Rc + RefCell の組み合わせ ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 「共有したうえで書き換えたい」ときの定番。</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">shared</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">()));</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">shared</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="n">writer</span><span class="p">.</span><span class="n">borrow_mut</span><span class="p">().</span><span class="n">push</span><span class="p">(</span><span class="s">&quot;追記した&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  共有した Vec = {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="n">borrow</span><span class="p">());</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. Weak で循環参照を避ける ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">parent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Parent</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;親&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="n">children</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="nb">Vec</span><span class="p">::</span><span class="n">new</span><span class="p">()),</span></span><span class="cl"><span class="w">    </span><span class="p">});</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">child</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Child</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;子&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="n">parent</span><span class="p">:</span><span class="w"> </span><span class="nc">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Rc</span><span class="p">::</span><span class="n">downgrade</span><span class="p">(</span><span class="o">&amp;</span><span class="n">parent</span><span class="p">)),</span><span class="w"> </span><span class="c1">// 弱い参照</span></span><span class="cl"><span class="w">    </span><span class="p">});</span></span><span class="cl"><span class="w">    </span><span class="n">parent</span><span class="p">.</span><span class="n">children</span><span class="p">.</span><span class="n">borrow_mut</span><span class="p">().</span><span class="n">push</span><span class="p">(</span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">child</span><span class="p">));</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  親のカウント（強い）= {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">parent</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  親のカウント（弱い）= {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">weak_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">parent</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="c1">// 弱い参照は upgrade して初めて使える。相手が消えていれば None。</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">found</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">child</span><span class="p">.</span><span class="n">parent</span><span class="p">.</span><span class="n">borrow</span><span class="p">().</span><span class="n">upgrade</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {} から {} を辿れた&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">child</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">found</span><span class="p">.</span><span class="n">name</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  両方を Rc にすると、カウントが 0 にならず解放されない&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. 使い分け ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  所有者が 1 人でヒープに置きたい      → Box&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  読む持ち主が複数（単一スレッド）      → Rc&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  読む持ち主が複数（複数スレッド）      → Arc&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  不変に見せたまま中身を書き換えたい    → RefCell / Mutex&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\18-smart-pointers&gt;</span> cargo run --quiet</span>
+── 1. Box でヒープに置く ──
+  合計 = 6
+  Box が無いと、この enum は「サイズが無限」になって定義できない
+
+── 2. Rc で共有する ──
+  作った直後のカウント = 1
+  2 人が見ている       = 3
+  どちらも同じ中身     = 仕様書 / 仕様書
+  抜けた後のカウント   = 1
+
+── 3. RefCell で内部可変性 ──
+  hits = 3
+  変数に mut を付けていないのに書き換えられた
+
+── 4. RefCell の代償 ──
+  読み中に書き込み借用しようとして弾かれた（実行時検査）
+  借用を手放してからなら書ける: true
+
+── 5. Rc + RefCell の組み合わせ ──
+  共有した Vec = [&quot;追記した&quot;]
+
+── 6. Weak で循環参照を避ける ──
+  親のカウント（強い）= 1
+  親のカウント（弱い）= 1
+  子 から 親 を辿れた
+  両方を Rc にすると、カウントが 0 にならず解放されない
+
+── 7. 使い分け ──
+  所有者が 1 人でヒープに置きたい      → Box
+  読む持ち主が複数（単一スレッド）      → Rc
+  読む持ち主が複数（複数スレッド）      → Arc
+  不変に見せたまま中身を書き換えたい    → RefCell / Mutex</code></pre></div><figcaption>実行結果。Rc のカウントが増えて減る様子、RefCell が実行時に借用を弾く様子、Weak で循環を避けている様子が順に出ている。</figcaption></figure>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/18-smart-pointers</code> を動かして、<code>Rc</code> のカウントの変化を確認してください。</li>
+    <li><code>enum Tree</code> の <code>Box</code> を外して、E0072（無限のサイズ）を出してください。</li>
+    <li><code>let first = cell.borrow();</code> の後の <code>try_borrow_mut()</code> を <code>borrow_mut()</code> に変えて、<strong>実行時に panic する</strong>ことを確認してください。</li>
+    <li><code>Child</code> の <code>Weak&lt;Parent&gt;</code> を <code>Rc&lt;Parent&gt;</code> に変えて、<code>strong_count</code> がどうなるか観察してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>Box&lt;T&gt;</code> はヒープに置くだけ。再帰的なデータ構造に必要。</li>
+    <li><code>Rc&lt;T&gt;</code> は参照カウントで共有。<strong>C# の参照型の既定の動作</strong>にあたる。</li>
+    <li><code>Rc</code> は読み専用。書きたいなら <code>Rc&lt;RefCell&lt;T&gt;&gt;</code>。</li>
+    <li><code>RefCell</code> は検査が実行時。破ると <strong>panic</strong> する。</li>
+    <li>循環参照は参照カウントでは解放されない。片方を <code>Weak</code> にする。</li>
+    <li><code>Rc&lt;RefCell&lt;T&gt;&gt;</code> が増えてきたら、設計を見直す合図。</li>
+    <li><code>Deref</code> のおかげで <code>Box</code> や <code>String</code> は中身のメソッドが透過的に使える。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../17-testing/"><span class="pager-dir">← 前の章</span><span class="pager-title">テストとドキュメント</span></a>
+<a class="pager-link pager-next" href="../19-concurrency/"><span class="pager-dir">次の章 →</span><span class="pager-title">並行処理</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<p>
+先に結論を書きます。<strong>Rust はエディタの支援があるかどうかで、難易度がまるで変わります。</strong>
+</p>
+
+<p>
+理由は単純です。Rust は型推論が強く、コードには型がほとんど書かれていません。
+しかも所有権と借用の規則があるので、
+「この変数はいま何型で、借りているのか持っているのか」が分かるかどうかが、
+そのまま読みやすさになります。エディタがそれを教えてくれれば、
+コンパイルする前に間違いに気づけます。
+</p>
+
+<h2>VS Code と rust-analyzer</h2>
+
+<p>
+公式に推奨されている構成は <strong>VS Code ＋ rust-analyzer 拡張</strong>です。
+拡張は 1 つだけ入れれば十分です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>値</th></tr></thead>
+  <tbody>
+    <tr><td>拡張の名前</td><td><strong>rust-analyzer</strong></td></tr>
+    <tr><td>発行元</td><td>The Rust Programming Language</td></tr>
+    <tr><td>拡張 ID</td><td><code>rust-lang.rust-analyzer</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+コマンドで入れることもできます。
+</p>
+
+<div class="src" data-lang="bash" data-file="PowerShell">
+code --install-extension rust-lang.rust-analyzer
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">「Rust」という名前の拡張を入れないこと</span>
+  <p>
+    以前は <code>rust-lang.rust</code> という名前の拡張がありました（中身は RLS という古い仕組み）。
+    これは<strong>すでに非推奨で、開発も止まっています</strong>。
+  </p>
+  <p>
+    古い記事には「Rust 拡張を入れる」と書かれていることがありますが、
+    いま入れるべきなのは <strong>rust-analyzer</strong> です。
+    名前が似ているので、発行元と ID で確かめてください。
+    両方入れると競合して補完がおかしくなります。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">ほかのエディタでもよい場合</span>
+  <p>
+    rust-analyzer は言語サーバ（LSP）なので、対応しているエディタなら同じ支援が受けられます。
+  </p>
+  <ul>
+    <li><strong>RustRover</strong>（JetBrains 製）… Rust 専用の IDE。非商用なら無料で使えます。IntelliJ 系に慣れているならこちら。</li>
+    <li><strong>Zed</strong> … rust-analyzer を内蔵しており、設定なしで動きます。</li>
+    <li><strong>Neovim / Helix</strong> … LSP の設定を書けば同じように動きます。</li>
+  </ul>
+  <p>この教材のコードはエディタに依存しないので、好きなものを選んでください。</p>
+</div>
+
+<h2>入れると何が変わるか</h2>
+
+<p>
+rust-analyzer が効いていると、次のことが起きます。
+このうち最初の 2 つが、Rust を学ぶうえで決定的に効きます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>できること</th><th>なぜ効くか</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>型が薄い文字で表示される</strong><br>（インレイヒント）</td>
+      <td>書いていない型が目に見える。<code>let x = ...</code> の <code>x</code> が
+          <code>String</code> なのか <code>&amp;str</code> なのかが即分かる</td>
+    </tr>
+    <tr>
+      <td><strong>保存前にエラーが出る</strong></td>
+      <td>所有権の違反がその場で赤くなる。コンパイルを待たなくてよい</td>
+    </tr>
+    <tr>
+      <td>メソッド補完</td>
+      <td>そのトレイトが実装されているものだけが出るので、探しやすい</td>
+    </tr>
+    <tr>
+      <td>定義へ移動（F12）</td>
+      <td>標準ライブラリの中身まで読める。実装が全部読めるのは Rust の強み</td>
+    </tr>
+    <tr>
+      <td>クイックフィックス</td>
+      <td><code>.clone()</code> の挿入や <code>use</code> の追加を提案してくれる</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">インレイヒントを必ず有効にしておく</span>
+  <p>
+    型が薄く表示される機能は、Rust の学習では特に効きます。
+    <strong>既定で有効ですが、消えている場合</strong>は設定を確認してください。
+    <code>Ctrl</code> + <code>,</code> で設定を開き、
+    <code>editor.inlayHints.enabled</code> を <code>on</code> にします。
+  </p>
+  <p>
+    <code>Ctrl</code> + <code>Alt</code> を押している間だけ表示する、という設定
+    （<code>onUnlessPressed</code>）も便利です。
+  </p>
+</div>
+
+<h2>おすすめの設定</h2>
+
+<p>
+プロジェクトの <code>.vscode/settings.json</code> に置いておくと、
+保存するだけで整形と静的解析がかかるようになります。
+</p>
+
+<div class="src" data-lang="json" data-file=".vscode/settings.json">
+{
+  "editor.formatOnSave": true,
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.inlayHints.typeHints.enable": true,
+  "rust-analyzer.inlayHints.parameterHints.enable": true
+}
+</div>
+
+<p>
+3 行目の <code>check.command</code> を <code>clippy</code> にしておくのが要点です。
+既定の <code>cargo check</code> より多くのことを指摘してくれます。
+</p>
+
+<h2>付いてくる道具たち</h2>
+
+<p>
+rustup を入れた時点で、次のコマンドが使えるようになっています。
+エディタからも呼ばれますが、意味を知っておくと役に立ちます。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コマンド</th><th>やること</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>cargo build</code></td><td>ビルドする</td><td><code>dotnet build</code></td></tr>
+    <tr><td><code>cargo run</code></td><td>ビルドして実行する</td><td><code>dotnet run</code></td></tr>
+    <tr><td><code>cargo check</code></td><td><strong>型検査だけして、実行ファイルは作らない</strong></td><td>—</td></tr>
+    <tr><td><code>cargo test</code></td><td>テストを走らせる</td><td><code>dotnet test</code></td></tr>
+    <tr><td><code>cargo fmt</code></td><td>整形する</td><td><code>dotnet format</code></td></tr>
+    <tr><td><code>cargo clippy</code></td><td>書き方の助言をもらう</td><td>アナライザ / IDE0xxx</td></tr>
+    <tr><td><code>cargo doc --open</code></td><td>自分のコードのドキュメントを作って開く</td><td>DocFX 相当</td></tr>
+    <tr><td><code>cargo add &lt;名前&gt;</code></td><td>依存を追加する</td><td><code>dotnet add package</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">cargo check は速い</span>
+  <p>
+    <code>cargo check</code> は型検査だけを行い、実行ファイルを作りません。
+    そのぶん <code>cargo build</code> よりずっと速いので、
+    「まず通るかどうかだけ知りたい」ときに便利です。
+    rust-analyzer が裏で走らせているのもこれです。
+  </p>
+</div>
+
+<h2>clippy は何を言ってくるのか</h2>
+
+<p>
+clippy は「動くけれど、こう書いたほうがよい」を教えてくれます。
+実際に少し雑なコードを書いて、走らせた結果がこれです。
+</p>
+
+<!--term: cargo-clippy | わざと雑に書いたコードに cargo clippy をかけた結果。len() == 0 は is_empty() にせよ、要素を追加しない Vec は配列でよい、という 2 点を指摘している。help の行に直し方まで書いてあるのが特徴。 -->
+
+<p>
+注目してほしいのは <code>help:</code> の行です。
+<strong>ただ「駄目だ」と言うのではなく、どう書けばよいかまで示してくれます。</strong>
+指摘の意味が分からないときは、末尾の URL を開けば解説が読めます。
+</p>
+
+<div class="note">
+  <span class="note-title">自動で直してもらう</span>
+  <p>
+    出力の最後に書いてあるとおり、直せるものは自動で直せます。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+cargo clippy --fix
+  </div>
+  <p>
+    納得できない指摘は無効にできます。理由をコメントに書いておくと後で助かります。
+  </p>
+  <div class="src" data-lang="rust">
+// ここでは push を見せたいので、あえて vec! を使わない
+#[allow(clippy::vec_init_then_push)]
+fn demo() {}
+  </div>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">clippy は「うるさいアナライザ」ではない</span>
+  <p>
+    C# のアナライザは、チームによっては切ってしまうこともあります。
+    Rust の clippy は<strong>初心者にとって教師として機能します</strong>。
+  </p>
+  <p>
+    「なぜこの書き方が良くないのか」を毎回教えてくれるので、
+    指摘に従っているうちに Rust らしい書き方が身につきます。
+    この教材のサンプルコードも、全部 clippy の指摘ゼロで通しています。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li>rust-analyzer を入れて、適当な <code>let x = 5;</code> の行を書いてみてください。<code>x</code> の後ろに <code>: i32</code> が薄く出れば成功です。</li>
+    <li><code>let s = "hello".to_string();</code> と書いて、<code>s</code> の型が <code>String</code> と出ることを確認してください。<code>let s = "hello";</code> なら <code>&amp;str</code> になります。この違いが第 8 章の主題です。</li>
+    <li>わざと <code>let x = 5; x = 6;</code> と書いて、保存する前に赤い波線が出ることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>入れるのは <strong>rust-analyzer</strong>（<code>rust-lang.rust-analyzer</code>）。古い「Rust」拡張は入れない。</li>
+    <li>インレイヒントで型が見えるようにすると、Rust の学習は一気に楽になる。</li>
+    <li><code>rust-analyzer.check.command</code> を <code>clippy</code> にしておく。</li>
+    <li><code>cargo check</code> は型検査だけなので速い。</li>
+    <li>clippy は直し方まで教えてくれる教師。逆らわずに従うのが早い。</li>
+  </ul>
+</div>

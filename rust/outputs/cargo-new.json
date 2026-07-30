@@ -1,0 +1,25 @@
+{
+  "name": "cargo-new",
+  "title": "Windows PowerShell",
+  "note": "cargo new で雛形を作る",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "cargo new hello",
+      "output": "\u001b[1m\u001b[92m    Creating\u001b[0m binary (application) `hello` package\r\n\u001b[1m\u001b[92mnote\u001b[0m: see more `Cargo.toml` keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\hello>",
+      "command": "type Cargo.toml",
+      "output": "[package]\nname = \"hello\"\nversion = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\hello>",
+      "command": "type src\\main.rs",
+      "output": "fn main() {\n    println!(\"Hello, world!\");\n}\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

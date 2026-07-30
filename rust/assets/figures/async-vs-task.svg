@@ -1,0 +1,53 @@
+<svg viewBox="0 0 720 340" role="img" aria-label="C# の Task と Rust の Future の違い。Task はメソッドを呼んだ時点で走り始めるが、Future は await されるまで何も起きない。">
+  <rect x="1" y="1" width="718" height="338" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-warn">見た目はそっくりだが、走り始める瞬間が違う</text>
+
+  <!-- C# 側 -->
+  <rect x="28" y="44" width="664" height="122" rx="10" class="d-cs"/>
+  <text x="48" y="68" class="d-head-cs">C# — 呼んだ時点で走り出す（ホットな Task）</text>
+
+  <rect x="48" y="80" width="150" height="34" rx="8" class="d-box"/>
+  <text x="123" y="102" text-anchor="middle" class="d-code">var t = FetchAsync();</text>
+
+  <path d="M198 97 L268 97" class="d-flow-deep"/>
+  <path d="M268 97 l-10 -5 v10 z" class="d-arrowhead-deep"/>
+
+  <rect x="268" y="80" width="200" height="34" rx="8" class="d-tip"/>
+  <text x="368" y="102" text-anchor="middle" class="d-code">もう動いている</text>
+
+  <path d="M468 97 L538 97" class="d-flow-deep"/>
+  <path d="M538 97 l-10 -5 v10 z" class="d-arrowhead-deep"/>
+
+  <rect x="538" y="80" width="134" height="34" rx="8" class="d-box"/>
+  <text x="605" y="102" text-anchor="middle" class="d-code">await t;</text>
+
+  <text x="48" y="136" class="d-mute">await は「終わるのを待つ」だけ。await しなくても処理は進む。</text>
+  <text x="48" y="154" class="d-mute">だから await 忘れは「投げっぱなし」になり、例外が消えることもある。</text>
+
+  <!-- Rust 側 -->
+  <rect x="28" y="180" width="664" height="122" rx="10" class="d-accent"/>
+  <text x="48" y="204" class="d-head-accent">Rust — await されるまで 1 行も走らない（レイジーな Future）</text>
+
+  <rect x="48" y="216" width="150" height="34" rx="8" class="d-box"/>
+  <text x="123" y="238" text-anchor="middle" class="d-code">let f = fetch();</text>
+
+  <path d="M198 233 L268 233" class="d-flow-mute"/>
+  <path d="M268 233 l-10 -5 v10 z" class="d-arrowhead-mute"/>
+
+  <rect x="268" y="216" width="200" height="34" rx="8" class="d-dead"/>
+  <text x="368" y="238" text-anchor="middle" class="d-dead-text">まだ何も起きていない</text>
+
+  <path d="M468 233 L538 233" class="d-flow"/>
+  <path d="M538 233 l-10 -5 v10 z" class="d-arrowhead"/>
+
+  <rect x="538" y="216" width="134" height="34" rx="8" class="d-fill-accent"/>
+  <text x="605" y="238" text-anchor="middle" class="d-code" fill="#fff">f.await</text>
+  <text x="605" y="266" text-anchor="middle" class="d-head-accent">ここで初めて動く</text>
+
+  <text x="48" y="290" class="d-mute">await 忘れは「未着手」なので、コンパイラが警告してくれる。</text>
+
+  <!-- 下 -->
+  <rect x="28" y="314" width="664" height="1" class="d-line"/>
+  <text x="28" y="332" class="d-mute">なお tokio::spawn に渡した場合だけは、ランタイムが引き取るので C# と同じく即座に走り始める。</text>
+</svg>

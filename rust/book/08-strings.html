@@ -1,0 +1,256 @@
+<p>
+先に答えを書きます。<strong>C# の <code>string</code> は UTF-16、Rust の <code>String</code> は UTF-8 です。</strong>
+</p>
+
+<p>
+この 1 行のせいで、「文字列の長さ」の意味が変わり、
+<code>s[0]</code> が書けなくなり、日本語や絵文字の扱いが変わります。
+日本語を扱う人にとっては、早めに知るほど得をする話です。
+</p>
+
+<h2>「長さ」が 3 種類ある</h2>
+
+<!--figure: utf8-vs-utf16 | 同じ文字が、UTF-16 の単位数（C# の Length）、UTF-8 のバイト数（Rust の len()）、文字数（chars().count()）でそれぞれ違う値になる。ASCII では一致するが、日本語で 3 つに分かれ、絵文字では全部違う。 -->
+
+<p>
+実際に測った結果がこれです。
+</p>
+
+<!--term: run-strings | examples/08-strings の実行結果。「こんにちは」は 15 バイト・5 文字・UTF-16 で 5 単位。絵文字の 🦀 は 4 バイト・1 文字・UTF-16 で 2 単位になる。 -->
+
+<div class="note csharp">
+  <span class="note-title">C# の Length は「文字数」ではない</span>
+  <p>
+    C# 経験者がいちばん誤解しているのがここです。
+    <code>"🦀".Length</code> は <strong>2</strong> になります。
+    UTF-16 でサロゲートペアになるためです。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やりたいこと</th><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td>バイト数</td><td><code>Encoding.UTF8.GetByteCount(s)</code></td><td><code>s.len()</code></td></tr>
+      <tr><td><strong>文字数</strong></td><td><code>s.EnumerateRunes().Count()</code></td><td><code>s.chars().count()</code></td></tr>
+      <tr><td>UTF-16 の単位数</td><td><code>s.Length</code></td><td><code>s.encode_utf16().count()</code></td></tr>
+      <tr><td>見た目の文字数</td><td><code>StringInfo</code></td><td><code>unicode-segmentation</code> クレート</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    つまり <code>s.Length</code> の素直な対応物は Rust には無く、
+    <strong>「何を数えたいのか」を書かせる設計になっています</strong>。
+    面倒に見えますが、日本語を扱うなら結局その区別が必要になります。
+  </p>
+</div>
+
+<h2>数字での添字が書けない</h2>
+
+<p>
+C# なら <code>s[0]</code> で 1 文字取れます。Rust は禁じています。
+</p>
+
+<!--term: err-e0277-string-index | String を数字で添字アクセスした場合。「String は Index&lt;{integer}&gt; を実装していない」と言われ、「String は文字ごとに添字を引けない」という note が付く。 -->
+
+<div class="note pitfall">
+  <span class="note-title">なぜ禁じられているのか</span>
+  <p>
+    UTF-8 では 1 文字が 1〜4 バイトです。
+    <code>"こんにちは"[2]</code> と書いたとき、
+    それが「3 バイト目」なのか「3 文字目」なのか決まりません。
+  </p>
+  <p>
+    しかも「3 バイト目」を返すとすれば、それは文字の途中を指すかもしれません。
+    そんな値を返しても意味がないので、<strong>Rust は最初から用意していない</strong>のです。
+  </p>
+  <p>
+    かわりに、何を数えたいかを書きます。
+  </p>
+  <div class="src" data-lang="rust">
+text.chars().nth(2)          // 3 文字目（Option を返す）
+text.as_bytes()[2]           // 3 バイト目
+&amp;text[0..3]                  // バイト位置で切り出す
+  </div>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">バイト位置での切り出しは panic しうる</span>
+  <p>
+    <code>&amp;text[0..3]</code> は<strong>バイト位置</strong>で切ります。
+    文字の途中で切ると、コンパイルは通りますが実行時に panic します。
+  </p>
+  <div class="src" data-lang="rust">
+let text = "こんにちは";
+let ok = &amp;text[0..3];    // 「こ」は 3 バイトなのでちょうど切れる
+let bad = &amp;text[0..2];   // 文字の途中 → 実行時に panic
+  </div>
+  <p>
+    日本語を切り出すときは、バイト数を数えるより
+    <code>chars()</code> を使うほうが安全です。
+  </p>
+  <div class="src" data-lang="rust">
+let first_two: String = text.chars().take(2).collect();   // 「こん」
+  </div>
+</div>
+
+<h2>String と &amp;str</h2>
+
+<p>
+Rust には文字列の型が 2 つあります。ここは所有権の話がそのまま出てきます。
+</p>
+
+<!--figure: string-layout | String は ptr / len / cap の 3 つを持ち、ヒープ上のバイト列を所有している。&amp;str は ptr / len の 2 つだけで、他人のバイト列を借りて見ている「窓」。cap が無いので伸ばせない。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th><code>String</code></th><th><code>&amp;str</code></th></tr></thead>
+  <tbody>
+    <tr><td>所有権</td><td><strong>持っている</strong></td><td>借りている</td></tr>
+    <tr><td>伸ばせるか</td><td>伸ばせる</td><td>伸ばせない</td></tr>
+    <tr><td>作り方</td><td><code>String::from("あ")</code> / <code>"あ".to_string()</code></td><td><code>"あ"</code> / <code>&amp;some_string</code></td></tr>
+    <tr><td>C# なら</td><td><code>StringBuilder</code> に近い</td><td><code>ReadOnlySpan&lt;char&gt;</code> に近い</td></tr>
+    <tr><td>使う場面</td><td>構築する、構造体に持たせる</td><td><strong>関数の引数、読むだけ</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">迷ったときの指針</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>場面</th><th>使うもの</th></tr></thead>
+    <tbody>
+      <tr><td>関数の引数（読むだけ）</td><td><strong><code>&amp;str</code></strong></td></tr>
+      <tr><td>関数の戻り値（新しく作る）</td><td><code>String</code></td></tr>
+      <tr><td>構造体のフィールド</td><td><strong><code>String</code></strong>（ライフタイムで悩まなくて済む）</td></tr>
+      <tr><td>定数・固定の文言</td><td><code>&amp;'static str</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>&amp;str</code> で引数を受けると、
+    <code>String</code> も文字列リテラルもそのまま渡せます。
+    <code>&amp;String</code> で受けるとリテラルが渡せなくなるので、損です。
+  </p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">なぜ 2 つに分かれているのか</span>
+  <p>
+    C# の <code>string</code> は不変で、参照型で、GC が面倒を見ます。
+    だから 1 つの型で済みます。
+  </p>
+  <p>
+    Rust には GC が無いので、
+    <strong>「このバイト列を誰が片付けるのか」を型で表す必要があります</strong>。
+    <code>String</code> は「私が片付けます」、
+    <code>&amp;str</code> は「借りているだけなので片付けません」という宣言です。
+  </p>
+  <p>
+    文字列リテラル <code>"あ"</code> が <code>&amp;'static str</code> なのも同じ理屈です。
+    実行ファイルに埋め込まれているので、確保も解放も要りません。
+  </p>
+</div>
+
+<h2>組み立てる・分ける</h2>
+
+<div class="src" data-lang="rust">
+let mut s = String::new();
+s.push_str("Rust");      // &amp;str を足す
+s.push(' ');             // char を足す
+s += "入門";              // += も使える
+let t = format!("{s}！");  // 新しく作る
+</div>
+
+<div class="note csharp">
+  <span class="note-title">連結の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>a + b</code></td><td><code>format!("{a}{b}")</code></td></tr>
+      <tr><td><code>sb.Append(x)</code></td><td><code>s.push_str(x)</code></td></tr>
+      <tr><td><code>string.Join(",", list)</code></td><td><code>list.join(",")</code></td></tr>
+      <tr><td><code>s.Split(',')</code></td><td><code>s.split(',')</code></td></tr>
+      <tr><td><code>s.Trim()</code></td><td><code>s.trim()</code></td></tr>
+      <tr><td><code>s.Replace(a, b)</code></td><td><code>s.replace(a, b)</code></td></tr>
+      <tr><td><code>s.Contains(x)</code></td><td><code>s.contains(x)</code></td></tr>
+      <tr><td><code>s.ToUpper()</code></td><td><code>s.to_uppercase()</code></td></tr>
+      <tr><td><code>s.StartsWith(x)</code></td><td><code>s.starts_with(x)</code></td></tr>
+      <tr><td><code>int.Parse(s)</code></td><td><code>s.parse::&lt;i32&gt;()</code>（<code>Result</code> を返す）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    名前は <code>PascalCase</code> から <code>snake_case</code> になるだけで、
+    ほとんど推測できます。<strong>大きな違いは <code>parse</code> だけ</strong>で、
+    C# の <code>int.Parse</code> は例外を投げますが、
+    Rust は <code>Result</code> を返します（第 11 章）。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">split はコピーを作らない</span>
+  <p>
+    <code>"赤,青,黄".split(',')</code> が返すのは <code>&amp;str</code> の列です。
+    <strong>元の文字列への窓が 3 つできるだけで、文字はコピーされません。</strong>
+  </p>
+  <p>
+    C# の <code>Split</code> は新しい <code>string</code> の配列を作るので、
+    ここは Rust のほうが素直に速くなります。
+    そのかわり、元の文字列が生きている間しか使えません。
+  </p>
+</div>
+
+<h2>見た目 1 文字が 1 文字でないこと</h2>
+
+<p>
+最後にもう 1 段だけ深い話をします。
+<code>chars()</code> で数えても、まだ「見た目の文字数」とは違うことがあります。
+</p>
+
+<div class="src" data-lang="rust">
+let ka = "か\u{3099}";      // 「か」＋結合用の濁点
+println!("{ka}");            // 「が」のように見える
+println!("{}", ka.chars().count());   // 2
+</div>
+
+<div class="note">
+  <span class="note-title">正確に数えたいとき</span>
+  <p>
+    「見た目 1 文字」の単位は<strong>書記素クラスタ</strong>と呼ばれます。
+    標準ライブラリには入っていないので、クレートを足します。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+cargo add unicode-segmentation
+  </div>
+  <p>
+    C# の <code>StringInfo.GetTextElementEnumerator</code> に当たるものです。
+    絵文字の肌色修飾や国旗を正しく 1 つと数えたい場合に必要になります。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 08-strings/src/main.rs-->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/08-strings</code> を動かして、3 つの「長さ」が食い違うことを自分の目で確認してください。</li>
+    <li><code>let text = String::from("こんにちは"); let c = text[0];</code> と書いて E0277 を出してください。</li>
+    <li><code>&amp;text[0..2]</code> を実行して、<strong>コンパイルは通るのに実行時に panic する</strong>ことを確認してください。エラーメッセージに「byte index 2 is not a char boundary」と出ます。</li>
+    <li>自分の名前を <code>String</code> に入れて、<code>len()</code> と <code>chars().count()</code> を比べてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>Rust の <code>String</code> は <strong>UTF-8</strong>。C# の <code>string</code> は UTF-16。</li>
+    <li><code>len()</code> は<strong>バイト数</strong>。文字数は <code>chars().count()</code>。</li>
+    <li>C# の <code>Length</code> は文字数ではない（絵文字は 2 になる）。</li>
+    <li><code>s[0]</code> は書けない。何を数えたいか明示する設計。</li>
+    <li>バイト位置での切り出しは、文字の途中だと<strong>実行時に panic</strong>。</li>
+    <li>引数は <code>&amp;str</code>、構造体のフィールドは <code>String</code>。これが基本。</li>
+  </ul>
+</div>

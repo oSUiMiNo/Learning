@@ -1,0 +1,28 @@
+<svg viewBox="0 0 720 230" role="img" aria-label="スライスは元のデータを指す窓であり、コピーを作らないことを示す図。">
+  <rect x="1" y="1" width="718" height="228" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">スライスは複製ではなく「窓」</text>
+  <text x="28" y="50" class="d-code">let all = vec![10, 20, 30, 40, 50];   let window = &amp;all[1..4];</text>
+
+  <!-- 元のデータ -->
+  <text x="28" y="82" class="d-mute">元のデータ（ヒープ上に 1 つだけある）</text>
+  <g>
+    <rect x="28" y="92" width="120" height="44" rx="6" class="d-box"/><text x="88" y="120" text-anchor="middle" class="d-code">10</text>
+    <rect x="152" y="92" width="120" height="44" rx="6" class="d-tip"/><text x="212" y="120" text-anchor="middle" class="d-code">20</text>
+    <rect x="276" y="92" width="120" height="44" rx="6" class="d-tip"/><text x="336" y="120" text-anchor="middle" class="d-code">30</text>
+    <rect x="400" y="92" width="120" height="44" rx="6" class="d-tip"/><text x="460" y="120" text-anchor="middle" class="d-code">40</text>
+    <rect x="524" y="92" width="120" height="44" rx="6" class="d-box"/><text x="584" y="120" text-anchor="middle" class="d-code">50</text>
+  </g>
+  <text x="88" y="152" text-anchor="middle" class="d-mute">[0]</text>
+  <text x="212" y="152" text-anchor="middle" class="d-mute">[1]</text>
+  <text x="336" y="152" text-anchor="middle" class="d-mute">[2]</text>
+  <text x="460" y="152" text-anchor="middle" class="d-mute">[3]</text>
+  <text x="584" y="152" text-anchor="middle" class="d-mute">[4]</text>
+
+  <!-- 窓 -->
+  <rect x="146" y="84" width="380" height="60" rx="8" class="d-flow-dash" fill="none"/>
+  <text x="336" y="176" text-anchor="middle" class="d-mark">window = &amp;all[1..4]  →  ptr は [1] を指し、len = 3</text>
+
+  <rect x="28" y="190" width="664" height="30" rx="8" class="d-dash"/>
+  <text x="48" y="210" class="d-mute">要素は 1 つもコピーされていない。だから元の Vec が生きている間しか窓は使えない（借用の規則がそのまま効く）。</text>
+</svg>

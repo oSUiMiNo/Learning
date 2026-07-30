@@ -1,0 +1,239 @@
+<p>
+この章は C# の知識でほとんど読み飛ばせます。
+違うところだけ拾っていきましょう。
+</p>
+
+<p>
+いちばん大きな違いは 1 つです。<strong>Rust の変数は、既定で書き換えられません。</strong>
+C# の <code>var</code> と Rust の <code>let</code> は見た目が似ていますが、態度が正反対です。
+</p>
+
+<!--code: 04-variables/src/main.rs-->
+
+<h2>既定が不変であること</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C#" data-cap="既定で書き換えられる。禁じたいときに readonly を足す">
+var total = 10;
+total = 20;      // 通る
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust" data-cap="既定で書き換えられない。許したいときに mut を足す">
+let total = 10;
+total = 20;      // E0384
+  </div>
+</div>
+
+<p>実際にコンパイルすると、こうなります。</p>
+
+<!--term: err-e0384-reassign-immutable | mut を付けていない変数に再代入した場合。「help: consider making this binding mutable」と、直し方まで出ている。 -->
+
+<p>
+書き換えたいときは <code>mut</code> を付けます。
+</p>
+
+<div class="src" data-lang="rust">
+let mut total = 10;
+total = 20;      // 通る
+</div>
+
+<div class="note csharp">
+  <span class="note-title">なぜ既定が不変なのか</span>
+  <p>
+    C# でも「できるだけ <code>readonly</code> にする」のは良い習慣とされています。
+    Rust はそれを既定にしただけ、と考えると納得しやすいはずです。
+  </p>
+  <p>
+    実務上の効き方はもう少し強くて、
+    <strong><code>mut</code> が付いている変数を探せば「書き換わる場所」が全部分かる</strong>という
+    読みやすさの利益があります。
+    さらに第 7 章の借用規則と組み合わさって、並行処理の安全性まで導きます。
+  </p>
+</div>
+
+<h2>シャドーイング — C# には無い書き方</h2>
+
+<p>
+Rust では<strong>同じ名前で変数を作り直せます</strong>。
+これは再代入ではなく「新しい変数を作って、前のものを隠す」動作です。
+型を変えても構いません。
+</p>
+
+<div class="src" data-lang="rust">
+let value = "42";                       // &str
+let value = value.parse::&lt;i32&gt;().unwrap();  // i32 になる
+let value = value * 2;                  // 84
+</div>
+
+<div class="note csharp">
+  <span class="note-title">C# だとこう書くしかない</span>
+  <div class="src" data-lang="csharp" data-file="C#">
+var valueText = "42";
+var valueNumber = int.Parse(valueText);
+var valueDoubled = valueNumber * 2;
+  </div>
+  <p>
+    C# はスコープ内の再宣言がエラーなので、名前を変えるしかありません。
+    <code>valueText</code> / <code>valueNumber</code> のように
+    苦しい名前が増えるのは、誰でも経験があると思います。
+  </p>
+  <p>
+    Rust のシャドーイングは、この
+    <strong>「同じものを段階的に変換していく」場面のためにあります</strong>。
+    <code>mut</code> と違って、各段階の値は不変のままです。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">シャドーイングと mut を混同しないこと</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th><code>mut</code></th><th>シャドーイング</th></tr></thead>
+    <tbody>
+      <tr><td>書き方</td><td><code>let mut x = 1; x = 2;</code></td><td><code>let x = 1; let x = 2;</code></td></tr>
+      <tr><td>型を変えられるか</td><td><strong>変えられない</strong></td><td>変えられる</td></tr>
+      <tr><td>実体</td><td>同じ変数を書き換える</td><td>別の変数を作る</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2>型 — 対応表で済む部分</h2>
+
+<div class="note csharp">
+  <span class="note-title">基本型の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td><code>int</code></td><td><code>i32</code></td><td>既定の整数はどちらも 32 ビット</td></tr>
+      <tr><td><code>long</code></td><td><code>i64</code></td><td></td></tr>
+      <tr><td><code>uint</code> / <code>ulong</code></td><td><code>u32</code> / <code>u64</code></td><td></td></tr>
+      <tr><td><code>byte</code></td><td><code>u8</code></td><td></td></tr>
+      <tr><td><code>nint</code></td><td><code>isize</code> / <code>usize</code></td><td>添字は <code>usize</code></td></tr>
+      <tr><td><code>double</code></td><td><code>f64</code></td><td>既定の小数</td></tr>
+      <tr><td><code>float</code></td><td><code>f32</code></td><td></td></tr>
+      <tr><td><code>decimal</code></td><td><strong>無い</strong></td><td><code>rust_decimal</code> クレートを使う</td></tr>
+      <tr><td><code>bool</code></td><td><code>bool</code></td><td></td></tr>
+      <tr><td><code>char</code></td><td><code>char</code></td><td><strong>C# は 2 バイト、Rust は 4 バイト</strong></td></tr>
+      <tr><td><code>string</code></td><td><code>String</code> / <code>&amp;str</code></td><td>第 8 章で扱う</td></tr>
+      <tr><td><code>object</code></td><td><strong>無い</strong></td><td>すべての型の親、という概念が無い</td></tr>
+      <tr><td><code>void</code></td><td><code>()</code></td><td>ユニット型</td></tr>
+      <tr><td><code>(int, string)</code></td><td><code>(i32, &amp;str)</code></td><td>タプルは同じ</td></tr>
+      <tr><td><code>int[]</code></td><td><code>[i32; 3]</code> / <code>Vec&lt;i32&gt;</code></td><td>長さ固定か可変か</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>char</code> の違いに注意してください。
+    Rust の <code>char</code> は Unicode スカラ値 1 つで <strong>4 バイト</strong>あるので、
+    <code>'🦀'</code> がそのまま 1 つの <code>char</code> に収まります。
+    C# の <code>char</code> は 2 バイトなので収まりません（第 8 章）。
+  </p>
+</div>
+
+<h2>暗黙の型変換が無い</h2>
+
+<p>
+C# は <code>int</code> から <code>long</code> へ黙って広げてくれますが、Rust はしません。
+</p>
+
+<!--term: err-e0308-mismatched-types | i32 を i64 の変数に入れようとした場合。「help: you can convert an `i32` to an `i64`」と、.into() を使えという提案が出る。 -->
+
+<p>
+明示的に変換します。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th><th>使う場面</th></tr></thead>
+  <tbody>
+    <tr><td><code>small.into()</code></td><td>情報が失われない変換</td><td><strong>基本はこれ</strong></td></tr>
+    <tr><td><code>i64::from(small)</code></td><td>同じ。型を前に出して読みやすくしたもの</td><td>型が推論できないとき</td></tr>
+    <tr><td><code>big as i32</code></td><td>切り詰めてよい変換</td><td>あふれを承知のうえで</td></tr>
+    <tr><td><code>big.try_into()</code></td><td>失敗しうる変換。<code>Result</code> を返す</td><td>入りきるか分からないとき</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">as は黙って値を壊す</span>
+  <p>
+    <code>as</code> は C# の <code>unchecked((int)x)</code> に近い動作です。
+    入りきらなければ<strong>上位ビットを捨てます</strong>。警告も出ません。
+  </p>
+  <div class="src" data-lang="rust">
+let big: i64 = 300;
+let small = big as u8;   // 300 は u8 に入らない → 44 になる
+  </div>
+  <p>
+    <code>as</code> は「そうしてよいと分かっている」ときだけ使い、
+    ふだんは <code>into()</code> か <code>try_into()</code> を選んでください。
+  </p>
+</div>
+
+<h2>あふれたときの挙動</h2>
+
+<div class="note csharp">
+  <span class="note-title">C# より安全側に倒れている</span>
+  <p>
+    C# の <code>int.MaxValue + 1</code> は既定で回り込んで負の数になります
+    （<code>checked</code> を書かないかぎり）。
+    Rust は<strong>デバッグビルドではその場で panic します</strong>。
+  </p>
+  <p>
+    リリースビルドでは速度のため回り込みますが、
+    どちらの挙動が欲しいかを明示するメソッドが用意されています。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>メソッド</th><th>あふれたとき</th></tr></thead>
+    <tbody>
+      <tr><td><code>checked_add</code></td><td><code>None</code> を返す</td></tr>
+      <tr><td><code>saturating_add</code></td><td>上限で止まる</td></tr>
+      <tr><td><code>wrapping_add</code></td><td>回り込む</td></tr>
+      <tr><td><code>overflowing_add</code></td><td>結果と「あふれたか」の組を返す</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    金額や個数の計算では <code>checked_*</code> を使う習慣を付けると、
+    「気づかないうちに数字が壊れる」種類の不具合が消えます。
+  </p>
+</div>
+
+<h2>定数</h2>
+
+<div class="src" data-lang="rust">
+const LIMIT: u32 = 100;          // コンパイル時に決まる。型の明記が必須
+static NAME: &str = "教材";       // 固定の場所に置かれる値
+</div>
+
+<div class="note csharp">
+  <span class="note-title">const と static</span>
+  <p>
+    <code>const</code> は C# の <code>const</code> と同じで、使う場所に埋め込まれます。
+    <code>static</code> は C# の <code>static readonly</code> に近く、
+    メモリ上に 1 か所だけ置かれます。
+    ふだんは <code>const</code> を使えば十分です。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/04-variables</code> を <code>cargo run</code> して、出力を上のコードと見比べてください。</li>
+    <li><code>let fixed = 10;</code> の下に <code>fixed = 20;</code> を書いて、E0384 が出ることを確認してください。</li>
+    <li><code>let n: u8 = 300;</code> と書くとどうなるか試してください。<strong>コンパイル時に</strong>「<code>u8</code> に入らない」と怒られます。C# では実行時まで分からない種類の間違いです。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><strong>既定は不変。</strong>書き換えるなら <code>mut</code> を付ける。</li>
+    <li>シャドーイング（<code>let</code> の再宣言）は C# に無い書き方。型を変えながら段階的に変換できる。</li>
+    <li>暗黙の型変換は無い。<code>into()</code> が基本、<code>as</code> は値を壊すので慎重に。</li>
+    <li>あふれはデバッグビルドで panic する。<code>checked_*</code> で明示的に扱える。</li>
+    <li><code>char</code> は 4 バイト。C# の 2 バイトとは別物。</li>
+  </ul>
+</div>

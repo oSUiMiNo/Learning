@@ -1,0 +1,20 @@
+{
+  "name": "cargo-run-hello",
+  "title": "Windows PowerShell",
+  "note": "はじめての cargo run",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\hello>",
+      "command": "cargo run",
+      "output": "\u001b[1m\u001b[92m   Compiling\u001b[0m hello v0.1.0 (C:\\rust\\hello)\r\n\u001b[1m\u001b[96m    Building\u001b[0m [                             ] 0/1: hello(bin)                              \r\u001b[K\u001b[1m\u001b[92m    Finished\u001b[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.16s\r\n\u001b[1m\u001b[92m     Running\u001b[0m `target\\debug\\hello.exe`\r\nHello, world!\r\n"
+    },
+    {
+      "prompt": "PS C:\\rust\\hello>",
+      "command": "cargo run",
+      "output": "\u001b[1m\u001b[92m    Finished\u001b[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.01s\r\n\u001b[1m\u001b[92m     Running\u001b[0m `target\\debug\\hello.exe`\r\nHello, world!\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

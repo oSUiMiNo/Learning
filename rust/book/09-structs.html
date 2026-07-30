@@ -1,0 +1,289 @@
+<p>
+Rust に <code>class</code> はありません。
+データは <code>struct</code>、ふるまいは <code>impl</code> に分けて書きます。
+そして<strong>継承がありません</strong>。
+</p>
+
+<p>
+慌てなくて大丈夫です。C# でも「継承より合成」と言われますし、
+Rust はその方針を言語レベルで徹底しただけです。
+埋め合わせの方法もちゃんとあります。
+</p>
+
+<h2>データとふるまいを分けて書く</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C#" data-cap="1 つのクラスに全部入れる">
+public class Book {
+    public string Title { get; set; }
+    public uint Pages { get; set; }
+
+    public Book(string title, uint pages) {
+        Title = title; Pages = pages;
+    }
+    public bool IsLong() =&gt; Pages &gt; 300;
+}
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust" data-cap="データと impl を分ける">
+struct Book {
+    title: String,
+    pages: u32,
+}
+
+impl Book {
+    fn new(title: &amp;str, pages: u32) -&gt; Self {
+        Self { title: title.to_string(), pages }
+    }
+    fn is_long(&amp;self) -&gt; bool { self.pages &gt; 300 }
+}
+  </div>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">impl ブロックは何個でも書ける</span>
+  <p>
+    <code>impl</code> は同じ型に対して複数書けます。
+    ファイルを分けることもできます。
+    C# の <code>partial class</code> に近い自由度がありますが、
+    <strong>あちらと違って宣言に <code>partial</code> は要りません</strong>。
+  </p>
+  <p>
+    「データの定義」と「機能ごとのふるまい」を分けて置けるので、
+    大きな型でも見通しが保てます。
+  </p>
+</div>
+
+<h2>self の 3 つの形 — ここが C# に無い</h2>
+
+<p>
+メソッドの第 1 引数には <code>self</code> を書きます。
+そして<strong>3 つの形があり、意味がまったく違います</strong>。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th><th>C# なら</th><th>呼んだ後</th></tr></thead>
+  <tbody>
+    <tr><td><code>&amp;self</code></td><td>借りて読む</td><td>ふつうのメソッド</td><td>そのまま使える</td></tr>
+    <tr><td><code>&amp;mut self</code></td><td>借りて書き換える</td><td>ふつうのメソッド（変更あり）</td><td>そのまま使える（呼び出し側に <code>mut</code> が必要）</td></tr>
+    <tr><td><strong><code>self</code></strong></td><td><strong>所有権をもらって消費する</strong></td><td><strong>対応するものが無い</strong></td><td><strong>もう使えない</strong></td></tr>
+    <tr><td>（なし）</td><td>関連関数</td><td><code>static</code> メソッド</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="src" data-lang="rust">
+impl Book {
+    fn new(title: &amp;str, pages: u32) -&gt; Self { /* 関連関数 */ }
+    fn is_long(&amp;self) -&gt; bool { /* 読むだけ */ }
+    fn finish(&amp;mut self) { /* 自分を書き換える */ }
+    fn into_summary(self) -&gt; String { /* 自分を消費する */ }
+}
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">self を取るメソッドを呼ぶと、変数が使えなくなる</span>
+  <p>
+    <code>into_summary(self)</code> は所有権をもらいます。
+    つまり呼んだ後、その変数は使えません。
+  </p>
+  <div class="src" data-lang="rust">
+let summary = book.into_summary();
+println!("{}", book.title);   // ✗ E0382。book は消費された
+  </div>
+  <p>
+    面倒に見えますが、これは<strong>「この値はもう使うな」と設計者が表明できる</strong>仕組みです。
+    ファイルを閉じる、接続を切る、変換して別の型にする、といった
+    「一度きりの操作」を型で守れます。
+  </p>
+  <p>
+    名前の慣習も決まっています。<code>into_</code> で始まるメソッドは
+    <strong>所有権をもらう</strong>という合図です。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">名前の慣習</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>接頭辞</th><th>self の形</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>as_</code></td><td><code>&amp;self</code></td><td>安く別の見え方にする（<code>as_str</code>）</td></tr>
+      <tr><td><code>to_</code></td><td><code>&amp;self</code></td><td>複製して作る（<code>to_string</code>）</td></tr>
+      <tr><td><code>into_</code></td><td><code>self</code></td><td><strong>消費して変換する</strong>（<code>into_iter</code>）</td></tr>
+      <tr><td><code>new</code></td><td>なし</td><td>作る。C# のコンストラクタ相当</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    この慣習は標準ライブラリ全体で守られているので、
+    メソッド名を見ただけで所有権の扱いが読めます。
+  </p>
+</div>
+
+<h2>derive で「よくある能力」を手に入れる</h2>
+
+<p>
+C# なら <code>ToString()</code> や <code>Equals()</code> は
+<code>object</code> から継承されて最初からあります。
+Rust には <code>object</code> がないので、必要な能力を明示します。
+</p>
+
+<p>
+何も付けないと、デバッグ表示すらできません。
+</p>
+
+<!--term: err-e0277-missing-debug | Debug を実装していない構造体を {:?} で表示しようとした場合。「#[derive(Debug)] を足せ」という提案がそのまま出ている。 -->
+
+<p>
+言われたとおり 1 行足せば直ります。
+</p>
+
+<div class="src" data-lang="rust">
+#[derive(Debug, Clone, PartialEq)]
+struct Book { title: String, pages: u32, read: bool }
+</div>
+
+<div class="note csharp">
+  <span class="note-title">derive できる主なもの</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>derive</th><th>できること</th><th>C# なら</th></tr></thead>
+    <tbody>
+      <tr><td><code>Debug</code></td><td><code>{:?}</code> で表示</td><td><code>ToString()</code>（デバッグ用）</td></tr>
+      <tr><td><code>Clone</code></td><td><code>.clone()</code></td><td><code>ICloneable</code></td></tr>
+      <tr><td><code>Copy</code></td><td>代入でコピー</td><td>値型（<code>struct</code>）</td></tr>
+      <tr><td><code>PartialEq</code></td><td><code>==</code> で比較</td><td><code>Equals</code> / <code>IEquatable</code></td></tr>
+      <tr><td><code>PartialOrd</code></td><td><code>&lt;</code> <code>&gt;</code> で比較</td><td><code>IComparable</code></td></tr>
+      <tr><td><code>Hash</code></td><td><code>HashMap</code> のキーにできる</td><td><code>GetHashCode</code></td></tr>
+      <tr><td><code>Default</code></td><td><code>Default::default()</code></td><td>既定値のコンストラクタ</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <strong><code>record</code> 型を書いたときに C# が自動生成するものと、ほぼ同じ一覧</strong>です。
+    Rust では 1 つずつ選べる、という違いだけです。
+  </p>
+  <p>
+    人間に見せる表示（<code>ToString()</code> に当たるもの）は
+    <code>Display</code> トレイトを自分で実装します。これは derive できません。
+    「どう見せるか」は自動では決められないからです（第 11 章で書きます）。
+  </p>
+</div>
+
+<h2>一部だけ変えて作る</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C# 9 以降">
+var sequel = book with { Title = "Rust 実践" };
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust">
+let sequel = Book {
+    title: String::from("Rust 実践"),
+    ..book
+};
+  </div>
+</div>
+
+<p>
+<code>..book</code> が「残りは <code>book</code> と同じ」という意味です。
+C# の <code>with</code> 式とほぼ同じ働きです。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">.. は move する</span>
+  <p>
+    <code>..book</code> は残りのフィールドを<strong>move します</strong>。
+    <code>String</code> のような <code>Copy</code> でないフィールドが残っていると、
+    <code>book</code> はその後使えなくなります。
+    使い続けたいなら <code>..book.clone()</code> にしてください。
+  </p>
+</div>
+
+<h2>タプル構造体で単位を分ける</h2>
+
+<p>
+名前を付けるだけの構造体も作れます。これが意外に強力です。
+</p>
+
+<div class="src" data-lang="rust">
+struct Yen(u32);
+struct Dollar(u32);
+
+let price = Yen(1200);
+let fee = Dollar(8);
+// price.0 + fee.0 は書けるが、Yen と Dollar を直接足すことはできない
+</div>
+
+<div class="note csharp">
+  <span class="note-title">これが「newtype パターン」</span>
+  <p>
+    C# でも <code>record struct Yen(uint Value);</code> のように書けますが、
+    Rust では<strong>この書き方が日常的に使われます</strong>。
+  </p>
+  <p>
+    <code>UserId(u32)</code> と <code>OrderId(u32)</code> を分ければ、
+    引数の順番を間違えたときにコンパイルエラーになります。
+    実行時のコストはゼロです（コンパイル後は生の <code>u32</code> と同じ）。
+  </p>
+  <p>
+    第 14 章に出てくる孤児則を回避するときにも、この書き方を使います。
+  </p>
+</div>
+
+<h2>継承が無いことへの対処</h2>
+
+<div class="note csharp">
+  <span class="note-title">継承の 3 つの用途を、それぞれ別の道具で置き換える</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>継承で何をしたかったか</th><th>Rust での書き方</th></tr></thead>
+    <tbody>
+      <tr><td>共通の<strong>ふるまい</strong>を共有する</td><td>トレイトの既定実装（第 14 章）</td></tr>
+      <tr><td>共通の<strong>データ</strong>を共有する</td><td>フィールドとして<strong>持たせる</strong>（合成）</td></tr>
+      <tr><td>いろいろな型を<strong>同じものとして扱う</strong></td><td><code>dyn Trait</code> か <code>enum</code>（第 10・14 章）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    「基底クラスのフィールドを使いたい」という場面は、
+    <strong>その基底クラスをフィールドとして持つ</strong>形に書き換えます。
+  </p>
+  <div class="src" data-lang="rust">
+struct Base { id: u32 }
+struct Derived { base: Base, extra: String }   // 継承ではなく所有
+  </div>
+  <p>
+    最初は冗長に感じますが、
+    「どのフィールドがどこから来たか」が常に見えるという利点があります。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 09-structs/src/main.rs-->
+
+<!--term: run-structs | 実行結果。最後の into_summary が book を消費するため、その後 book は使えなくなっている。 -->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/09-structs</code> を動かしてください。</li>
+    <li><code>#[derive(Debug, ...)]</code> の <code>Debug</code> を消して、E0277 を出してください。</li>
+    <li><code>book.into_summary()</code> の後に <code>println!("{book:?}");</code> を足して、E0382 を確認してください。</li>
+    <li><code>finish()</code> を呼ぶ行の前で、<code>let mut book</code> の <code>mut</code> を消してみてください。<code>&amp;mut self</code> のメソッドが呼べなくなることが分かります。</li>
+    <li><code>Yen</code> と <code>Dollar</code> を足そうとして、コンパイルエラーになることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>データは <code>struct</code>、ふるまいは <code>impl</code>。<code>impl</code> は何個でも書ける。</li>
+    <li><code>&amp;self</code>（読む）/ <code>&amp;mut self</code>（書く）/ <strong><code>self</code>（消費する）</strong>の 3 つ。3 番目は C# に無い。</li>
+    <li><code>into_</code> で始まるメソッドは所有権をもらう合図。</li>
+    <li>能力は <code>derive</code> で足す。C# の <code>record</code> が自動生成するものとほぼ同じ一覧。</li>
+    <li>継承は無い。ふるまいはトレイト、データは合成、多態は <code>dyn</code> か <code>enum</code> で置き換える。</li>
+    <li>タプル構造体（newtype）で単位を型として分けると、取り違えがコンパイルエラーになる。</li>
+  </ul>
+</div>

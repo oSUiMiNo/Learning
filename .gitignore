@@ -8,6 +8,12 @@ venv/
 qt6-widgets/tools/.preview/
 qt6-widgets/tools/.shots-tmp/
 qt6-widgets/tools/.cpp-build/
+rust/tools/.preview/
+
+# Rust サンプルのビルド結果
+rust/examples/target/
+# 第21章の ToDo ツールが作る保存ファイル（動かすと生まれる）
+rust/examples/21-cli-app/todo.json
 
 # C++ サンプルのビルド結果
 build/

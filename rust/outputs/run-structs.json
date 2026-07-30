@@ -1,0 +1,15 @@
+{
+  "name": "run-structs",
+  "title": "Windows PowerShell",
+  "note": "examples/09-structs の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\09-structs>",
+      "command": "cargo run --quiet",
+      "output": "── 1. 作って使う ──\r\n  Book { title: \"Rust 入門\", pages: 420, read: false }\r\n  長い本か = true\r\n\r\n── 2. 書き換える ──\r\n  読み終わった = true\r\n\r\n── 3. 複製と比較 ──\r\n  複製と等しいか = true\r\n\r\n── 4. 一部だけ変えて作る ──\r\n  Book { title: \"Rust 実践\", pages: 420, read: true }\r\n\r\n── 5. 型で単位を分ける ──\r\n  1200 円 / 8 ドル\r\n\r\n── 6. self を消費するメソッド ──\r\n  ────────────────────\r\n  『Rust 入門』420 ページ\r\n  ────────────────────\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

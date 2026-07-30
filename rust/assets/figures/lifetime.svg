@@ -1,0 +1,33 @@
+<svg viewBox="0 0 720 270" role="img" aria-label="ライフタイムは参照が有効な区間を表すもの。借りた先が自分より短命だとコンパイルエラーになる。">
+  <rect x="1" y="1" width="718" height="268" rx="14" class="d-box-plain"/>
+
+  <text x="28" y="30" class="d-head-accent">'a は「新しい寿命」ではなく、既にある寿命への名札</text>
+
+  <!-- 正しい例 -->
+  <rect x="24" y="44" width="672" height="80" rx="9" class="d-tip"/>
+  <text x="44" y="66" class="d-head-tip">通る — 借りた先が、参照より長生きしている</text>
+  <g class="d-code">
+    <text x="44" y="88">let text = String::from("..");</text>
+    <text x="300" y="88">let part = &amp;text;</text>
+    <text x="470" y="88">println!("{part}");</text>
+  </g>
+  <rect x="44" y="98" width="600" height="8" rx="4" class="d-fill-accent"/>
+  <text x="344" y="118" text-anchor="middle" class="d-mute">text が生きている区間。part の区間はこの中にすっぽり収まっている</text>
+
+  <!-- 誤りの例 -->
+  <rect x="24" y="136" width="672" height="100" rx="9" class="d-warn"/>
+  <text x="44" y="158" class="d-head-warn">通らない（E0597）— 借りた先が先に消える</text>
+  <g class="d-code">
+    <text x="44" y="180">{ let inner = ..;  outer = &amp;inner; }</text>
+    <text x="400" y="180">println!("{outer}");</text>
+  </g>
+  <rect x="44" y="190" width="300" height="8" rx="4" class="d-fill-accent"/>
+  <text x="194" y="212" text-anchor="middle" class="d-mute">inner が生きている区間</text>
+
+  <rect x="400" y="190" width="244" height="8" rx="4" class="d-flow-warn"/>
+  <path d="M400 194 L644 194" class="d-flow-warn"/>
+  <text x="522" y="212" text-anchor="middle" class="d-head-warn">outer はここでまだ生きている → はみ出している</text>
+  <text x="344" y="230" text-anchor="middle" class="d-mute">C や C++ ならダングリングポインタになる場面。Rust はここで止める。</text>
+
+  <text x="28" y="258" class="d-mute">迷ったら「借りるのをやめて所有させる（String にする）」のが素直な解決策。少しコピーが増えるだけ。</text>
+</svg>

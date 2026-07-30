@@ -1,0 +1,15 @@
+{
+  "name": "err-e0382-use-after-move",
+  "title": "Windows PowerShell",
+  "note": "e0382-use-after-move.rs のコンパイルエラー",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust>",
+      "command": "rustc e0382-use-after-move.rs",
+      "output": "\u001b[1m\u001b[91merror[E0382]\u001b[0m\u001b[1m: borrow of moved value: `s1`\u001b[0m\r\n  \u001b[1m\u001b[94m--> \u001b[0me0382-use-after-move.rs:12:16\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m 9\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let s1 = String::from(\"こんにちは\");\r\n   \u001b[1m\u001b[94m|\u001b[0m         \u001b[1m\u001b[94m--\u001b[0m \u001b[1m\u001b[94mmove occurs because `s1` has type `String`, which does not implement the `Copy` trait\u001b[0m\r\n\u001b[1m\u001b[94m10\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     let s2 = s1; // ここで所有権が s1 から s2 へ移る\r\n   \u001b[1m\u001b[94m|\u001b[0m              \u001b[1m\u001b[94m--\u001b[0m \u001b[1m\u001b[94mvalue moved here\u001b[0m\r\n\u001b[1m\u001b[94m11\u001b[0m \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m12\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     println!(\"{s1}\"); // s1 はもう使えない\r\n   \u001b[1m\u001b[94m|\u001b[0m                \u001b[1m\u001b[91m^^\u001b[0m \u001b[1m\u001b[91mvalue borrowed here after move\u001b[0m\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[96mhelp\u001b[0m: consider cloning the value if the performance cost is acceptable\r\n   \u001b[1m\u001b[94m|\u001b[0m\r\n\u001b[1m\u001b[94m10\u001b[0m \u001b[1m\u001b[94m| \u001b[0m    let s2 = s1\u001b[92m.clone()\u001b[0m; // ここで所有権が s1 から s2 へ移る\r\n   \u001b[1m\u001b[94m|\u001b[0m                \u001b[92m++++++++\u001b[0m\r\n\r\n\u001b[1m\u001b[91merror\u001b[0m\u001b[1m: aborting due to 1 previous error\u001b[0m\r\n\r\n\u001b[1mFor more information about this error, try `rustc --explain E0382`.\u001b[0m\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

@@ -1,0 +1,286 @@
+<p>
+この章は必ず読んでください。
+<strong>C# の <code>async</code> の知識が、そのままでは通じません。</strong>
+</p>
+
+<p>
+見た目はそっくりです。<code>async fn</code> と書き、<code>.await</code> と書きます。
+けれど動き方が根本的に違います。1 行で言えばこうです。
+</p>
+
+<div class="note pitfall">
+  <span class="note-title">いちばん大事な違い</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>動き始めるタイミング</th></tr></thead>
+    <tbody>
+      <tr><td><strong>C#</strong></td><td>async メソッドを<strong>呼んだ時点</strong>で、もう走っている</td></tr>
+      <tr><td><strong>Rust</strong></td><td><code>.await</code> されるまで、<strong>1 行も走らない</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# の <code>Task</code> は「ホット」、Rust の <code>Future</code> は「レイジー」と呼ばれます。
+  </p>
+</div>
+
+<!--figure: async-vs-task | C# では FetchAsync() を呼んだ瞬間に処理が始まり、await は「終わるのを待つ」だけ。Rust では fetch() を呼んでも Future が作られるだけで何も起きず、.await した時点で初めて動き出す。 -->
+
+<h2>実際に確かめる</h2>
+
+<p>
+200 ミリ秒かかる関数を呼んで、すぐに時間を測ってみます。
+</p>
+
+<div class="src" data-lang="rust">
+let started = Instant::now();
+let future = fetch("走らせていない仕事", 200);   // まだ何も起きていない
+println!("{:?}", started.elapsed());            // ほぼ 0 秒
+let result = future.await;                       // ここで初めて走る
+println!("{:?}", started.elapsed());            // 200ms 経過
+</div>
+
+<!--term: run-async | 実行結果。1 番目の項目で、200ms かかる関数を呼んだ直後の経過時間がマイクロ秒単位であることに注目。await するまで本当に何も起きていない。 -->
+
+<div class="note csharp">
+  <span class="note-title">この違いが引き起こすこと</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>場面</th><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>await</code> を書き忘れた</td>
+        <td><strong>処理は走る</strong>が結果を待たない。例外が消えることも（投げっぱなし）</td>
+        <td><strong>処理が走らない</strong>。<code>unused_must_use</code> 警告が出る</td>
+      </tr>
+      <tr>
+        <td>2 つを同時に走らせたい</td>
+        <td>呼んでおいて、後で両方 <code>await</code></td>
+        <td><strong>それでは直列になる。</strong><code>join!</code> が必要</td>
+      </tr>
+      <tr>
+        <td>結果を捨てたい</td>
+        <td><code>_ = FooAsync();</code> で走る</td>
+        <td>走らない。<code>spawn</code> が必要</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    2 行目が実務でいちばん危険です。
+    C# の癖で書くと、<strong>並行になっているつもりで直列になります。</strong>
+  </p>
+</div>
+
+<h2>直列と並行</h2>
+
+<div class="compare">
+  <div class="src" data-lang="rust" data-file="✗ 直列（200ms かかる）" data-cap="A が終わってから B が始まる">
+let a = fetch("A", 100).await;
+let b = fetch("B", 100).await;
+  </div>
+  <div class="src" data-lang="rust" data-file="○ 並行（100ms で済む）" data-cap="同時に進む">
+let (a, b) = tokio::join!(
+    fetch("A", 100),
+    fetch("B", 100)
+);
+  </div>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">Task.WhenAll との対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust (tokio)</th></tr></thead>
+    <tbody>
+      <tr><td><code>await Task.WhenAll(a, b)</code></td><td><code>tokio::join!(a, b)</code></td></tr>
+      <tr><td><code>await Task.WhenAny(a, b)</code></td><td><code>tokio::select! { .. }</code></td></tr>
+      <tr><td><code>Task.Run(...)</code></td><td><code>tokio::spawn(...)</code></td></tr>
+      <tr><td><code>await Task.Delay(100)</code></td><td><code>tokio::time::sleep(..).await</code></td></tr>
+      <tr><td><code>cts.CancelAfter(50)</code></td><td><code>tokio::time::timeout(.., fut).await</code></td></tr>
+      <tr><td>結果が全部 <code>Result</code> なら</td><td><code>try_join!</code> で最初の失敗で打ち切れる</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>join!</code> と <code>WhenAll</code> の違いに注意してください。
+    <code>WhenAll</code> は「すでに走っているものを待つ」、
+    <code>join!</code> は「<strong>これから同時に走らせる</strong>」です。
+  </p>
+</div>
+
+<h2>ランタイムを自分で選ぶ</h2>
+
+<p>
+Rust の標準ライブラリには、非同期処理を動かす仕組みが入っていません。
+<strong><code>async</code> は構文だけで、実行する人がいないのです。</strong>
+</p>
+
+<div class="src" data-lang="bash" data-file="PowerShell">
+cargo add tokio --features full
+</div>
+
+<div class="src" data-lang="rust">
+#[tokio::main]
+async fn main() {
+    // ここでランタイムの上で動いている
+}
+</div>
+
+<div class="note csharp">
+  <span class="note-title">.NET ランタイムが無いということ</span>
+  <p>
+    C# では <code>async</code> を書けば、.NET のスレッドプールが勝手に面倒を見てくれます。
+    考える必要がありません。
+  </p>
+  <p>
+    Rust では<strong>ランタイムを選んで入れます</strong>。
+    面倒ですが、代わりに「組み込み機器向けの軽いもの」
+    「1 スレッドで動かすもの」など、用途に合わせて選べます。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>ランタイム</th><th>特徴</th></tr></thead>
+    <tbody>
+      <tr><td><strong><code>tokio</code></strong></td><td>事実上の標準。ネットワーク周りが充実。<strong>迷ったらこれ</strong></td></tr>
+      <tr><td><code>async-std</code></td><td>標準ライブラリに似た API</td></tr>
+      <tr><td><code>smol</code></td><td>小さい。組み込み向け</td></tr>
+      <tr><td><code>embassy</code></td><td>組み込み専用</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">ランタイムを混ぜられない</span>
+  <p>
+    <code>tokio</code> を前提に書かれたクレートは、
+    <code>async-std</code> の上では動かないことがあります。
+    <strong>「どのランタイム向けか」がクレート選びの条件になります。</strong>
+  </p>
+  <p>
+    実質 <code>tokio</code> が標準なので、
+    <strong>特別な理由がなければ <code>tokio</code> を選んでおけば困りません。</strong>
+  </p>
+</div>
+
+<h2>spawn だけは C# と同じ</h2>
+
+<p>
+<code>tokio::spawn</code> に渡したものは、ランタイムが引き取るので<strong>即座に走り始めます</strong>。
+</p>
+
+<div class="src" data-lang="rust">
+let handle = tokio::spawn(fetch("裏で走る仕事", 120));
+sleep(Duration::from_millis(60)).await;   // その間に別のことをする
+let result = handle.await.unwrap();
+</div>
+
+<div class="note">
+  <span class="note-title">使い分け</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やりたいこと</th><th>書き方</th></tr></thead>
+    <tbody>
+      <tr><td>1 つ待つ</td><td><code>fut.await</code></td></tr>
+      <tr><td>複数を同時に待つ</td><td><code>join!(a, b)</code></td></tr>
+      <tr><td>先に終わったほうを採る</td><td><code>select! { .. }</code></td></tr>
+      <tr><td>投げて後で回収する</td><td><code>tokio::spawn(fut)</code></td></tr>
+      <tr><td>数が動的に決まる</td><td><code>spawn</code> して <code>Vec&lt;JoinHandle&gt;</code> に集める</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<h2>async のつらいところ</h2>
+
+<div class="note pitfall">
+  <span class="note-title">async は「別の色の関数」になる</span>
+  <p>
+    <code>async fn</code> は、ふつうの関数から直接呼べません。
+    <code>.await</code> は <code>async</code> の中だけで使えるからです。
+  </p>
+  <p>
+    そのため<strong>一度 async にすると、呼び出し側も全部 async にする必要があります</strong>。
+    これは C# でも同じ現象（"async all the way"）ですが、
+    Rust ではトレイトのメソッドにも波及するので、より厄介です。
+  </p>
+  <p>
+    対処としては、<strong>そもそも async が必要か考える</strong>のがいちばんです。
+    「同時に何千も待つ」のでなければ、スレッド（第 19 章）で十分なことが多いです。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">await をまたいでロックを持たない</span>
+  <p>
+    <code>Mutex</code> をロックしたまま <code>.await</code> すると、
+    他のタスクが同じロックを待って<strong>デッドロックすることがあります</strong>。
+  </p>
+  <div class="src" data-lang="rust" data-cap="✗ ロックを持ったまま待っている">
+let mut data = mutex.lock().unwrap();
+some_async_work().await;      // 危険
+data.push(1);
+  </div>
+  <div class="src" data-lang="rust" data-cap="○ 先に await して、そのあとロックする">
+let value = some_async_work().await;
+let mut data = mutex.lock().unwrap();
+data.push(value);
+  </div>
+  <p>
+    どうしてもまたぎたい場合は <code>tokio::sync::Mutex</code> を使います
+    （こちらは <code>.await</code> でロックを取ります）。
+    ただし遅いので、<strong>まず設計で避けるのが正解</strong>です。
+  </p>
+</div>
+
+<div class="note deep">
+  <span class="note-title">Future の正体</span>
+  <p>
+    <code>Future</code> は「<code>poll()</code> されると、
+    <code>Ready(値)</code> か <code>Pending</code> を返すもの」というだけのトレイトです。
+  </p>
+  <div class="src" data-lang="rust">
+trait Future {
+    type Output;
+    fn poll(self: Pin&lt;&amp;mut Self&gt;, cx: &amp;mut Context) -&gt; Poll&lt;Self::Output&gt;;
+}
+  </div>
+  <p>
+    ランタイムがこれを繰り返し呼び、<code>Pending</code> が返る間は他のタスクに切り替えます。
+    <strong>誰も <code>poll()</code> しなければ何も起きない</strong> ──
+    これが「await されるまで走らない」の正体です。
+  </p>
+  <p>
+    C# のステートマシン変換と発想は同じですが、
+    C# は変換した時点でスレッドプールに投入され、Rust は投入されません。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 20-async/src/main.rs-->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/20-async</code> を動かして、経過時間を確認してください。<strong>2 番目（直列）と 3 番目（並行）の差が要点です。</strong></li>
+    <li><code>tokio::join!</code> の 2 つを、それぞれ別々に <code>.await</code> する形に書き換えて、時間が倍になることを確認してください。</li>
+    <li><code>let future = fetch(...)</code> の <code>.await</code> を消して、<strong>警告が出る</strong>ことを確認してください。C# なら黙って走ってしまう場面です。</li>
+    <li><code>#[tokio::main]</code> を消して、どんなエラーになるか見てください。</li>
+    <li><code>timeout</code> の 50ms を 600ms に変えて、間に合うようになることを確認してください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><strong>Rust の <code>Future</code> は <code>.await</code> されるまで走らない。</strong>C# の <code>Task</code> は呼んだ時点で走る。</li>
+    <li>だから「呼んでおいて後で await」では並行にならない。<code>join!</code> を使う。</li>
+    <li><code>await</code> 忘れは C# では投げっぱなし、Rust では<strong>未着手</strong>。警告で気づける。</li>
+    <li>ランタイムは標準に無い。<strong>実質 <code>tokio</code> を入れる</strong>。</li>
+    <li><code>tokio::spawn</code> に渡したものだけは即座に走る。</li>
+    <li><code>.await</code> をまたいで <code>Mutex</code> を持たない。</li>
+    <li>同時に何千も待つのでなければ、スレッド（第 19 章）で足りることが多い。</li>
+  </ul>
+</div>

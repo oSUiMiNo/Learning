@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第5章 関数と制御フロー — ほとんどが「式」である | Rust 入門</title>
+<meta name="description" content="`if` が値を返し、ブロックの最後の行が戻り値になります。C# の式形式メンバーが好きな人には、たぶん気持ちのいい章です。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li class="is-current"><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 5 章<span class="dot">·</span>読了目安 12 分</p>
+        <h1>第5章 関数と制御フロー — ほとんどが「式」である</h1>
+        <p class="lede">`if` が値を返し、ブロックの最後の行が戻り値になります。C# の式形式メンバーが好きな人には、たぶん気持ちのいい章です。</p>
+      </header>
+      <div class="prose">
+<p>
+この章も C# の知識でほぼ読めます。覚えるのは 1 つの考え方だけです。
+</p>
+
+<p>
+<strong>Rust ではほとんどのものが「式」です。</strong>
+つまり値を返します。<code>if</code> も <code>match</code> も <code>loop</code> も、
+ブロックそれ自体も値になります。
+C# の式形式メンバー（<code>=&gt;</code>）やスイッチ式が好きな人には、たぶん気持ちのいい話です。
+</p>
+
+<figure class="code-block" data-lang="rust" data-src="05-control-flow/src/main.rs"><div class="code-head"><span class="code-file">src/main.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! 制御フロー。Rust では if も match もループも「式」なので、値を返せます。</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 早期 return も普通に書ける。式指向だからといって縛られはしない。</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">classify</span><span class="p">(</span><span class="n">score</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kp">&amp;</span><span class="o">&#39;</span><span class="nb">static</span><span class="w"> </span><span class="kt">str</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;ありえない値&quot;</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="c1">// if は式なので、そのまま戻り値になる</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">80</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;優&quot;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;良&quot;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;可&quot;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;── 1. if は値を返す ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">hour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">14</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="c1">// C# の三項演算子 (cond ? a : b) の代わりがこれ</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">greeting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">hour</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;おはよう&quot;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="s">&quot;こんにちは&quot;</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {greeting}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">score</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">[</span><span class="mi">95</span><span class="p">,</span><span class="w"> </span><span class="mi">70</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {score} 点 → {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">classify</span><span class="p">(</span><span class="n">score</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 2. loop は値を返せる ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="c1">// break に値を付けると、それが loop 式の値になる</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">first_over_100</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">loop</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">n</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="k">break</span><span class="w"> </span><span class="n">n</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  3 を掛け続けて最初に 100 を超えたのは {first_over_100}&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 3. while ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">countdown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="n">countdown</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {countdown}...&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="n">countdown</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  発射&quot;</span><span class="p">);</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 4. for は必ず「何かをなめる」形 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// C 風の for (i = 0; i &lt; n; i++) は無い。範囲や反復子をなめる。</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..=</span><span class="mi">3</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  1..=3 の {i}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;赤&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;青&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;黄&quot;</span><span class="p">].</span><span class="n">iter</span><span class="p">().</span><span class="n">enumerate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {index} 番目は {name}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 5. ラベル付き break ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="c1">// 入れ子のループから一気に抜ける。C# の goto 代わり。</span></span><span class="cl"><span class="w">    </span><span class="o">&#39;</span><span class="na">outer</span><span class="p">:</span><span class="w"> </span><span class="nc">for</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..=</span><span class="mi">3</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..=</span><span class="mi">3</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">                </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {a} × {b} = {} で打ち切り&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="p">);</span></span><span class="cl"><span class="w">                </span><span class="k">break</span><span class="w"> </span><span class="nl">&#39;outer</span><span class="p">;</span></span><span class="cl"><span class="w">            </span><span class="p">}</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 6. match は網羅性を検査される ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">42</span><span class="p">]</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="mi">0</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;ゼロ&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span></span><span class="cl"><span class="w">            </span><span class="mi">1</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;ひとつ&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span></span><span class="cl"><span class="w">            </span><span class="c1">// 範囲でも受けられる</span></span><span class="cl"><span class="w">            </span><span class="mi">2</span><span class="o">..=</span><span class="mi">9</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{n} は一桁&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">            </span><span class="c1">// _ は「それ以外」。これが無いと漏れとして怒られる</span></span><span class="cl"><span class="w">            </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;{n} は二桁以上&quot;</span><span class="p">),</span></span><span class="cl"><span class="w">        </span><span class="p">};</span></span><span class="cl"><span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  {label}&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">── 7. ブロックも式 ──&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">computed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="n">base</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="c1">// これがブロックの値</span></span><span class="cl"><span class="w">    </span><span class="p">};</span></span><span class="cl"><span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;  ブロックの値 = {computed}&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<h2 id="if-が値を返す">if が値を返す</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">greeting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hour</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;おはよう&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s">&quot;こんにちは&quot;</span><span class="p">;</span></span></code></pre><figcaption class="code-cap">三項演算子か、スイッチ式を使う</figcaption></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">greeting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">hour</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;おはよう&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;こんにちは&quot;</span><span class="w"> </span><span class="p">};</span></span></code></pre><figcaption class="code-cap">if がそのまま値になる。三項演算子は無い</figcaption></figure>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">三項演算子は無い</span>
+  <p>
+    Rust に <code>? :</code> はありません。<code>if</code> が式なので要らないからです。
+    <code>?</code> という記号は別の意味（エラーの伝播、第 11 章）に使われています。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">両方の枝が同じ型でなければならない</span>
+  <p>
+    <code>if</code> が値を返すということは、<strong>どの枝も同じ型を返す必要がある</strong>ということです。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">flag</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;five&quot;</span><span class="w"> </span><span class="p">};</span></span></code></pre><figcaption class="code-cap">✗ 一方が数値、もう一方が文字列なので E0308</figcaption></figure>
+  <p>
+    また <code>else</code> を省くと、その枝は <code>()</code> を返すことになります。
+    値として使いたい <code>if</code> には <code>else</code> が必須です。
+  </p>
+</div>
+
+<h2 id="条件には-bool-しか書けない">条件には bool しか書けない</h2>
+
+<div class="note csharp">
+  <span class="note-title">0 や null は偽にならない</span>
+  <p>
+    C# でも <code>if (0)</code> は書けませんが、
+    JavaScript や C から来た感覚だと <code>if (count)</code> と書きたくなることがあります。
+    Rust はこれを許しません。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">if</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">        </span><span class="c1">// ○</span></span><span class="cl"><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">list</span><span class="p">.</span><span class="n">is_empty</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// ○</span></span></code></pre></figure>
+  <p>
+    <code>if x = 5</code> のような代入の書き間違いも、
+    <code>bool</code> でないので必ずコンパイルエラーになります。
+  </p>
+</div>
+
+<h2 id="ループの-3-種類">ループの 3 種類</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Rust</th><th>意味</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>loop { }</code></td><td>無限ループ。<code>break</code> で抜ける</td><td><code>while (true)</code></td></tr>
+    <tr><td><code>while cond { }</code></td><td>条件付きループ</td><td><code>while</code></td></tr>
+    <tr><td><code>for x in iter { }</code></td><td>反復子をなめる</td><td><code>foreach</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">C 風の for は無い</span>
+  <p>
+    <code>for (int i = 0; i &lt; n; i++)</code> に当たる構文はありません。
+    <strong><code>for</code> は必ず「何かをなめる」形</strong>です。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="n">n</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">        </span><span class="c1">// 0 から n-1 まで（C# の for と同じ範囲）</span></span><span class="cl"><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..=</span><span class="n">n</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">       </span><span class="c1">// 0 から n まで（= が付くと終端を含む）</span></span><span class="cl"><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">n</span><span class="p">).</span><span class="n">rev</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 逆順</span></span><span class="cl"><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">n</span><span class="p">).</span><span class="n">step_by</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 2 つ飛ばし</span></span></code></pre></figure>
+  <p>
+    <code>..</code> が終端を含まず、<code>..=</code> が含みます。
+    <strong>この 1 文字を落とすのは、Rust で最もよくある間取り違え</strong>です。
+  </p>
+</div>
+
+<h2 id="loop-は値を返せる">loop は値を返せる</h2>
+
+<p>
+これは C# に対応するものがない、便利な書き方です。
+<code>break</code> に値を付けると、それが <code>loop</code> 式の値になります。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">first_over_100</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">loop</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">n</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">break</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w">      </span><span class="c1">// これが loop の値になる</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">};</span></span></code></pre></figure>
+
+<div class="note csharp">
+  <span class="note-title">C# なら変数を外に用意する</span>
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C#</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span></span><span class="cl"><span class="kt">int</span><span class="w"> </span><span class="n">firstOver100</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></span><span class="cl"><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="k">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">n</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">firstOver100</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w"> </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <p>
+    <code>firstOver100</code> を先に宣言して仮の値を入れておく必要があり、
+    「初期値の 0 は意味がない値だ」という気持ち悪さが残ります。
+    Rust の <code>loop</code> 式はそれを解消します。
+  </p>
+</div>
+
+<h2 id="ラベル付き-break">ラベル付き break</h2>
+
+<p>
+入れ子のループから一気に抜けられます。C# の <code>goto</code> の代わりです。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="o">&#39;</span><span class="na">outer</span><span class="p">:</span><span class="w"> </span><span class="nc">for</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..=</span><span class="mi">3</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..=</span><span class="mi">3</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">            </span><span class="k">break</span><span class="w"> </span><span class="nl">&#39;outer</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+ラベルは <code>'</code> で始まります。
+ライフタイム（第 15 章）と同じ記号ですが、別のものです。
+</p>
+
+<h2 id="match--スイッチ式の強化版">match — スイッチ式の強化版</h2>
+
+<div class="note csharp">
+  <span class="note-title">C# のスイッチ式との対応</span>
+  <div class="compare">
+    <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C# 8 以降</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kt">var</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="k">switch</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="mi">0</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;ゼロ&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="mi">1</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;ひとつ&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">9</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;一桁&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;二桁以上&quot;</span></span><span class="cl"><span class="p">};</span></span></code></pre></figure>
+    <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="mi">0</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;ゼロ&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="mi">1</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;ひとつ&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="mi">2</span><span class="o">..=</span><span class="mi">9</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;一桁&quot;</span><span class="p">,</span></span><span class="cl"><span class="w">    </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;二桁以上&quot;</span><span class="p">,</span></span><span class="cl"><span class="p">};</span></span></code></pre></figure>
+  </div>
+  <p>
+    ほとんど同じです。違いは <strong>Rust の <code>match</code> は網羅性を強制する</strong>ことです。
+    C# のスイッチ式も網羅していないと警告が出ますが、
+    Rust は<strong>エラーとしてビルドを止めます</strong>。
+    列挙型と組み合わせたときの効き方は第 10 章で扱います。
+  </p>
+</div>
+
+<h2 id="ブロックも式">ブロックも式</h2>
+
+<p>
+波括弧のかたまりも値になります。
+「計算に使う一時変数をスコープに閉じ込めたい」ときに便利です。
+</p>
+
+<figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">computed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="n">base</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">base</span><span class="w">       </span><span class="c1">// これがブロックの値</span></span><span class="cl"><span class="p">};</span></span><span class="cl"><span class="c1">// base はここでは見えない</span></span></code></pre></figure>
+
+<div class="note deep">
+  <span class="note-title">式と文の区別</span>
+  <p>
+    セミコロンには「式を文にする」働きがあります。
+    文は値を返さない（正確には <code>()</code> を返す）ので、次の 2 つは違うものです。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>書き方</th><th>ブロックの値</th></tr></thead>
+    <tbody>
+      <tr><td><code>{ 5 }</code></td><td><code>5</code></td></tr>
+      <tr><td><code>{ 5; }</code></td><td><code>()</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    「型が合わない」と言われたら、まず末尾のセミコロンを疑ってください。
+    これは Rust を書きはじめた人が最もよく踏む間違いです。
+  </p>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/05-control-flow</code> を動かして、出力を追ってください。</li>
+    <li><code>for i in 1..3</code> と <code>for i in 1..=3</code> の違いを、実際に出力して確かめてください。</li>
+    <li><code>loop</code> を使って「2 で割り続けて 1 になるまでの回数」を数える式を書いてみてください。</li>
+    <li><code>let x = if true { 1 };</code> と書いて、どんなエラーになるか見てください（<code>else</code> が無い場合の型の話が実感できます）。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li><code>if</code>・<code>match</code>・<code>loop</code>・ブロックはすべて<strong>式</strong>。値を返す。</li>
+    <li>三項演算子は無い。<code>if</code> が式なので要らない。</li>
+    <li>条件には <code>bool</code> しか書けない。</li>
+    <li>C 風の <code>for</code> は無い。<code>..</code> は終端を含まず、<code>..=</code> は含む。</li>
+    <li><code>break 値</code> で <code>loop</code> から値を返せる。C# に対応するものはない。</li>
+    <li>末尾のセミコロンの有無で戻り値が変わる。型エラーの原因はまずここ。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../04-variables/"><span class="pager-dir">← 前の章</span><span class="pager-title">変数と型</span></a>
+<a class="pager-link pager-next" href="../06-ownership/"><span class="pager-dir">次の章 →</span><span class="pager-title">★ 所有権</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

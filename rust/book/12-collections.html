@@ -1,0 +1,300 @@
+<p>
+この章は対応表でほとんど済みます。
+<code>List&lt;T&gt;</code> は <code>Vec&lt;T&gt;</code>、<code>Dictionary&lt;K, V&gt;</code> は <code>HashMap&lt;K, V&gt;</code>。
+名前が違うだけです。
+</p>
+
+<p>
+ただし 1 つだけ新しいことがあります。
+<strong>ここで初めて、借用の規則が実戦になります。</strong>
+コレクションは「読みながら書き換えたくなる」ものなので、第 7 章の話が本当に効いてきます。
+</p>
+
+<h2>対応表</h2>
+
+<div class="note csharp">
+  <span class="note-title">コレクションの対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td><code>List&lt;T&gt;</code></td><td><code>Vec&lt;T&gt;</code></td><td>連続した領域。いちばん使う</td></tr>
+      <tr><td><code>T[]</code></td><td><code>[T; N]</code></td><td>長さが型に含まれる</td></tr>
+      <tr><td><code>Dictionary&lt;K, V&gt;</code></td><td><code>HashMap&lt;K, V&gt;</code></td><td>順序は保証されない</td></tr>
+      <tr><td><code>SortedDictionary&lt;K, V&gt;</code></td><td><code>BTreeMap&lt;K, V&gt;</code></td><td>キー順に並ぶ</td></tr>
+      <tr><td><code>HashSet&lt;T&gt;</code></td><td><code>HashSet&lt;T&gt;</code></td><td>同名</td></tr>
+      <tr><td><code>SortedSet&lt;T&gt;</code></td><td><code>BTreeSet&lt;T&gt;</code></td><td></td></tr>
+      <tr><td><code>Queue&lt;T&gt;</code> / <code>Stack&lt;T&gt;</code></td><td><code>VecDeque&lt;T&gt;</code></td><td>両端から出し入れできる</td></tr>
+      <tr><td><code>PriorityQueue</code></td><td><code>BinaryHeap&lt;T&gt;</code></td><td></td></tr>
+      <tr><td><code>StringBuilder</code></td><td><code>String</code></td><td>第 8 章</td></tr>
+      <tr><td><code>ImmutableList&lt;T&gt;</code></td><td>—</td><td><code>im</code> クレートなど</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">HashMap は use が必要</span>
+  <p>
+    <code>Vec</code> と <code>String</code> は最初から使えますが、
+    <code>HashMap</code> などは <code>use</code> を書く必要があります。
+  </p>
+  <div class="src" data-lang="rust">
+use std::collections::{HashMap, HashSet, VecDeque};
+  </div>
+  <p>
+    忘れると <code>cannot find type `HashMap` in this scope</code> と言われます。
+    rust-analyzer が入っていれば、クイックフィックスで自動的に足してくれます。
+  </p>
+</div>
+
+<h2>Vec の基本</h2>
+
+<div class="src" data-lang="rust">
+let mut fruits = vec!["りんご", "みかん"];   // vec! マクロで作る
+fruits.push("ぶどう");                       // C# の Add
+let mut empty: Vec&lt;&amp;str&gt; = Vec::new();      // 空から作る
+</div>
+
+<div class="note csharp">
+  <span class="note-title">メソッド名の対応</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>list.Add(x)</code></td><td><code>v.push(x)</code></td></tr>
+      <tr><td><code>list.Insert(i, x)</code></td><td><code>v.insert(i, x)</code></td></tr>
+      <tr><td><code>list.RemoveAt(i)</code></td><td><code>v.remove(i)</code></td></tr>
+      <tr><td><code>list.Count</code></td><td><code>v.len()</code></td></tr>
+      <tr><td><code>list.Count == 0</code></td><td><code>v.is_empty()</code></td></tr>
+      <tr><td><code>list.Clear()</code></td><td><code>v.clear()</code></td></tr>
+      <tr><td><code>list.Contains(x)</code></td><td><code>v.contains(&amp;x)</code></td></tr>
+      <tr><td><code>list.Sort()</code></td><td><code>v.sort()</code></td></tr>
+      <tr><td><code>list[0]</code></td><td><code>v[0]</code>（範囲外で panic）</td></tr>
+      <tr><td>—</td><td><strong><code>v.get(0)</code></strong>（<code>Option</code> を返す）</td></tr>
+      <tr><td><code>list.ToArray()</code></td><td><code>v.as_slice()</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>contains</code> に <code>&amp;</code> が付くことに注意してください。
+    値を借りて比べるだけなので、所有権は要らないからです。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">添字と get の使い分け</span>
+  <div class="compare">
+    <div class="src" data-lang="rust" data-file="添字" data-cap="範囲外なら panic。あると確信できるとき">
+let first = numbers[0];
+    </div>
+    <div class="src" data-lang="rust" data-file="get" data-cap="範囲外でも落ちない。Option が返る">
+if let Some(first) = numbers.get(0) { }
+    </div>
+  </div>
+  <p>
+    C# の <code>list[i]</code> は範囲外で
+    <code>ArgumentOutOfRangeException</code> を投げます。
+    Rust の <code>v[i]</code> は panic します。挙動は同じです。
+    <strong>落ちてほしくない場面では <code>get()</code> を使ってください。</strong>
+  </p>
+</div>
+
+<h2>HashMap の基本</h2>
+
+<div class="src" data-lang="rust">
+let mut ages = HashMap::new();
+ages.insert("すずき", 28);
+
+// 取り出しは Option。キーが無ければ None
+println!("{:?}", ages.get("すずき"));   // Some(28)
+println!("{:?}", ages.get("さとう"));   // None
+</div>
+
+<div class="note csharp">
+  <span class="note-title">Dictionary との違い</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C#</th><th>Rust</th><th>違い</th></tr></thead>
+    <tbody>
+      <tr><td><code>dict[key]</code></td><td><code>map[&amp;key]</code></td><td>どちらも無いと落ちる</td></tr>
+      <tr><td><code>dict.TryGetValue(k, out v)</code></td><td><strong><code>map.get(&amp;k)</code></strong></td><td><code>out</code> 引数が要らない</td></tr>
+      <tr><td><code>dict.ContainsKey(k)</code></td><td><code>map.contains_key(&amp;k)</code></td><td></td></tr>
+      <tr><td><code>dict[k] = v</code></td><td><code>map.insert(k, v)</code></td><td><strong>Rust は古い値を <code>Option</code> で返す</strong></td></tr>
+      <tr><td><code>dict.Remove(k)</code></td><td><code>map.remove(&amp;k)</code></td><td>同じく古い値を返す</td></tr>
+      <tr><td><code>GetOrAdd</code>（ConcurrentDictionary）</td><td><strong><code>map.entry(k).or_insert(v)</code></strong></td><td>下で説明</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>TryGetValue</code> の <code>out</code> 引数が <code>Option</code> の戻り値になるのが、
+    いちばん気持ちのよい対応です。
+  </p>
+</div>
+
+<h2>entry API — 「無ければ入れる」</h2>
+
+<p>
+C# で「あれば足す、無ければ作る」を書くと、こうなりがちです。
+</p>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C#" data-cap="キーを 2 回引いている">
+if (!counts.ContainsKey(word))
+    counts[word] = 0;
+counts[word]++;
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust" data-cap="1 回で済む">
+*counts.entry(word).or_insert(0) += 1;
+  </div>
+</div>
+
+<div class="note">
+  <span class="note-title">entry のよく使う形</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>.entry(k).or_insert(v)</code></td><td>無ければ <code>v</code> を入れる</td></tr>
+      <tr><td><code>.entry(k).or_default()</code></td><td>無ければ型の既定値を入れる</td></tr>
+      <tr><td><code>.entry(k).or_insert_with(|| 重い計算())</code></td><td>無いときだけ計算する</td></tr>
+      <tr><td><code>.entry(k).and_modify(|v| *v += 1).or_insert(1)</code></td><td>あれば更新、無ければ挿入</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>or_insert</code> は「入った値への <code>&amp;mut</code>」を返すので、
+    <code>*</code> で中身を書き換えられます。
+    グループ化や集計を書くときの定番です。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">HashMap の順序は決まっていない</span>
+  <p>
+    <code>HashMap</code> をなめると、出てくる順番は<strong>毎回変わりえます</strong>。
+    Rust はハッシュの初期値を実行ごとにランダム化しているためです
+    （ハッシュ衝突攻撃を防ぐ目的）。
+  </p>
+  <p>
+    順番を決めたいなら、明示的に並べるか <code>BTreeMap</code> を使ってください。
+  </p>
+  <div class="src" data-lang="rust">
+let mut names: Vec&lt;_&gt; = ages.keys().collect();
+names.sort();
+  </div>
+  <p>
+    C# の <code>Dictionary</code> も順序は保証されませんが、
+    実装の都合で「だいたい挿入順」になることがあります。
+    <strong>そこに頼ったコードは Rust では通用しません。</strong>
+  </p>
+</div>
+
+<h2>ここで借用が効いてくる</h2>
+
+<p>
+コレクションを扱うと、必ずこれに当たります。
+</p>
+
+<div class="src" data-lang="rust" data-cap="✗ E0502。last() の借用が生きているのに push しようとしている">
+let mut stack = vec![1, 2, 3];
+stack.push(*stack.last().unwrap() * 10);
+</div>
+
+<p>
+直し方は、借用を先に終わらせることです。
+</p>
+
+<div class="src" data-lang="rust" data-cap="○ 値を取り出してから push する">
+let mut stack = vec![1, 2, 3];
+let last = *stack.last().unwrap();   // * でコピーして借用を終わらせる
+stack.push(last * 10);
+</div>
+
+<div class="note deep">
+  <span class="note-title">「なめながら消す」を書きたいとき</span>
+  <p>
+    C# で <code>foreach</code> 中に <code>Remove</code> すると例外になるので、
+    ふつうは条件に合うものを別のリストに集めてから消します。
+    Rust には専用のメソッドがあります。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やりたいこと</th><th>書き方</th></tr></thead>
+    <tbody>
+      <tr><td>条件に合うものだけ残す</td><td><code>v.retain(|x| *x &gt; 0)</code></td></tr>
+      <tr><td>条件に合うものを抜き出す</td><td><code>v.extract_if(..)</code></td></tr>
+      <tr><td>全部取り出して空にする</td><td><code>v.drain(..)</code></td></tr>
+      <tr><td>中身を全部置き換える</td><td><code>*v = 新しい Vec</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <code>retain</code> は C# の <code>RemoveAll</code> に当たります。
+    「消す」のではなく「残す」条件を書く点に注意してください。
+  </p>
+</div>
+
+<h2>所有権をもらう繰り返しと、借りる繰り返し</h2>
+
+<p>
+<code>for</code> の書き方が 3 通りあります。ここは C# に無い区別です。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>もらうもの</th><th>後で Vec を使えるか</th></tr></thead>
+  <tbody>
+    <tr><td><code>for x in &amp;v</code></td><td><code>&amp;T</code>（借用）</td><td><strong>使える</strong></td></tr>
+    <tr><td><code>for x in &amp;mut v</code></td><td><code>&amp;mut T</code>（書ける借用）</td><td>使える</td></tr>
+    <tr><td><code>for x in v</code></td><td><code>T</code>（所有権）</td><td><strong>使えない</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">for x in v と書くと Vec が消える</span>
+  <p>
+    C# の <code>foreach (var x in list)</code> の後も <code>list</code> は使えます。
+    Rust で <code>for x in v</code> と書くと、<strong><code>v</code> の所有権が for に移ります。</strong>
+  </p>
+  <div class="src" data-lang="rust">
+for w in words { }
+println!("{words:?}");   // ✗ E0382。words は消費された
+  </div>
+  <p>
+    <code>&amp;</code> を 1 文字足せば直ります。
+    <strong>ふだんは <code>for x in &amp;v</code> と書く癖にしておくのが無難です。</strong>
+  </p>
+  <p>
+    逆に「中身を取り出して別の場所へ移したい」ときは、
+    所有権をもらう形が正解になります。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 12-collections/src/main.rs-->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/12-collections</code> を動かしてください。</li>
+    <li>HashMap の出力を何度か実行して、キーの順番が変わることを確認してください（環境によっては変わらないこともあります）。</li>
+    <li><code>for w in words</code> の <code>&amp;</code> を消して、E0382 を出してください。</li>
+    <li>単語の出現回数を数えるコードを <code>entry().or_insert(0)</code> で書いてみてください。<code>"a b a c b a".split(' ')</code> を使うと楽です。</li>
+    <li><code>numbers[99]</code> を実行して、panic のメッセージを見てください。<code>numbers.get(99)</code> との違いが分かります。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li><code>Vec</code>＝<code>List</code>、<code>HashMap</code>＝<code>Dictionary</code>。名前が違うだけ。</li>
+    <li>取り出しは <code>Option</code> を返す（<code>get</code>）。添字は範囲外で panic。</li>
+    <li><code>entry().or_insert()</code> で「無ければ入れる」が 1 行で書ける。</li>
+    <li><code>HashMap</code> の順序は決まっていない。並べたいなら <code>BTreeMap</code>。</li>
+    <li><code>for x in &amp;v</code> は借りる、<code>for x in v</code> は<strong>所有権をもらう</strong>。<code>&amp;</code> を付ける癖を。</li>
+    <li>「なめながら消す」は <code>retain</code> / <code>drain</code>。</li>
+  </ul>
+</div>

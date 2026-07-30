@@ -1,0 +1,15 @@
+{
+  "name": "run-enums",
+  "title": "Windows PowerShell",
+  "note": "examples/10-enums の実行結果",
+  "steps": [
+    {
+      "prompt": "PS C:\\rust\\10-enums>",
+      "command": "cargo run --quiet",
+      "output": "── 1. 値を持つ列挙型 ──\r\n  Circle { radius: 1.0 } の面積 = 3.14\r\n  Rectangle { width: 3.0, height: 4.0 } の面積 = 12.00\r\n  Triangle(6.0, 2.0) の面積 = 6.00\r\n\r\n── 2. Option が null の代わり ──\r\n  id 1 → すずき\r\n  id 99 → 見つかりません\r\n\r\n── 3. if let は「片方だけ気にする」書き方 ──\r\n  見つかった: たなか\r\n\r\n── 4. let else で早く抜ける ──\r\n  id 1 は すずき さん\r\n  id 99 は該当なし。ここで打ち切ります\r\n\r\n── 5. Option の便利メソッド ──\r\n  unwrap_or  = 名無し\r\n  is_some    = true\r\n  map        = Some(9)\r\n  and_then   = Some('す')\r\n\r\n── 6. match の網羅性 ──\r\n  Shape を増やすと、上の area() が必ずエラーになって気づける\r\n"
+    }
+  ],
+  "captured_at": "2026-07-30",
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)"
+}

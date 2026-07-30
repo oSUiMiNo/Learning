@@ -1,0 +1,302 @@
+<p>
+トレイトはインターフェースによく似ています。
+「このメソッドを持っていること」を約束する仕組み、という点は同じです。
+</p>
+
+<p>
+違いは 1 つですが、それが決定的です。
+<strong>トレイトは、他人が作った型にも後から実装できます。</strong>
+C# の拡張メソッドでは真似できない範囲まで、これができます。
+</p>
+
+<h2>まず似ているところ</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C#">
+interface IGreet {
+    string Name();
+    string Hello() =&gt; $"こんにちは、{Name()} さん";  // C# 8 以降
+}
+
+class Person : IGreet {
+    public string Name() =&gt; "すずき";
+}
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust">
+trait Greet {
+    fn name(&amp;self) -&gt; String;
+    fn hello(&amp;self) -&gt; String {
+        format!("こんにちは、{} さん", self.name())
+    }
+}
+
+impl Greet for Person {
+    fn name(&amp;self) -&gt; String { "すずき".to_string() }
+}
+  </div>
+</div>
+
+<p>
+既定実装まで含めて、ほぼ同じです。
+書き方の違いは <code>impl Trait for Type</code> という形だけです。
+</p>
+
+<div class="note csharp">
+  <span class="note-title">実装を型の宣言と切り離す</span>
+  <p>
+    C# は <code>class Person : IGreet</code> と、クラス宣言に書きます。
+    Rust は <code>impl Greet for Person</code> と、<strong>別の場所に書きます</strong>。
+  </p>
+  <p>
+    つまり型を定義したファイルと、トレイトを実装するファイルを分けられます。
+    これが次の節の話につながります。
+  </p>
+</div>
+
+<h2>決定的な違い — 他人の型に実装できる</h2>
+
+<div class="src" data-lang="rust">
+// 標準ライブラリの i32 に、自分のトレイトを実装する
+impl Greet for i32 {
+    fn name(&amp;self) -&gt; String {
+        format!("整数の {self}")
+    }
+}
+
+// これで 42.hello() と書けるようになる
+</div>
+
+<div class="note csharp">
+  <span class="note-title">拡張メソッドとの違い</span>
+  <p>
+    C# の拡張メソッドも <code>int</code> にメソッドを足せます。しかし決定的に違います。
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>C# の拡張メソッド</th><th>Rust のトレイト実装</th></tr></thead>
+    <tbody>
+      <tr><td>メソッドを足せる</td><td>できる</td><td>できる</td></tr>
+      <tr><td><strong>インターフェースを実装させる</strong></td><td><strong>できない</strong></td><td><strong>できる</strong></td></tr>
+      <tr><td>ジェネリクスの制約に使える</td><td>使えない</td><td><strong>使える</strong></td></tr>
+      <tr><td>多態に使える</td><td>使えない</td><td>使える（<code>dyn Trait</code>）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    C# では「<code>int</code> に <code>IGreet</code> を後から実装させる」ことは不可能です。
+    だから <code>List&lt;IGreet&gt;</code> に <code>int</code> を入れることもできません。
+  </p>
+  <p>
+    Rust ならできます。この違いのおかげで、
+    <strong>ライブラリの型を自分のシステムに組み込むのがはるかに楽</strong>です。
+    たとえば <code>serde</code> は「あらゆる型を JSON にできる」仕組みを、
+    この性質だけで実現しています。
+  </p>
+</div>
+
+<h2>孤児則 — できないこともある</h2>
+
+<p>
+無制限ではありません。1 つ制約があります。
+</p>
+
+<!--figure: orphan-rule | 「型」と「トレイト」の少なくとも一方が自分のクレートのものであれば実装できる。両方が他人のものだと実装できない。2 つのクレートが同じ組み合わせに別々の実装を書けてしまうと、どちらを使うか決められなくなるため。 -->
+
+<div class="note">
+  <span class="note-title">孤児則を回避する — newtype</span>
+  <p>
+    「標準の <code>Vec</code> に標準の <code>Display</code> を実装したい」ときは、
+    自分の型で包みます（第 9 章のタプル構造体）。
+  </p>
+  <div class="src" data-lang="rust">
+struct MyVec(Vec&lt;i32&gt;);
+
+impl std::fmt::Display for MyVec {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter) -&gt; std::fmt::Result {
+        write!(f, "[{}]", self.0.iter().map(|n| n.to_string())
+            .collect::&lt;Vec&lt;_&gt;&gt;().join(", "))
+    }
+}
+  </div>
+  <p>
+    包んだぶんの実行時コストはゼロです。
+    <strong>コンパイル後は生の <code>Vec</code> と同じ</strong>になります。
+  </p>
+</div>
+
+<h2>ジェネリクスとトレイト境界</h2>
+
+<div class="compare">
+  <div class="src" data-lang="csharp" data-file="C#">
+void GreetAll&lt;T&gt;(IEnumerable&lt;T&gt; items) where T : IGreet {
+    foreach (var item in items)
+        Console.WriteLine(item.Hello());
+}
+  </div>
+  <div class="src" data-lang="rust" data-file="Rust">
+fn greet_all&lt;T: Greet&gt;(items: &amp;[T]) {
+    for item in items {
+        println!("{}", item.hello());
+    }
+}
+  </div>
+</div>
+
+<p>
+書き方は 3 通りあり、どれも同じ意味です。
+</p>
+
+<div class="src" data-lang="rust">
+fn a&lt;T: Greet&gt;(x: &amp;T) { }              // 型引数の後ろに書く
+fn b(x: &amp;impl Greet) { }               // impl Trait。短い
+fn c&lt;T&gt;(x: &amp;T) where T: Greet { }      // where で後ろにまとめる
+</div>
+
+<div class="note">
+  <span class="note-title">使い分け</span>
+  <ul>
+    <li>境界が 1 つで短いなら <code>impl Trait</code></li>
+    <li>同じ型を複数の引数で使うなら <code>&lt;T: Trait&gt;</code></li>
+    <li>境界が長い・複数あるなら <code>where</code></li>
+  </ul>
+  <div class="src" data-lang="rust">
+fn describe&lt;T&gt;(value: T) -&gt; String
+where
+    T: Display + PartialOrd&lt;i32&gt;,   // + でつなぐ
+{ }
+  </div>
+</div>
+
+<h2>単相化 — C# のジェネリクスとの違い</h2>
+
+<!--figure: trait-dispatch | ジェネリクスは型ごとに実体が複製される（単相化）ので呼び出しが直接になり、実行時コストがゼロ。dyn Trait は vtable を経由するので C# のインターフェース呼び出しに近い。違う型を 1 つの Vec に混ぜたいときだけ dyn を使う。 -->
+
+<div class="note csharp">
+  <span class="note-title">.NET のジェネリクスとの比較</span>
+  <p>
+    .NET は<strong>参照型については 1 つの実体を共有</strong>し、
+    値型については型ごとにコードを作ります。
+  </p>
+  <p>
+    Rust は<strong>常に型ごとに作ります</strong>（単相化）。だから
+  </p>
+  <ul>
+    <li>呼び出しは直接。インライン展開もされる。<strong>実行時コストがゼロ</strong></li>
+    <li>そのぶん実行ファイルが大きくなり、ビルドが遅くなる</li>
+    <li>実行時に型情報が残らない。<strong>C# の <code>typeof(T)</code> のようなことは基本できない</strong></li>
+  </ul>
+  <p>
+    3 つ目が実務で効きます。C# のリフレクションに相当するものは Rust にはほぼ無く、
+    「型に応じて動きを変える」ことはコンパイル時に決めます。
+  </p>
+</div>
+
+<h2>dyn Trait — 違う型を混ぜる</h2>
+
+<p>
+ジェネリクスでは「1 つの <code>Vec</code> に <code>Person</code> と <code>Robot</code> を混ぜる」ことができません。
+そのときは <code>dyn</code> を使います。
+</p>
+
+<div class="src" data-lang="rust">
+let mixed: Vec&lt;Box&lt;dyn Greet&gt;&gt; = vec![
+    Box::new(Person { first: String::from("さとう") }),
+    Box::new(Robot { id: 99 }),
+    Box::new(5_i32),
+];
+</div>
+
+<div class="note csharp">
+  <span class="note-title">List&lt;IGreet&gt; に相当するもの</span>
+  <p>
+    C# の <code>List&lt;IGreet&gt;</code> がそのまま <code>Vec&lt;Box&lt;dyn Greet&gt;&gt;</code> です。
+    <code>Box</code> が必要なのは、<strong>要素の大きさが型によって違うから</strong>です。
+  </p>
+  <p>
+    C# では参照型なのでポインタ 1 個ぶんに揃っていますが、
+    Rust の値は型ごとに大きさが違うので、
+    ヒープに置いてポインタで揃える必要があります。それが <code>Box</code> の役目です。
+  </p>
+  <p>
+    借用でよければ <code>&amp;dyn Greet</code> と書けて、<code>Box</code> は要りません。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">dyn にできないトレイトがある</span>
+  <p>
+    <code>dyn Trait</code> にするには、そのトレイトが
+    <strong>オブジェクト安全</strong>である必要があります。主な条件は次の 2 つです。
+  </p>
+  <ul>
+    <li>メソッドがジェネリック型引数を持たない</li>
+    <li><code>self</code> を値で受け取るメソッドが無い（<code>Sized</code> が要るため）</li>
+  </ul>
+  <p>
+    <code>the trait cannot be made into an object</code> と言われたら、これです。
+    ジェネリックなメソッドがあるトレイトは <code>dyn</code> にできません。
+  </p>
+</div>
+
+<h2>知っておくべき標準トレイト</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>トレイト</th><th>役目</th><th>C# なら</th></tr></thead>
+  <tbody>
+    <tr><td><code>Display</code></td><td><code>{}</code> での表示。<strong>derive できない</strong></td><td><code>ToString()</code></td></tr>
+    <tr><td><code>Debug</code></td><td><code>{:?}</code> での表示。derive できる</td><td>—</td></tr>
+    <tr><td><code>Clone</code> / <code>Copy</code></td><td>複製</td><td><code>ICloneable</code> / 値型</td></tr>
+    <tr><td><code>PartialEq</code> / <code>Eq</code></td><td>等値比較</td><td><code>IEquatable</code></td></tr>
+    <tr><td><code>PartialOrd</code> / <code>Ord</code></td><td>大小比較</td><td><code>IComparable</code></td></tr>
+    <tr><td><code>Default</code></td><td>既定値</td><td>既定コンストラクタ</td></tr>
+    <tr><td><code>From</code> / <code>Into</code></td><td>型変換</td><td>暗黙・明示の変換演算子</td></tr>
+    <tr><td><code>Iterator</code></td><td>反復</td><td><code>IEnumerator</code></td></tr>
+    <tr><td><code>IntoIterator</code></td><td><code>for</code> で回せるようにする</td><td><code>IEnumerable</code></td></tr>
+    <tr><td><code>Drop</code></td><td>後片付け</td><td><code>IDisposable</code></td></tr>
+    <tr><td><code>Deref</code></td><td><code>*</code> と自動参照外し</td><td>—</td></tr>
+    <tr><td><code>Send</code> / <code>Sync</code></td><td>スレッド安全性（第 19 章）</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">From を実装すると Into が無料で付いてくる</span>
+  <p>
+    <code>impl From&lt;A&gt; for B</code> を書くと、
+    自動的に <code>a.into()</code> で <code>B</code> が作れるようになります。
+    逆は成り立たないので、<strong>実装するのは常に <code>From</code> 側</strong>です。
+  </p>
+  <p>
+    第 11 章の <code>?</code> がエラー型を自動変換していたのは、この仕組みです。
+  </p>
+</div>
+
+<h2>全体を動かす</h2>
+
+<!--code: 14-traits/src/main.rs-->
+
+<!--term: run-traits | 実行結果。42.hello() が動いているところに注目。標準ライブラリの i32 に、自分のトレイトを後から実装した結果。 -->
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/14-traits</code> を動かしてください。</li>
+    <li><code>impl Greet for String</code> を足して、<code>"あ".to_string().hello()</code> を呼んでみてください。</li>
+    <li><code>impl std::fmt::Display for Vec&lt;i32&gt;</code> を書こうとして、孤児則のエラー（E0117）を見てください。</li>
+    <li><code>trait Greet</code> に <code>fn convert&lt;T&gt;(&amp;self) -&gt; T;</code> のようなジェネリックなメソッドを足して、<code>dyn Greet</code> が使えなくなることを確認してください。</li>
+    <li><code>greet_all</code> を <code>&amp;[Box&lt;dyn Greet&gt;]</code> を受け取る形に書き換えてみてください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>トレイトはインターフェースに似ているが、<strong>他人の型にも後から実装できる</strong>。</li>
+    <li>ただし孤児則がある。「型かトレイトの一方は自分のもの」であること。回避策は newtype。</li>
+    <li>ジェネリクスは<strong>単相化</strong>される。実行時コストゼロだが、実行時の型情報は残らない。</li>
+    <li>違う型を 1 つの箱に混ぜたいときだけ <code>dyn Trait</code>。C# の <code>List&lt;IFoo&gt;</code> に相当。</li>
+    <li>境界の書き方は <code>&lt;T: Trait&gt;</code> / <code>impl Trait</code> / <code>where</code> の 3 通り。意味は同じ。</li>
+    <li><code>Display</code> は derive できない。人間向けの表示は自分で決めるもの。</li>
+  </ul>
+</div>

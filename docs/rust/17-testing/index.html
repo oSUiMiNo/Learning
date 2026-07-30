@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第17章 テストとドキュメント — 標準で付いてくるもの | Rust 入門</title>
+<meta name="description" content="テスト機構は言語に組み込みです。さらに「ドキュメントに書いた例がテストとして走る」仕組みまであります。この教材自身もそれに支えられています。">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#129408;</text></svg>">
+<script>
+// テーマのちらつき防止のため、CSS より先に実行する。
+(function () {
+  try {
+    var saved = localStorage.getItem('rustbook-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="">
+<a class="skip-link" href="#main">本文へスキップ</a>
+<div class="reading-progress"><span id="reading-bar"></span></div>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="目次を開く">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="../">
+    <span class="brand-mark" aria-hidden="true">Rs</span>
+    <span class="brand-text">Rust 入門</span>
+  </a>
+  <span class="verbadge" title="この教材の全コードは、この構成で実際にビルドして動作確認されています">
+    rustc 1.97.1 / edition 2024
+  </span>
+  <button class="icon-btn theme-toggle" type="button" aria-label="配色を切り替える">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+  </button>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="目次">
+    <p class="sidebar-title">目次</p>
+    <ol class="nav-list">
+<li><a href="../00-intro/"><span class="nav-num">はじめに</span><span class="nav-label">はじめに</span></a></li>
+<li><a href="../01-setup/"><span class="nav-num">第1章</span><span class="nav-label">環境構築</span></a></li>
+<li><a href="../02-editor/"><span class="nav-num">第2章</span><span class="nav-label">エディタの準備</span></a></li>
+<li><a href="../03-cargo/"><span class="nav-num">第3章</span><span class="nav-label">Cargo と最初の一本</span></a></li>
+<li><a href="../04-variables/"><span class="nav-num">第4章</span><span class="nav-label">変数と型</span></a></li>
+<li><a href="../05-control-flow/"><span class="nav-num">第5章</span><span class="nav-label">関数と制御フロー</span></a></li>
+<li><a href="../06-ownership/"><span class="nav-num">第6章</span><span class="nav-label">★ 所有権</span></a></li>
+<li><a href="../07-borrowing/"><span class="nav-num">第7章</span><span class="nav-label">★ 借用と参照</span></a></li>
+<li><a href="../08-strings/"><span class="nav-num">第8章</span><span class="nav-label">文字列</span></a></li>
+<li><a href="../09-structs/"><span class="nav-num">第9章</span><span class="nav-label">構造体と impl</span></a></li>
+<li><a href="../10-enums/"><span class="nav-num">第10章</span><span class="nav-label">列挙型と match</span></a></li>
+<li><a href="../11-errors/"><span class="nav-num">第11章</span><span class="nav-label">エラー処理</span></a></li>
+<li><a href="../12-collections/"><span class="nav-num">第12章</span><span class="nav-label">コレクション</span></a></li>
+<li><a href="../13-iterators/"><span class="nav-num">第13章</span><span class="nav-label">イテレータ</span></a></li>
+<li><a href="../14-traits/"><span class="nav-num">第14章</span><span class="nav-label">★ トレイト</span></a></li>
+<li><a href="../15-lifetimes/"><span class="nav-num">第15章</span><span class="nav-label">★ ライフタイム</span></a></li>
+<li><a href="../16-modules/"><span class="nav-num">第16章</span><span class="nav-label">モジュールとクレート</span></a></li>
+<li class="is-current"><a href="../17-testing/"><span class="nav-num">第17章</span><span class="nav-label">テストとドキュメント</span></a></li>
+<li><a href="../18-smart-pointers/"><span class="nav-num">第18章</span><span class="nav-label">スマートポインタ</span></a></li>
+<li><a href="../19-concurrency/"><span class="nav-num">第19章</span><span class="nav-label">並行処理</span></a></li>
+<li><a href="../20-async/"><span class="nav-num">第20章</span><span class="nav-label">★ async / await</span></a></li>
+<li><a href="../21-cli-app/"><span class="nav-num">第21章</span><span class="nav-label">実践: CLI ツール</span></a></li>
+<li><a href="../99-pitfalls/"><span class="nav-num">付録</span><span class="nav-label">つまずき集と次の一歩</span></a></li>
+    </ol>
+  </nav>
+  <div class="sidebar-scrim" hidden></div>
+
+  <main id="main">
+    <article class="chapter">
+      <header class="chapter-head">
+        <p class="eyebrow">第 17 章<span class="dot">·</span>読了目安 12 分</p>
+        <h1>第17章 テストとドキュメント — 標準で付いてくるもの</h1>
+        <p class="lede">テスト機構は言語に組み込みです。さらに「ドキュメントに書いた例がテストとして走る」仕組みまであります。この教材自身もそれに支えられています。</p>
+      </header>
+      <div class="prose">
+<p>
+テストは言語に組み込まれています。
+NUnit や xUnit のような外部のフレームワークを入れる必要はありません。
+</p>
+
+<p>
+そして Rust には C# に無い仕組みが 1 つあります。
+<strong>ドキュメントに書いたコード例が、テストとして実行されます。</strong>
+「ドキュメントの例が古くなって動かない」が構造的に起きません。
+この教材自身も、同じ考え方で作られています。
+</p>
+
+<h2 id="書き方">書き方</h2>
+
+<div class="compare">
+  <figure class="code-block" data-lang="csharp"><div class="code-head"><span class="code-file">C# (xUnit)</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TaxTests</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="na">[Fact]</span></span><span class="cl"><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="err">税込み金額を計算できる</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">Assert</span><span class="p">.</span><span class="n">Equal</span><span class="p">(</span><span class="mi">110</span><span class="p">,</span><span class="w"> </span><span class="n">Tax</span><span class="p">.</span><span class="n">WithTax</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mf">0.10</span><span class="p">));</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="cp">#[cfg(test)]</span></span><span class="cl"><span class="k">mod</span><span class="w"> </span><span class="nn">tests</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">税込み金額を計算できる</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">with_tax</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mf">0.10</span><span class="p">),</span><span class="w"> </span><span class="mi">110</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">対応表</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>C# (xUnit)</th><th>Rust</th></tr></thead>
+    <tbody>
+      <tr><td><code>[Fact]</code></td><td><code>#[test]</code></td></tr>
+      <tr><td><code>[Theory]</code> + <code>[InlineData]</code></td><td>ループを書く、または <code>rstest</code> クレート</td></tr>
+      <tr><td><code>Assert.Equal(a, b)</code></td><td><code>assert_eq!(a, b)</code></td></tr>
+      <tr><td><code>Assert.NotEqual</code></td><td><code>assert_ne!</code></td></tr>
+      <tr><td><code>Assert.True</code></td><td><code>assert!</code></td></tr>
+      <tr><td><code>Assert.Throws&lt;T&gt;</code></td><td><code>#[should_panic]</code></td></tr>
+      <tr><td><code>[Skip]</code></td><td><code>#[ignore]</code></td></tr>
+      <tr><td><code>dotnet test</code></td><td><code>cargo test</code></td></tr>
+      <tr><td>テストは別プロジェクト</td><td><strong>同じファイルに書くのが慣習</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    最後の行が大きな違いです。
+    Rust では<strong>テストを実装と同じファイルに置きます</strong>。
+    <code>#[cfg(test)]</code> が付いているので、通常のビルドには含まれません。
+    製品のバイナリにテストコードが混ざる心配はありません。
+  </p>
+  <p>
+    同じファイルにあるので、<strong>非公開の関数もテストできます</strong>。
+    C# で <code>InternalsVisibleTo</code> を書く必要があった場面が、そのまま解決します。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">テスト関数の名前は日本語でよい</span>
+  <p>
+    Rust の識別子は Unicode を許すので、テスト名に日本語が使えます。
+    出力にもそのまま出るので、読みやすさのために使う価値があります。
+  </p>
+  <p>
+    ふつうの関数名に日本語を使うと警告が出ますが（<code>non_snake_case</code>）、
+    テストでは実害がないので使われることがあります。
+  </p>
+</div>
+
+<h2 id="ドキュメントテスト">ドキュメントテスト</h2>
+
+<p>
+これが Rust 独自の仕組みです。
+<code>///</code> のドキュメントコメントの中に <code>```</code> でコードを書くと、
+<strong>それが実際にコンパイルされ、実行されます</strong>。
+</p>
+
+<figure class="code-block" data-lang="rust" data-src="17-testing/src/lib.rs"><div class="code-head"><span class="code-file">src/lib.rs</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">//! テストとドキュメント。テスト機構が言語に組み込みであることを確かめます。</span></span><span class="cl"><span class="sd">//!</span></span><span class="cl"><span class="sd">//! この章のサンプルはライブラリ（--lib）にしてあります。</span></span><span class="cl"><span class="sd">//! `cargo test` を実行すると、次の 3 種類がまとめて走ります。</span></span><span class="cl"><span class="sd">//!   1. #[test] を付けた単体テスト</span></span><span class="cl"><span class="sd">//!   2. ドキュメントコメントの中のコード例（doc テスト）</span></span><span class="cl"><span class="sd">//!   3. tests/ ディレクトリの結合テスト</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 消費税を加えた金額を返す。円未満は切り捨て。</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// # 例</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="sd">/// use ch17_testing::with_tax;</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// assert_eq!(with_tax(100, 0.10), 110);</span></span><span class="cl"><span class="sd">/// assert_eq!(with_tax(105, 0.10), 115); // 115.5 → 切り捨て</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// この ``` で囲んだ部分は、ただの飾りではありません。</span></span><span class="cl"><span class="sd">/// `cargo test` が実際にコンパイルして実行します。</span></span><span class="cl"><span class="sd">/// つまり「ドキュメントの例が古くなって動かない」ことが起きません。</span></span><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">with_tax</span><span class="p">(</span><span class="n">price</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w"> </span><span class="n">rate</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="p">(</span><span class="n">price</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">rate</span><span class="p">)).</span><span class="n">floor</span><span class="p">()</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u32</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 文字列を逆さにする。文字単位なので、日本語でも壊れない。</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// # 例</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="sd">/// use ch17_testing::reverse;</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// assert_eq!(reverse(&quot;abc&quot;), &quot;cba&quot;);</span></span><span class="cl"><span class="sd">/// assert_eq!(reverse(&quot;こんにちは&quot;), &quot;はちにんこ&quot;);</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">reverse</span><span class="p">(</span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="n">text</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">rev</span><span class="p">().</span><span class="n">collect</span><span class="p">()</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// 割り算。0 で割ろうとしたら Err を返す。</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// # 例</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="sd">/// use ch17_testing::divide;</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// assert_eq!(divide(10, 2), Ok(5));</span></span><span class="cl"><span class="sd">/// assert!(divide(1, 0).is_err());</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">divide</span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="s">&quot;0 で割ることはできません&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">());</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">a</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">b</span><span class="p">)</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="sd">/// パニックすることを示す例も書ける。</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// ```should_panic</span></span><span class="cl"><span class="sd">/// ch17_testing::must_be_positive(-1);</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">must_be_positive</span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="fm">assert!</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;正の数でなければなりません（受け取った値: {n}）&quot;</span><span class="p">);</span></span><span class="cl"><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="c1">// テストは同じファイルの中に、専用のモジュールとして置くのが慣習。</span></span><span class="cl"><span class="c1">// #[cfg(test)] が付いているので、通常のビルドには含まれない。</span></span><span class="cl"><span class="c1">// 「テストコードが製品に混ざる」心配が要らない。</span></span><span class="cl"><span class="cp">#[cfg(test)]</span></span><span class="cl"><span class="k">mod</span><span class="w"> </span><span class="nn">tests</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="c1">// 親モジュール（つまりこのライブラリ本体）のものを全部持ってくる</span></span><span class="cl"><span class="w">    </span><span class="k">use</span><span class="w"> </span><span class="k">super</span><span class="p">::</span><span class="o">*</span><span class="p">;</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">税込み金額を計算できる</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="c1">// テスト関数の名前に日本語を使える。読みやすさのために使ってよい。</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">with_tax</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mf">0.10</span><span class="p">),</span><span class="w"> </span><span class="mi">110</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">with_tax</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mf">0.08</span><span class="p">),</span><span class="w"> </span><span class="mi">1080</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">端数は切り捨てる</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">with_tax</span><span class="p">(</span><span class="mi">105</span><span class="p">,</span><span class="w"> </span><span class="mf">0.10</span><span class="p">),</span><span class="w"> </span><span class="mi">115</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">日本語も逆さにできる</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s">&quot;こんにちは&quot;</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;はちにんこ&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">ゼロ除算はエラーになる</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="fm">assert!</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">is_err</span><span class="p">());</span></span><span class="cl"><span class="w">        </span><span class="c1">// エラーの中身まで確かめる</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">unwrap_err</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;0 で割ることはできません&quot;</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="cp">#[should_panic(expected = </span><span class="s">&quot;正の数&quot;</span><span class="cp">)]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">負の数を渡すと落ちる</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="n">must_be_positive</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="sd">/// Result を返すテストも書ける。? が使えるので前準備が短くなる。</span></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">結果型を返すテスト</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">divide</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span></span><span class="cl"><span class="w">        </span><span class="nb">Ok</span><span class="p">(())</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"></span><span class="cl"><span class="w">    </span><span class="cp">#[test]</span></span><span class="cl"><span class="w">    </span><span class="cp">#[ignore = </span><span class="s">&quot;時間がかかるので、明示的に指定したときだけ走らせる&quot;</span><span class="cp">]</span></span><span class="cl"><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="err">重いテスト</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">        </span><span class="c1">// cargo test -- --ignored で走る</span></span><span class="cl"><span class="w">        </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">with_tax</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="p">}</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+
+<p>
+実行するとこうなります。
+</p>
+
+<figure class="term"><div class="term-frame"><div class="term-bar"><span class="term-title">Windows PowerShell</span><span class="term-badge term-badge--real" title="実際にこのコマンドを走らせて捕獲した出力です">実測</span><span class="term-dots"></span></div><pre class="term-body"><code><span class="term-cmd"><span class="term-prompt">PS C:\rust\17-testing&gt;</span> cargo test</span>
+<span class="a-b a-92">    Finished</span> `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+<span class="a-b a-92">     Running</span> unittests src/lib.rs (C:\rust\target\debug\deps\ch17_testing-436452698a6ed2e7)
+
+running 7 tests
+test tests::ゼロ除算はエラーになる ... <span class="a-32">ok</span>
+test tests::税込み金額を計算できる ... <span class="a-32">ok</span>
+test tests::日本語も逆さにできる ... <span class="a-32">ok</span>
+test tests::結果型を返すテスト ... <span class="a-32">ok</span>
+test tests::重いテスト ... <span class="a-33">ignored, 時間がかかるので、明示的に指定したときだけ走らせる</span>
+test tests::端数は切り捨てる ... <span class="a-32">ok</span>
+test tests::負の数を渡すと落ちる - should panic ... <span class="a-32">ok</span>
+
+test result: <span class="a-32">ok</span>. 6 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+<span class="a-b a-92">     Running</span> tests/integration.rs (C:\rust\target\debug\deps\integration-51cda8795e23e147)
+
+running 2 tests
+test 公開されている関数だけで一連の処理ができる ... <span class="a-32">ok</span>
+test 税率がゼロなら金額は変わらない ... <span class="a-32">ok</span>
+
+test result: <span class="a-32">ok</span>. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+<span class="a-b a-92">   Doc-tests</span> ch17_testing
+
+running 4 tests
+test 17-testing/src/lib.rs - divide (line 45) ... <span class="a-32">ok</span>
+test 17-testing/src/lib.rs - reverse (line 31) ... <span class="a-32">ok</span>
+test 17-testing/src/lib.rs - with_tax (line 13) ... <span class="a-32">ok</span>
+test 17-testing/src/lib.rs - must_be_positive (line 60) - should panic ... <span class="a-32">ok</span>
+
+test result: <span class="a-32">ok</span>. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+all doctests ran in 0.34s; merged doctests compilation took 0.25s</code></pre></div><figcaption>cargo test の出力。単体テスト 7 件（1 件は ignored）、結合テスト 2 件、そしてドキュメントテスト 4 件が、まとめて走っている。ドキュメントの例が本当にテストされていることが分かる。</figcaption></figure>
+
+<div class="note">
+  <span class="note-title">3 種類のテストが一度に走る</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>種類</th><th>置く場所</th><th>見えるもの</th></tr></thead>
+    <tbody>
+      <tr><td>単体テスト</td><td>実装と同じファイルの <code>#[cfg(test)] mod tests</code></td><td><strong>非公開のものも見える</strong></td></tr>
+      <tr><td>結合テスト</td><td><code>tests/*.rs</code></td><td>公開している API だけ</td></tr>
+      <tr><td>ドキュメントテスト</td><td><code>///</code> の中の <code>```</code></td><td>公開している API だけ</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    結合テストは<strong>別のクレートとしてコンパイルされます</strong>。
+    だから「公開している API だけで目的を果たせるか」の検証になります。
+    C# で別プロジェクトからテストするのと同じ位置づけです。
+  </p>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">なぜドキュメントテストが効くのか</span>
+  <p>
+    C# の XML ドキュメントコメントに書いた <code>&lt;example&gt;</code> は、
+    ただのテキストです。API を変えても誰も気づきません。
+  </p>
+  <p>
+    Rust では、それがコンパイルエラーになります。
+    <strong>「使い方の例」と「実際の API」が食い違えないのです。</strong>
+  </p>
+  <p>
+    docs.rs で公開されているクレートのドキュメントに載っているコードは、
+    すべてこの検証を通っています。
+    だから<strong>公式ドキュメントのサンプルは、写せば動きます</strong>。
+    これは Rust のエコシステム全体の信頼性を支えている仕組みです。
+  </p>
+</div>
+
+<h2 id="特別な書き方">特別な書き方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>#[should_panic]</code></td><td>panic することを期待する</td></tr>
+    <tr><td><code>#[should_panic(expected = "文字列")]</code></td><td>メッセージに指定の文字列が含まれること</td></tr>
+    <tr><td><code>#[ignore = "理由"]</code></td><td>ふだんは走らせない。<code>cargo test -- --ignored</code> で走る</td></tr>
+    <tr><td><code>fn t() -&gt; Result&lt;(), E&gt;</code></td><td>テストの中で <code>?</code> が使える</td></tr>
+    <tr><td>```should_panic</td><td>ドキュメントテストで panic を期待する</td></tr>
+    <tr><td>```no_run</td><td>コンパイルはするが実行しない</td></tr>
+    <tr><td>```ignore</td><td>コンパイルもしない（ただの飾り）</td></tr>
+    <tr><td>```compile_fail</td><td><strong>コンパイルが失敗することを期待する</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">Result を返すテスト</span>
+  <p>
+    テストの中で <code>?</code> を使いたいなら、<code>Result</code> を返すようにします。
+    前準備が短くなります。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="cp">#[test]</span></span><span class="cl"><span class="k">fn</span><span class="w"> </span><span class="err">結果型を返すテスト</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span></span><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">divide</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="o">?</span><span class="p">;</span></span><span class="cl"><span class="w">    </span><span class="fm">assert_eq!</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span></span><span class="cl"><span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span></span><span class="cl"><span class="p">}</span></span></code></pre></figure>
+</div>
+
+<h2 id="走らせ方">走らせ方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コマンド</th><th>やること</th></tr></thead>
+  <tbody>
+    <tr><td><code>cargo test</code></td><td>全部走らせる</td></tr>
+    <tr><td><code>cargo test 税込み</code></td><td>名前に含むものだけ</td></tr>
+    <tr><td><code>cargo test -- --nocapture</code></td><td><strong><code>println!</code> の出力を見せる</strong></td></tr>
+    <tr><td><code>cargo test -- --ignored</code></td><td><code>#[ignore]</code> のものだけ</td></tr>
+    <tr><td><code>cargo test -- --test-threads=1</code></td><td>1 つずつ順番に走らせる</td></tr>
+    <tr><td><code>cargo test --lib</code></td><td>単体テストだけ</td></tr>
+    <tr><td><code>cargo test --doc</code></td><td>ドキュメントテストだけ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">println! が出ないのは既定の動作</span>
+  <p>
+    テストが通っている間、<code>println!</code> の出力は隠されます。
+    デバッグのために見たいときは <code>-- --nocapture</code> を付けてください。
+  </p>
+  <p>
+    <code>--</code> の前が cargo への引数、後がテストランナーへの引数です。
+    この区切りを忘れると <code>cargo</code> が知らない引数だと怒ります。
+  </p>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">テストは並列に走る</span>
+  <p>
+    既定では複数のスレッドで同時に走ります。C# の xUnit と同じです。
+    <strong>同じファイルを読み書きするテストは、そのままだと衝突します。</strong>
+  </p>
+  <p>
+    対処は 3 つあります。
+  </p>
+  <ul>
+    <li>テストごとに違う一時ディレクトリを使う（<code>tempfile</code> クレート）</li>
+    <li><code>--test-threads=1</code> で直列にする</li>
+    <li>そもそもファイルに触らない設計にする（依存を引数で渡す）</li>
+  </ul>
+</div>
+
+<h2 id="ドキュメントを生成する">ドキュメントを生成する</h2>
+
+<figure class="code-block" data-lang="bash"><div class="code-head"><span class="code-file">PowerShell</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl">cargo<span class="w"> </span>doc<span class="w"> </span>--open</span></code></pre></figure>
+
+<p>
+自分のコードと、依存しているすべてのクレートのドキュメントが生成され、
+ブラウザで開きます。
+</p>
+
+<div class="note">
+  <span class="note-title">ドキュメントコメントの書き方</span>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>記法</th><th>説明する対象</th></tr></thead>
+    <tbody>
+      <tr><td><code>///</code></td><td><strong>次に来る項目</strong>（関数・構造体など）</td></tr>
+      <tr><td><code>//!</code></td><td><strong>そのファイル自身</strong>（モジュール・クレート）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>
+    中身は Markdown です。慣習的な見出しがあります。
+  </p>
+  <figure class="code-block" data-lang="rust"><div class="code-head"><span class="code-file code-file--plain">Rust</span><button class="code-copy" type="button" data-copy>コピー</button></div><pre><code><span class="cl"><span class="sd">/// 1 行の要約。</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// もう少し詳しい説明。</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// # 例</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="sd">/// assert_eq!(my_crate::add(1, 2), 3);</span></span><span class="cl"><span class="sd">/// ```</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// # パニック</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// 引数が負のとき panic します。</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// # エラー</span></span><span class="cl"><span class="sd">///</span></span><span class="cl"><span class="sd">/// ファイルが無いとき `Err` を返します。</span></span></code></pre></figure>
+</div>
+
+<div class="note try">
+  <span class="note-title">やってみよう</span>
+  <ol>
+    <li><code>examples/17-testing</code> で <code>cargo test</code> を走らせてください。</li>
+    <li><code>with_tax</code> のドキュメントの <code>assert_eq!(with_tax(100, 0.10), 110);</code> を <code>111</code> に変えて、<strong>ドキュメントテストが落ちる</strong>ことを確認してください。これがこの章の要点です。</li>
+    <li><code>cargo test -- --ignored</code> で、<code>#[ignore]</code> のテストが走ることを確認してください。</li>
+    <li><code>cargo test 日本語</code> のように名前で絞り込んでください。</li>
+    <li><code>cargo doc --open</code> でドキュメントを生成し、書いた <code># 例</code> がどう表示されるか見てください。</li>
+  </ol>
+</div>
+
+<div class="recap">
+  <h2 id="この章のまとめ">この章のまとめ</h2>
+  <ul>
+    <li>テスト機構は言語に組み込み。<code>#[test]</code> と <code>cargo test</code> だけ。</li>
+    <li>テストは<strong>実装と同じファイル</strong>に <code>#[cfg(test)] mod tests</code> で書く。非公開のものもテストできる。</li>
+    <li><code>tests/</code> の結合テストは別クレート。公開 API だけを使う検証になる。</li>
+    <li><strong>ドキュメントの <code>```</code> の中のコードがテストとして走る。</strong>これが Rust 独自の強み。</li>
+    <li><code>println!</code> を見たいときは <code>cargo test -- --nocapture</code>。</li>
+    <li>テストは並列に走る。ファイルを触るテストは注意。</li>
+  </ul>
+</div>
+
+      </div>
+<nav class="pager" aria-label="章の移動">
+<a class="pager-link pager-prev" href="../16-modules/"><span class="pager-dir">← 前の章</span><span class="pager-title">モジュールとクレート</span></a>
+<a class="pager-link pager-next" href="../18-smart-pointers/"><span class="pager-dir">次の章 →</span><span class="pager-title">スマートポインタ</span></a>
+</nav>
+    </article>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <p>Rust 入門 — C# が書ける人のための、所有権から async まで</p>
+  <p class="footer-meta">
+    rustc 1.97.1 / cargo 1.97.1 / edition 2024 で検証（2026-07-30 時点）
+  </p>
+  <p class="footer-meta"><a href="../../">ほかの教材を見る</a></p>
+</footer>
+
+<script src="../assets/book.js" defer></script>
+</body>
+</html>

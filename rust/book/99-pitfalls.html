@@ -1,0 +1,432 @@
+<p>
+最後の章です。ここから先は自力で進めるための地図です。
+</p>
+
+<p>
+前半はエラーコードの早見表、後半は
+<strong>「古い記事のとおりに書くと動かない」箇所の一覧</strong>です。
+後半は本書でいちばん間違えてはいけない部分なので、
+すべて実物のコンパイラとクレートで確かめてあります。
+</p>
+
+<h2>エラーコード早見表</h2>
+
+<!--figure: error-map | よく出るエラーコードを分類したマップ。症状から原因と該当章を引ける。どのコードも rustc --explain で公式の解説が読める。 -->
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>コード</th><th>症状</th><th>まず疑うこと</th><th>章</th></tr></thead>
+  <tbody>
+    <tr><td><code>E0382</code></td><td>move した値を使った</td><td>関数に渡した／代入した後で触っている。<code>&amp;</code> か <code>clone()</code></td><td>6</td></tr>
+    <tr><td><code>E0384</code></td><td>不変な変数に再代入した</td><td><code>mut</code> が無い</td><td>4</td></tr>
+    <tr><td><code>E0308</code></td><td>型が合わない</td><td>暗黙変換は無い。<strong>末尾のセミコロン</strong>も疑う</td><td>3・4</td></tr>
+    <tr><td><code>E0499</code></td><td><code>&amp;mut</code> が 2 本</td><td>片方の使用を先に終わらせる</td><td>7</td></tr>
+    <tr><td><code>E0502</code></td><td>読みと書きの借用が同席</td><td>値を <code>*</code> で取り出して借用を切る</td><td>7</td></tr>
+    <tr><td><code>E0596</code></td><td>可変として借用できない</td><td>変数に <code>mut</code> が無い</td><td>7</td></tr>
+    <tr><td><code>E0505</code></td><td>貸出中に move した</td><td>借用が終わってから move する</td><td>7</td></tr>
+    <tr><td><code>E0507</code></td><td>借用から持ち出せない</td><td><code>clone()</code> か、参照を返す形に</td><td>7</td></tr>
+    <tr><td><code>E0106</code></td><td>ライフタイムが書かれていない</td><td>提案どおり <code>'a</code> を足す</td><td>15</td></tr>
+    <tr><td><code>E0597</code></td><td>借用先が先に消える</td><td>値を外側で作る／所有させる</td><td>15</td></tr>
+    <tr><td><code>E0277</code></td><td>必要なトレイトが未実装</td><td><code>#[derive(..)]</code> を足す／<code>use</code> を足す</td><td>9・14</td></tr>
+    <tr><td><code>E0599</code></td><td>そのメソッドが無い</td><td><strong>トレイトの <code>use</code> 忘れ</strong>を最初に疑う</td><td>14</td></tr>
+    <tr><td><code>E0004</code></td><td><code>match</code> に漏れがある</td><td>足りない選択肢が名指しされている</td><td>10</td></tr>
+    <tr><td><code>E0603</code></td><td>非公開のものを使った</td><td><code>pub</code> を足す</td><td>16</td></tr>
+    <tr><td><code>E0072</code></td><td>型のサイズが無限</td><td>再帰する箇所を <code>Box</code> で包む</td><td>18</td></tr>
+    <tr><td><code>E0432</code> / <code>E0433</code></td><td>その名前が見つからない</td><td><code>use</code> 忘れ／<code>cargo add</code> 忘れ／<code>mod</code> 忘れ</td><td>16</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">rustc --explain で公式の解説が読める</span>
+  <p>
+    どのコードも、コマンド 1 つで詳しい説明が読めます。
+  </p>
+  <!--term: rustc-explain | rustc --explain E0382 の出力（先頭部分）。何が問題で、どう直すかが例つきで説明される。 -->
+  <p>
+    <code>E0599</code> だけ特別に注意しておきます。
+    <strong>「メソッドが無い」と言われたら、まずトレイトの <code>use</code> 忘れを疑ってください。</strong>
+    Rust ではトレイトを <code>use</code> しないとそのメソッドが見えません。
+    次の節でその実例を扱います。
+  </p>
+</div>
+
+<h2>古い記事との差分</h2>
+
+<p>
+ここが本章の本題です。ネット上の情報をそのまま写すと動かない箇所を並べます。
+</p>
+
+<div class="note">
+  <span class="note-title">この表について</span>
+  <p>
+    この表の各行は、<strong>本書のビルド時に実際に確かめています。</strong>
+  </p>
+  <ul>
+    <li>コンパイルエラーになる例は、実際に <code>rustc</code> に通してエラーコードを照合</li>
+    <li>クレートの API については、実際にそのクレートを取得してコンパイル</li>
+  </ul>
+  <p>
+    食い違えば公開が止まる仕組みになっているので、
+    <strong>この表が古くなることは構造的に起きません</strong>。
+  </p>
+</div>
+
+<h3>言語とツールの変化</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>古い記事の書き方</th><th>いま</th><th>いつ変わったか</th></tr></thead>
+  <tbody>
+    <tr><td><code>extern crate rand;</code></td><td><strong>不要</strong>。<code>use</code> だけでよい</td><td>2018 エディション</td></tr>
+    <tr><td><code>cargo install cargo-edit</code> してから <code>cargo add</code></td><td><code>cargo add</code> は<strong>標準搭載</strong></td><td>Cargo 1.62</td></tr>
+    <tr><td><code>println!("{}", name)</code></td><td><code>println!("{name}")</code> と書ける（前者も有効）</td><td>2021 エディション</td></tr>
+    <tr><td><code>try!(expr)</code></td><td><code>expr?</code></td><td>Rust 1.13</td></tr>
+    <tr><td><code>fn main()</code> で <code>?</code> が使えない</td><td><code>fn main() -&gt; Result&lt;..&gt;</code> にすれば使える</td><td>Rust 1.26</td></tr>
+    <tr><td><code>match</code> で早期脱出を書く</td><td><code>let ... else</code> が使える</td><td>Rust 1.65</td></tr>
+    <tr><td>スレッドに借用を渡すには <code>crossbeam</code></td><td><code>thread::scope</code> が標準にある</td><td>Rust 1.63</td></tr>
+    <tr><td>入れ子の <code>if let</code> を書く</td><td><code>if let .. &amp;&amp; let ..</code> と連鎖できる</td><td>2024 エディション</td></tr>
+    <tr><td>「借用検査が厳しくて書けない」</td><td>借用は<strong>最後の使用</strong>で終わる（NLL）</td><td>2018 エディション</td></tr>
+    <tr><td>VS Code に「Rust」拡張を入れる</td><td><strong>rust-analyzer</strong> を入れる（旧 RLS は廃止）</td><td>2022 年ごろ</td></tr>
+    <tr><td>先に Visual Studio を入れてから rustup</td><td>rustup が<strong>自動で入れてくれる</strong></td><td>—</td></tr>
+    <tr><td><code>#[clap(...)]</code></td><td><code>#[command(...)]</code> / <code>#[arg(...)]</code></td><td>clap v4</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>rand — 数当てゲームが動かない理由</h3>
+
+<p>
+これがいちばんよく踏まれる罠です。入門記事の定番題材なのに、
+<strong>API が 2 回変わっています</strong>。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>版</th><th>書き方</th><th>いま実行すると</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>0.8<br>（記事に最も多い）</td>
+      <td><code>use rand::Rng;</code><br><code>rand::thread_rng().gen_range(1..=100)</code></td>
+      <td><strong><code>E0425</code></strong><br><code>thread_rng</code> が存在しない</td>
+    </tr>
+    <tr>
+      <td>0.9</td>
+      <td><code>use rand::Rng;</code><br><code>rand::rng().random_range(1..=100)</code></td>
+      <td><strong><code>E0599</code></strong><br>メソッドが生えない</td>
+    </tr>
+    <tr>
+      <td><strong>いま</strong></td>
+      <td><code>use rand::RngExt;</code><br><code>rand::rng().random_range(1..=100)</code></td>
+      <td>通る</td>
+    </tr>
+    <tr>
+      <td><strong>いま（最短）</strong></td>
+      <td><code>rand::random_range(1..=100)</code></td>
+      <td>通る（<code>use</code> 不要）</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+実際にコンパイルすると、こう出ます。
+</p>
+
+<!--term: err-rand-old-style | 0.8 の書き方と 0.9 の書き方を、それぞれ最新の rand でビルドした結果。前者は thread_rng が無いと言われ、後者は「use rand::Rng; と書いているのにメソッドが無い」という分かりにくいエラーになる。 -->
+
+<div class="note pitfall">
+  <span class="note-title">2 番目のエラーがなぜ厄介なのか</span>
+  <p>
+    <code>use rand::Rng;</code> と書いているのに
+    「<code>random_range</code> というメソッドはありません」と言われます。
+    <strong>import は成功しているのにメソッドが無い</strong>ので、意味が分かりません。
+  </p>
+  <p>
+    答えはこうです。<code>rand</code> 0.10 で
+    <strong>便利なメソッド群が <code>Rng</code> から <code>RngExt</code> へ移りました。</strong>
+    <code>Rng</code> という名前のトレイト自体は今も存在するので、
+    <code>use</code> は通ってしまうのです。
+  </p>
+  <p>
+    直し方は <code>use rand::RngExt;</code> にするか、
+    <code>use rand::prelude::*;</code> でまとめて持ってくるかです。
+  </p>
+  <div class="compare">
+    <div class="src" data-lang="rust" data-file="✗ 動かない（記事に多い）">
+use rand::Rng;
+let secret = rand::rng().random_range(1..=100);
+    </div>
+    <div class="src" data-lang="rust" data-file="○ いまの書き方">
+use rand::RngExt;
+let secret = rand::rng().random_range(1..=100);
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <span class="note-title">動く数当てゲーム</span>
+  <p>
+    正しい書き方で書いたものが <code>examples/99-guessing</code> にあります。
+    自動で当てにいく形にしてありますが、構造は定番のものと同じです。
+  </p>
+  <!--code: 99-guessing/src/main.rs-->
+  <!--term: run-guessing | 実行結果。二分探索で絞り込んでいく様子。match で Ordering の 3 つを漏れなく扱っているのが Rust らしい部分。 -->
+  <p>
+    人が遊ぶ形にするには、<code>guess</code> を作っている行を
+    標準入力の読み取りに差し替えます。
+  </p>
+  <div class="src" data-lang="rust">
+use std::io::{self, Write};
+
+let mut input = String::new();
+print!("入力してください: ");
+io::stdout().flush().unwrap();
+io::stdin().read_line(&amp;mut input).unwrap();
+let guess: u32 = match input.trim().parse() {
+    Ok(n) =&gt; n,
+    Err(_) =&gt; {
+        println!("数字を入れてください");
+        continue;
+    }
+};
+  </div>
+  <p>
+    <code>flush()</code> が必要なのは、<code>print!</code>（改行なし）が
+    すぐには画面に出ないためです。これは C# の
+    <code>Console.Write</code> と違う点なので、忘れると
+    「プロンプトが出ないまま入力待ちになる」という現象になります。
+  </p>
+</div>
+
+<h3>主要クレートの版</h3>
+
+<p>
+本書を作った時点で <code>cargo add</code> が入れる版です。
+古い記事は 1 つ前の系列を前提にしていることが多いので、
+<strong>メジャーな番号が違っていたら書き方が変わっている</strong>と考えてください。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>クレート</th><th>用途</th><th>注意</th></tr></thead>
+  <tbody>
+    <tr><td><code>rand</code></td><td>乱数</td><td><strong>0.8 / 0.9 / 0.10 で書き方が違う</strong></td></tr>
+    <tr><td><code>clap</code></td><td>引数解析</td><td>v3 → v4 で derive の属性名が変わった</td></tr>
+    <tr><td><code>serde</code> / <code>serde_json</code></td><td>直列化</td><td>1.0 系で安定。変化は少ない</td></tr>
+    <tr><td><code>anyhow</code> / <code>thiserror</code></td><td>エラー</td><td><code>thiserror</code> は 2.0 系になった</td></tr>
+    <tr><td><code>tokio</code></td><td>非同期ランタイム</td><td>1.0 系で安定。0.2 時代の記事は別物</td></tr>
+    <tr><td><code>reqwest</code></td><td>HTTP クライアント</td><td>0.11 / 0.12 / 0.13 で変化あり</td></tr>
+    <tr><td><code>itertools</code></td><td>イテレータ追加</td><td><code>group_by</code> は <code>chunk_by</code> に改名</td></tr>
+    <tr><td><code>chrono</code> / <code>jiff</code></td><td>日時</td><td><code>jiff</code> は新しい選択肢</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note pitfall">
+  <span class="note-title">記事の古さを見抜く手がかり</span>
+  <p>
+    記事に日付が書いていないことはよくあります。次のものが目印になります。
+  </p>
+  <ul>
+    <li><code>extern crate</code> がある → <strong>2018 年より前</strong></li>
+    <li><code>println!("{}", x)</code> ばかり → 2021 年より前の可能性</li>
+    <li><code>try!(..)</code> がある → かなり古い（2016 年ごろ）</li>
+    <li><code>rand::thread_rng()</code> → rand 0.8 以前</li>
+    <li><code>#[clap(...)]</code> → clap v3 以前</li>
+    <li>「Rust 拡張を入れる」→ 2022 年より前</li>
+    <li><code>edition = "2018"</code> と書いてある → そのまま動くが、記事は古い</li>
+  </ul>
+  <p>
+    そして最強の判定方法は、<strong>とりあえず手元でコンパイルしてみる</strong>ことです。
+    Rust のエラーメッセージは直し方まで書いてくれるので、
+    古い書き方は自力で直せることが多いです。
+  </p>
+</div>
+
+<h2>この先にあるもの</h2>
+
+<p>
+本書では扱わなかった領域を、入口だけ紹介します。
+</p>
+
+<h3>unsafe</h3>
+
+<div class="src" data-lang="rust">
+unsafe {
+    // 生ポインタの参照外し、C の関数呼び出しなど
+}
+</div>
+
+<div class="note">
+  <span class="note-title">unsafe は「検査を切る」ではない</span>
+  <p>
+    <code>unsafe</code> でできるようになるのは 5 つだけです。
+    生ポインタの参照外し、<code>unsafe</code> 関数の呼び出し、
+    可変な <code>static</code> の読み書き、<code>unsafe</code> トレイトの実装、
+    共用体のフィールドアクセス。
+  </p>
+  <p>
+    <strong>所有権と借用の検査は <code>unsafe</code> の中でも働いています。</strong>
+    「面倒だから <code>unsafe</code> で回避する」ということはできません。
+  </p>
+  <p>
+    アプリを書くうえでは、まず必要になりません。
+    2024 エディションでは <code>unsafe fn</code> の中でも
+    <code>unsafe</code> ブロックを書くことが求められるようになり、
+    より厳しくなっています。
+  </p>
+</div>
+
+<h3>FFI — C や C++ と繋ぐ</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>やりたいこと</th><th>道具</th></tr></thead>
+  <tbody>
+    <tr><td>C の関数を Rust から呼ぶ</td><td><code>extern "C"</code> ＋ <code>bindgen</code></td></tr>
+    <tr><td>Rust の関数を C から呼ぶ</td><td><code>#[no_mangle] extern "C"</code> ＋ <code>cbindgen</code></td></tr>
+    <tr><td>C++ と繋ぐ</td><td><code>cxx</code> クレート</td></tr>
+    <tr><td><strong>C# から呼ぶ</strong></td><td>cdylib にして <code>DllImport</code> で P/Invoke</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note csharp">
+  <span class="note-title">既存の C# 資産と組み合わせる</span>
+  <p>
+    「重い処理だけ Rust に置き換える」という使い方ができます。
+    Rust 側を <code>crate-type = ["cdylib"]</code> でビルドして DLL を作り、
+    C# から <code>[DllImport]</code> で呼びます。
+  </p>
+  <div class="src" data-lang="toml" data-file="Cargo.toml">
+[lib]
+crate-type = ["cdylib"]
+  </div>
+  <p>
+    現実的で効果の出やすい導入経路です。
+    全部を書き換えなくても、Rust の速さと安全性を部分的に得られます。
+  </p>
+</div>
+
+<h3>WebAssembly</h3>
+
+<div class="src" data-lang="bash" data-file="PowerShell">
+rustup target add wasm32-unknown-unknown
+cargo install wasm-pack
+wasm-pack build --target web
+</div>
+
+<p>
+Rust は WebAssembly への対応が最も進んだ言語のひとつです。
+ブラウザ上で動かす場合は <code>wasm-bindgen</code> と <code>wasm-pack</code> を使います。
+Blazor WebAssembly と似た立ち位置ですが、<strong>実行ファイルはずっと小さくなります</strong>。
+</p>
+
+<h3>そのほかの領域</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>やりたいこと</th><th>定番のクレート</th></tr></thead>
+  <tbody>
+    <tr><td>Web サーバ</td><td><code>axum</code>（tokio 系）/ <code>actix-web</code></td></tr>
+    <tr><td>HTTP クライアント</td><td><code>reqwest</code></td></tr>
+    <tr><td>データベース</td><td><code>sqlx</code>（コンパイル時に SQL を検査）/ <code>diesel</code></td></tr>
+    <tr><td>GUI</td><td><code>egui</code> / <code>iced</code> / <code>tauri</code></td></tr>
+    <tr><td>ゲーム</td><td><code>bevy</code></td></tr>
+    <tr><td>組み込み</td><td><code>embassy</code> / <code>embedded-hal</code></td></tr>
+    <tr><td>データ並列</td><td><code>rayon</code></td></tr>
+    <tr><td>正規表現</td><td><code>regex</code></td></tr>
+    <tr><td>ログ</td><td><code>tracing</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>公式資料の歩き方</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>資料</th><th>内容</th><th>使いどころ</th></tr></thead>
+  <tbody>
+    <tr><td><a href="https://doc.rust-lang.org/book/">The Rust Programming Language</a></td><td>公式の教科書。通称「the book」</td><td><strong>本書の次に読むもの</strong></td></tr>
+    <tr><td><a href="https://doc.rust-lang.org/rust-by-example/">Rust by Example</a></td><td>短い例の集まり</td><td>書き方を思い出したいとき</td></tr>
+    <tr><td><a href="https://doc.rust-lang.org/std/">標準ライブラリ</a></td><td>API リファレンス</td><td><strong>毎日使う</strong></td></tr>
+    <tr><td><a href="https://docs.rs/">docs.rs</a></td><td>全クレートのドキュメント</td><td><strong>毎日使う</strong></td></tr>
+    <tr><td><a href="https://rustlings.rust-lang.org/">Rustlings</a></td><td>手を動かす練習問題集</td><td>所有権に慣れたいとき</td></tr>
+    <tr><td><a href="https://play.rust-lang.org/">Rust Playground</a></td><td>ブラウザで試せる</td><td>短いコードの確認、共有</td></tr>
+    <tr><td><a href="https://doc.rust-lang.org/nomicon/">Rustonomicon</a></td><td><code>unsafe</code> の教科書</td><td>ずっと後で</td></tr>
+    <tr><td><a href="https://doc.rust-lang.org/edition-guide/">Edition Guide</a></td><td>エディションごとの差分</td><td>古いコードを移行するとき</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="note-title">オフラインで読める</span>
+  <p>
+    上の公式資料の多くは、rustup が入れた時点で手元にあります。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+rustup doc                 # 全部の入口
+rustup doc --book          # the book
+rustup doc --std           # 標準ライブラリ
+  </div>
+  <p>
+    <strong>手元の版に対応したものが開く</strong>ので、
+    ネット上の記事より確実です。「これ、いまも正しいのか？」と思ったら、
+    まず <code>rustup doc</code> を開いてください。
+  </p>
+</div>
+
+<div class="note">
+  <span class="note-title">Rustlings をやってみる</span>
+  <p>
+    所有権と借用は、読むだけでは身につきません。
+    公式の練習問題集をやると効率よく慣れられます。
+  </p>
+  <div class="src" data-lang="bash" data-file="PowerShell">
+cargo install rustlings
+rustlings init
+cd rustlings
+rustlings
+  </div>
+  <p>
+    コンパイルエラーを直していく形式で、
+    <strong>本書の第 6・7・15 章の内容がそのまま演習になります</strong>。
+  </p>
+</div>
+
+<h2>おわりに</h2>
+
+<p>
+Rust が「難しい」と言われる理由は、第 0 章で書いたとおりです。
+<strong>C# なら実行時に分かっていた不具合が、コンパイル時に前倒しで出てくる。</strong>
+最初にまとめて来るので重く感じますが、総量は減っています。
+</p>
+
+<p>
+そして借用検査と戦っている時間は、無駄ではありません。
+それは<strong>本番で落ちるはずだったコードを、手元で直している時間</strong>です。
+</p>
+
+<p>
+詰まったときは、この 3 つを思い出してください。
+</p>
+
+<ul>
+  <li><strong>エラーメッセージを最後まで読む。</strong>Rust は直し方まで書いてくれます。</li>
+  <li><strong>とりあえず <code>clone()</code> して前に進む。</strong>動かないコードより、少し遅いコードのほうがましです。</li>
+  <li><strong>手元でコンパイルして確かめる。</strong>記事が古いのか自分が間違えたのかは、それでしか分かりません。</li>
+</ul>
+
+<div class="recap">
+  <h2>この章のまとめ</h2>
+  <ul>
+    <li>エラーは <code>rustc --explain &lt;コード&gt;</code> で公式の解説が読める。</li>
+    <li><code>E0599</code>（メソッドが無い）は、まず<strong>トレイトの <code>use</code> 忘れ</strong>を疑う。</li>
+    <li><code>rand</code> は 0.8 → 0.9 → 0.10 で 2 回変わった。いまは <code>use rand::RngExt;</code>。</li>
+    <li><code>extern crate</code>・<code>#[clap(...)]</code>・「Rust 拡張」は、記事が古い目印。</li>
+    <li><code>unsafe</code> でも所有権の検査は働く。「検査を切る」ものではない。</li>
+    <li>C# の資産と組み合わせるなら、cdylib ＋ P/Invoke が現実的な入口。</li>
+    <li>迷ったら <code>rustup doc</code>。手元の版に対応した公式資料が開く。</li>
+  </ul>
+</div>
