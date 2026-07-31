@@ -24,7 +24,8 @@ LABEL_RE = re.compile(
     r"(?P<month>0[1-9]|1[0-2])(?P<day>0[1-9]|[12]\d|3[01])_"
     r"(?P<hour>[01]\d|2[0-3])(?P<minute>[0-5]\d)$"
 )
-ADDENDUM_RE = re.compile(r"^(?P<label>\S+)\n-{3,}\s*$", re.MULTILINE)
+DASH_LINE_RE = re.compile(r"^-{3,}\s*$")
+KIKKAKE_RE = re.compile(r"^\s*>\s*きっかけ[:：]\s*\S.*$")
 
 
 def find_memo_dirs() -> list[Path]:
@@ -39,8 +40,13 @@ def memo_files(memo_dir: Path) -> list[Path]:
     return sorted(files)
 
 
-def parse_table(lines: list[str], path: Path) -> tuple[list[tuple[str, str]], list[str]]:
-    """`#` 見出しの直後にあるチェックボックス表を読む。(行のリスト, エラー) を返す。"""
+def parse_table(
+    lines: list[str], path: Path
+) -> tuple[list[tuple[str, str]], list[str], int]:
+    """`#` 見出しの直後にあるチェックボックス表を読む。
+
+    (行のリスト, エラー, 表の次の行の index) を返す。
+    """
     errors: list[str] = []
     idx = 0
     # 先頭の `#` 見出しと空行を読み飛ばす
@@ -49,11 +55,11 @@ def parse_table(lines: list[str], path: Path) -> tuple[list[tuple[str, str]], li
 
     if idx >= len(lines) or not HEADER_RE.match(lines[idx]):
         errors.append(f"{path}: 冒頭にチェックボックス表の見出し行（| 内容 | 反映状況 |）が無い")
-        return [], errors
+        return [], errors, idx
 
     if idx + 1 >= len(lines) or not SEP_RE.match(lines[idx + 1]):
         errors.append(f"{path}: 見出し行の次に区切り行（| --- | --- |）が無い")
-        return [], errors
+        return [], errors, idx
 
     rows: list[tuple[str, str]] = []
     i = idx + 2
@@ -67,7 +73,7 @@ def parse_table(lines: list[str], path: Path) -> tuple[list[tuple[str, str]], li
 
     if not rows:
         errors.append(f"{path}: チェックボックス表に行が無い")
-        return [], errors
+        return [], errors, i
 
     if rows[0][0] != "初回":
         errors.append(f"{path}: 表の1行目の内容欄が「初回」ではない: {rows[0][0]!r}")
@@ -82,13 +88,46 @@ def parse_table(lines: list[str], path: Path) -> tuple[list[tuple[str, str]], li
                 f"{path}: ラベルの書式が不正（<種別>_<YYYY>_<MMDD>_<HHMM> ではない）: {content!r}"
             )
 
-    return rows, errors
+    return rows, errors, i
+
+
+def find_addendum_headings(lines: list[str], start: int) -> list[tuple[str, int]]:
+    """`<label>\\n---` の形の追記見出しを、start 行目以降から順に探す。"""
+    headings: list[tuple[str, int]] = []
+    i = start
+    while i < len(lines) - 1:
+        label = lines[i].strip()
+        if label and LABEL_RE.match(label) and DASH_LINE_RE.match(lines[i + 1]):
+            headings.append((label, i))
+        i += 1
+    return headings
+
+
+def check_kikkake_blocks(
+    lines: list[str], table_end: int, headings: list[tuple[str, int]], path: Path
+) -> list[str]:
+    """初回の内容・各追記のそれぞれの先頭に `> きっかけ: ...` があるか確かめる。"""
+    errors: list[str] = []
+    starts = [table_end] + [idx + 2 for _, idx in headings]
+    ends = [idx for _, idx in headings] + [len(lines)]
+    names = ["初回"] + [label for label, _ in headings]
+
+    for start, end, name in zip(starts, ends, names):
+        segment = lines[start:end]
+        j = 0
+        while j < len(segment) and not segment[j].strip():
+            j += 1
+        if j >= len(segment) or not KIKKAKE_RE.match(segment[j]):
+            errors.append(
+                f"{path}: 「{name}」の内容の先頭に `> きっかけ: ...` が無い"
+            )
+    return errors
 
 
 def check_file(path: Path, *, is_done: bool) -> tuple[list[str], list[tuple[str, str]]]:
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
-    rows, errors = parse_table(lines, path)
+    rows, errors, table_end = parse_table(lines, path)
     if not rows:
         return errors, []
 
@@ -99,13 +138,16 @@ def check_file(path: Path, *, is_done: bool) -> tuple[list[str], list[tuple[str,
                 f"{path}: 反映済フォルダにあるのに未反映の行がある: {unreflected!r}"
             )
 
-    body_labels = {m.group("label") for m in ADDENDUM_RE.finditer(text)}
+    headings = find_addendum_headings(lines, table_end)
+    body_labels = {label for label, _idx in headings}
     table_labels = {content for content, _status in rows if content != "初回"}
 
     for label in table_labels - body_labels:
         errors.append(f"{path}: 表にラベル {label!r} があるが、本文に対応する追記見出しが無い")
     for label in body_labels - table_labels:
         errors.append(f"{path}: 本文に追記見出し {label!r} があるが、表に対応する行が無い")
+
+    errors.extend(check_kikkake_blocks(lines, table_end, headings, path))
 
     pending = [(path, content) for content, status in rows if status != "[x]"]
     return errors, pending
